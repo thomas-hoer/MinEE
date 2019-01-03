@@ -1,0 +1,286 @@
+package de.minee.jpa;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import de.minee.env.Environment;
+
+public abstract class AbstractDAO {
+
+	private static Logger logger = Logger.getLogger(AbstractDAO.class.getName());
+	private final Map<String, Connection> connections = new HashMap<>();
+	private Connection localConnection;
+	private Statement statementForSchemaUpdate;
+
+	protected String getConnectionString() {
+		return Environment.getEnvironmentVariable("DB_CONNECTION");
+	}
+
+	protected String getUserName() {
+		return Environment.getEnvironmentVariable("DB_USER");
+	}
+
+	protected String getPassword() {
+		return Environment.getEnvironmentVariable("DB_PASSWORD");
+	}
+
+	protected abstract int updateDatabaseSchema(int oldDbSchemaVersion) throws SQLException;
+
+	private synchronized Connection createConnection() throws SQLException {
+		if (connections.containsKey(getConnectionString())) {
+			return connections.get(getConnectionString());
+		}
+		try {
+			Class.forName("org.h2.Driver");
+		} catch (final ClassNotFoundException e) {
+			logger.log(Level.SEVERE, "Cannot load Driver for H2 Database", e);
+		}
+		final Connection connection = DriverManager.getConnection(getConnectionString(), getUserName(), getPassword());
+		checkVersion(connection);
+		connections.put(getConnectionString(), connection);
+		return connection;
+	}
+
+	protected Connection getConnection() throws SQLException {
+		if (localConnection == null) {
+			localConnection = createConnection();
+		}
+		return localConnection;
+	}
+
+	private void checkVersion(final Connection con) throws SQLException {
+		int dbSchemaVersion = 0;
+		try (Statement statement = con.createStatement();
+				ResultSet resultSetCustomProperties = statement.executeQuery(
+						"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'CUSTOMPROPERTY'");) {
+			resultSetCustomProperties.next();
+			final boolean tableFound = resultSetCustomProperties.getInt(1) == 1;
+			if (!tableFound) {
+				statement.executeUpdate("CREATE TABLE CustomProperty ( Key varchar(50), Value varchar(50) )");
+				statement.executeUpdate("INSERT INTO CustomProperty ( Key , Value ) VALUES ( 'dbShemaVersion','0') ");
+			}
+			try (final ResultSet resultSetDbSchemaVersion = statement
+					.executeQuery("SELECT Value FROM CustomProperty WHERE Key = 'dbShemaVersion'")) {
+				resultSetDbSchemaVersion.next();
+				dbSchemaVersion = resultSetDbSchemaVersion.getInt(1);
+			}
+
+			statementForSchemaUpdate = statement;
+			dbSchemaVersion = updateDatabaseSchema(dbSchemaVersion);
+			statementForSchemaUpdate = null;
+		}
+
+		try (PreparedStatement preparedStatement = con
+				.prepareStatement("UPDATE CustomProperty SET Value = ? WHERE Key = ?")) {
+			preparedStatement.setInt(1, dbSchemaVersion);
+			preparedStatement.setString(2, "dbShemaVersion");
+			preparedStatement.execute();
+		}
+	}
+
+	protected Statement createStatement() throws SQLException {
+		final Connection connection = getConnection();
+		return connection.createStatement();
+	}
+
+	protected PreparedStatement createPreparedStatement(final String sql) throws SQLException {
+		final Connection connection = getConnection();
+		return connection.prepareStatement(sql);
+	}
+
+	protected void dropTable(final Class<?> cls) throws SQLException {
+		dropTable(cls.getSimpleName());
+	}
+
+	protected void dropTable(final String table) throws SQLException {
+		if (statementForSchemaUpdate == null) {
+			throw new SQLException("dropTable is only allowed during updateDatabaseSchema process");
+		}
+		final String dropTableQuery = String.format("DROP TABLE %s", table);
+		logger.info(dropTableQuery);
+		statementForSchemaUpdate.execute(dropTableQuery);
+	}
+
+	protected void createTable(final Class<?> cls) throws SQLException {
+		if (statementForSchemaUpdate == null) {
+			throw new SQLException("createTable is only allowed during updateDatabaseSchema process");
+		}
+		final StringBuilder stringBuilder = new StringBuilder();
+		final Field[] fields = cls.getDeclaredFields();
+		stringBuilder.append("CREATE TABLE ");
+		stringBuilder.append(cls.getSimpleName());
+		stringBuilder.append("(");
+
+		for (final Field field : fields) {
+			final String mappedType = MappingHelper.mapDatabaseType(field);
+			if (mappedType != null) {
+				stringBuilder.append(field.getName());
+				stringBuilder.append(" ");
+				stringBuilder.append(mappedType);
+				if ("id".equals(field.getName())) {
+					stringBuilder.append(" PRIMARY KEY");
+				}
+				stringBuilder.append(",");
+			} else {
+				createMappingTableFor(field, statementForSchemaUpdate);
+			}
+		}
+		stringBuilder.setLength(stringBuilder.length() - 1);
+		stringBuilder.append(")");
+		final String createTableQuery = stringBuilder.toString();
+		logger.info(createTableQuery);
+		statementForSchemaUpdate.execute(createTableQuery);
+	}
+
+	protected void updateTable(final Class<?> cls) throws SQLException {
+		updateTable(cls, false);
+	}
+
+	protected void updateTable(final Class<?> cls, final boolean allowDeletion) throws SQLException {
+		if (statementForSchemaUpdate == null) {
+			throw new SQLException("createTable is only allowed during updateDatabaseSchema process");
+		}
+		final Map<String, String> existingFields = new HashMap<>();
+		try (ResultSet resultSetColumns = statementForSchemaUpdate.executeQuery(
+				"SELECT COLUMNS.COLUMN_NAME, COLUMNS.TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMNS.TABLE_NAME = '"
+						+ cls.getSimpleName().toUpperCase() + "'")) {
+			while (resultSetColumns.next()) {
+				existingFields.put(resultSetColumns.getString(1), resultSetColumns.getString(2));
+			}
+		}
+		try (ResultSet resultSetMappingTable = statementForSchemaUpdate
+				.executeQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLES.TABLE_NAME LIKE 'MAPPING_"
+						+ cls.getSimpleName().toUpperCase() + "_%'")) {
+			while (resultSetMappingTable.next()) {
+				final String tableName = resultSetMappingTable.getString(1)
+						.replace("MAPPING_" + cls.getSimpleName().toUpperCase() + "_", "");
+				existingFields.put(tableName, "List");
+			}
+		}
+		final Field[] fields = cls.getDeclaredFields();
+		for (final Field field : fields) {
+			final String mappedType = MappingHelper.mapDatabaseType(field);
+
+			final String fieldName = field.getName().toUpperCase();
+			if (existingFields.containsKey(fieldName)) {
+				if (existingFields.get(fieldName).equalsIgnoreCase(mappedType)) {
+					existingFields.remove(fieldName);
+				} else if (List.class.isAssignableFrom(field.getType())
+						&& existingFields.get(fieldName).equals("List")) {
+					existingFields.remove(fieldName);
+				} else {
+					throw new UnsupportedOperationException("Cannot change field type");
+				}
+			} else {
+				if (mappedType != null) {
+					final StringBuilder query = new StringBuilder();
+					query.append("ALTER TABLE ");
+					query.append(cls.getSimpleName());
+					query.append(" ADD COLUMN ");
+					query.append(field.getName());
+					query.append(" ");
+					query.append(mappedType);
+					query.append(";");
+					final String alterTableQuery = query.toString();
+					logger.info(alterTableQuery);
+					statementForSchemaUpdate.execute(alterTableQuery);
+				} else {
+					createMappingTableFor(field, statementForSchemaUpdate);
+				}
+			}
+		}
+		for (final Entry<String, String> entry : existingFields.entrySet()) {
+			if (allowDeletion) {
+				final StringBuilder query = new StringBuilder();
+				query.append("ALTER TABLE ");
+				query.append(cls.getSimpleName());
+				query.append(" DROP COLUMN ");
+				query.append(entry.getKey());
+				query.append(";");
+				final String alterTableQuery = query.toString();
+				logger.info(alterTableQuery);
+				statementForSchemaUpdate.execute(alterTableQuery);
+			} else {
+				logger.warning("Warning: Field " + entry.getKey() + " of class " + cls.getSimpleName() + " is unused");
+			}
+		}
+
+	}
+
+	private static void createMappingTableFor(final Field field, final Statement statement) throws SQLException {
+		final Class<?> fromClazz = field.getDeclaringClass();
+
+		final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
+		final Class<?> type = (Class<?>) mapToType.getActualTypeArguments()[0];
+
+		final StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append("CREATE TABLE ");
+		stringBuilder.append("Mapping_");
+		stringBuilder.append(fromClazz.getSimpleName());
+		stringBuilder.append("_");
+		stringBuilder.append(field.getName());
+		stringBuilder.append("(");
+		stringBuilder.append(fromClazz.getSimpleName());
+		stringBuilder.append(" UUID, ");
+		if (MappingHelper.isSupportedType(type)) {
+			stringBuilder.append(type.getSimpleName());
+			stringBuilder.append(" ");
+			stringBuilder.append(MappingHelper.mapType(type));
+		} else {
+			stringBuilder.append(type.getSimpleName());
+			stringBuilder.append(" UUID");
+			stringBuilder.append(", PRIMARY KEY (");
+			stringBuilder.append(fromClazz.getSimpleName());
+			stringBuilder.append(", ");
+			stringBuilder.append(type.getSimpleName());
+			stringBuilder.append(")");
+		}
+		stringBuilder.append(")");
+
+		final String createTableQuery = stringBuilder.toString();
+		logger.info(createTableQuery);
+		statement.execute(createTableQuery);
+
+	}
+
+	public <T> SelectStatement<T> select(final Class<T> clazz) throws SQLException {
+		return SelectStatement.select(clazz, getConnection());
+	}
+
+	public <T> UUID insertShallow(final T objectToInsert) throws SQLException {
+		return PreparedInsert.insert(objectToInsert, getConnection(), false);
+	}
+
+	/**
+	 * Deep insert of the Object and recursively their children
+	 *
+	 * @param objectToInsert
+	 * @return
+	 * @throws SQLException
+	 */
+	public <T> UUID insert(final T objectToInsert) throws SQLException {
+		return PreparedInsert.insert(objectToInsert, getConnection(), true);
+	}
+
+	public <T> int update(final T objectToUpdate) throws SQLException {
+		return PreparedUpdate.update(objectToUpdate, getConnection(), true);
+	}
+
+	public <T> int updateShallow(final T objectToUpdate) throws SQLException {
+		return PreparedUpdate.update(objectToUpdate, getConnection(), false);
+	}
+
+}
