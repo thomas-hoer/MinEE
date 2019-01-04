@@ -17,6 +17,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import de.minee.env.Environment;
+import de.minee.util.ReflectionUtil;
 
 public abstract class AbstractDAO {
 
@@ -153,6 +154,38 @@ public abstract class AbstractDAO {
 		if (statementForSchemaUpdate == null) {
 			throw new SQLException("createTable is only allowed during updateDatabaseSchema process");
 		}
+		final Map<String, String> existingFields = analyseExistingFieldsForTable(cls);
+
+		final List<Field> fields = ReflectionUtil.getAllFields(cls);
+		for (final Field field : fields) {
+			final String mappedType = MappingHelper.mapDatabaseType(field);
+
+			final String fieldName = field.getName().toUpperCase();
+			if (existingFields.containsKey(fieldName)) {
+				if (existingFields.get(fieldName).equalsIgnoreCase(mappedType)) {
+					existingFields.remove(fieldName);
+				} else if (List.class.isAssignableFrom(field.getType())
+						&& existingFields.get(fieldName).equals("List")) {
+					existingFields.remove(fieldName);
+				} else {
+					throw new UnsupportedOperationException("Cannot change field type");
+				}
+			} else {
+				alterTableAddField(cls, field, mappedType);
+			}
+		}
+
+		for (final Entry<String, String> entry : existingFields.entrySet()) {
+			if (allowDeletion) {
+				alterTableDropField(cls, entry);
+			} else {
+				logger.warning("Warning: Field " + entry.getKey() + " of class " + cls.getSimpleName() + " is unused");
+			}
+		}
+
+	}
+
+	private Map<String, String> analyseExistingFieldsForTable(final Class<?> cls) throws SQLException {
 		final Map<String, String> existingFields = new HashMap<>();
 		try (ResultSet resultSetColumns = statementForSchemaUpdate.executeQuery(
 				"SELECT COLUMNS.COLUMN_NAME, COLUMNS.TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMNS.TABLE_NAME = '"
@@ -170,54 +203,38 @@ public abstract class AbstractDAO {
 				existingFields.put(tableName, "List");
 			}
 		}
-		final Field[] fields = cls.getDeclaredFields();
-		for (final Field field : fields) {
-			final String mappedType = MappingHelper.mapDatabaseType(field);
+		return existingFields;
+	}
 
-			final String fieldName = field.getName().toUpperCase();
-			if (existingFields.containsKey(fieldName)) {
-				if (existingFields.get(fieldName).equalsIgnoreCase(mappedType)) {
-					existingFields.remove(fieldName);
-				} else if (List.class.isAssignableFrom(field.getType())
-						&& existingFields.get(fieldName).equals("List")) {
-					existingFields.remove(fieldName);
-				} else {
-					throw new UnsupportedOperationException("Cannot change field type");
-				}
-			} else {
-				if (mappedType != null) {
-					final StringBuilder query = new StringBuilder();
-					query.append("ALTER TABLE ");
-					query.append(cls.getSimpleName());
-					query.append(" ADD COLUMN ");
-					query.append(field.getName());
-					query.append(" ");
-					query.append(mappedType);
-					query.append(";");
-					final String alterTableQuery = query.toString();
-					logger.info(alterTableQuery);
-					statementForSchemaUpdate.execute(alterTableQuery);
-				} else {
-					createMappingTableFor(field, statementForSchemaUpdate);
-				}
-			}
-		}
-		for (final Entry<String, String> entry : existingFields.entrySet()) {
-			if (allowDeletion) {
-				final StringBuilder query = new StringBuilder();
-				query.append("ALTER TABLE ");
-				query.append(cls.getSimpleName());
-				query.append(" DROP COLUMN ");
-				query.append(entry.getKey());
-				query.append(";");
-				final String alterTableQuery = query.toString();
-				logger.info(alterTableQuery);
-				statementForSchemaUpdate.execute(alterTableQuery);
-			} else {
-				logger.warning("Warning: Field " + entry.getKey() + " of class " + cls.getSimpleName() + " is unused");
-			}
-		}
+	private void alterTableDropField(final Class<?> cls, final Entry<String, String> entry) throws SQLException {
+		final StringBuilder query = new StringBuilder();
+		query.append("ALTER TABLE ");
+		query.append(cls.getSimpleName());
+		query.append(" DROP COLUMN ");
+		query.append(entry.getKey());
+		query.append(";");
+		final String alterTableQuery = query.toString();
+		logger.info(alterTableQuery);
+		statementForSchemaUpdate.execute(alterTableQuery);
+	}
 
+	private void alterTableAddField(final Class<?> cls, final Field field, final String mappedType)
+			throws SQLException {
+		if (mappedType != null) {
+			final StringBuilder query = new StringBuilder();
+			query.append("ALTER TABLE ");
+			query.append(cls.getSimpleName());
+			query.append(" ADD COLUMN ");
+			query.append(field.getName());
+			query.append(" ");
+			query.append(mappedType);
+			query.append(";");
+			final String alterTableQuery = query.toString();
+			logger.info(alterTableQuery);
+			statementForSchemaUpdate.execute(alterTableQuery);
+		} else {
+			createMappingTableFor(field, statementForSchemaUpdate);
+		}
 	}
 
 	private static void createMappingTableFor(final Field field, final Statement statement) throws SQLException {
@@ -261,7 +278,7 @@ public abstract class AbstractDAO {
 	}
 
 	public <T> UUID insertShallow(final T objectToInsert) throws SQLException {
-		return PreparedInsert.insert(objectToInsert, getConnection(), false);
+		return PreparedInsert.insert(objectToInsert, getConnection(), Cascade.NONE);
 	}
 
 	/**
@@ -272,15 +289,18 @@ public abstract class AbstractDAO {
 	 * @throws SQLException
 	 */
 	public <T> UUID insert(final T objectToInsert) throws SQLException {
-		return PreparedInsert.insert(objectToInsert, getConnection(), true);
+		return PreparedInsert.insert(objectToInsert, getConnection(), Cascade.INSERT);
 	}
 
 	public <T> int update(final T objectToUpdate) throws SQLException {
-		return PreparedUpdate.update(objectToUpdate, getConnection(), true);
+		return PreparedUpdate.update(objectToUpdate, getConnection(), Cascade.UPDATE);
 	}
 
 	public <T> int updateShallow(final T objectToUpdate) throws SQLException {
-		return PreparedUpdate.update(objectToUpdate, getConnection(), false);
+		return PreparedUpdate.update(objectToUpdate, getConnection(), Cascade.NONE);
 	}
 
+	public <T> UUID merge(final T objectToMerge) throws SQLException {
+		return PreparedMerge.merge(objectToMerge, getConnection(), Cascade.MERGE);
+	}
 }

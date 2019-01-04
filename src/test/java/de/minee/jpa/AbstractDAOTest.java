@@ -1,7 +1,5 @@
 package de.minee.jpa;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,21 +7,18 @@ import java.util.List;
 import java.util.UUID;
 
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import de.minee.datamodel.ArrayTypes;
-import de.minee.datamodel.Category;
-import de.minee.datamodel.PictureContent;
+import de.minee.datamodel.EnumObject;
 import de.minee.datamodel.PrimitiveList;
-import de.minee.datamodel.enumeration.Encryption;
-import de.minee.datamodel.update.Gallery;
-import de.minee.datamodel.update.Picture;
-import de.minee.datamodel.update.User;
+import de.minee.datamodel.RecursiveObject;
+import de.minee.datamodel.enumeration.Enumeration;
+import de.minee.datamodel.update.ReferenceList;
+import de.minee.datamodel.update.SimpleReference;
+import de.minee.datamodel.update.ReferenceChain;
 
 public class AbstractDAOTest extends AbstractDAO {
-
-	private static Connection connection;
 
 	@Override
 	protected String getConnectionString() {
@@ -42,75 +37,76 @@ public class AbstractDAOTest extends AbstractDAO {
 
 	@Override
 	protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
-		createTable(Category.class);
-		createTable(de.minee.datamodel.Gallery.class);
-		createTable(de.minee.datamodel.Picture.class);
-		createTable(de.minee.datamodel.User.class);
-		createTable(PictureContent.class);
+		createTable(RecursiveObject.class);
+		createTable(de.minee.datamodel.ReferenceList.class);
+		createTable(de.minee.datamodel.SimpleReference.class);
+		createTable(de.minee.datamodel.ReferenceChain.class);
+		createTable(EnumObject.class);
 		createTable(PrimitiveList.class);
 		createTable(ArrayTypes.class);
-		updateTable(User.class);
-		updateTable(Picture.class, true);
-		updateTable(Gallery.class);
+		updateTable(ReferenceChain.class);
+		updateTable(SimpleReference.class, true);
+		updateTable(ReferenceList.class);
 		return 1;
-	}
-
-	@BeforeClass
-	public static void init() throws SQLException, ClassNotFoundException {
-		Class.forName("org.h2.Driver");
-		connection = DriverManager.getConnection("jdbc:h2:mem:", "", "streng_geheim");
-
 	}
 
 	@Test(expected = SQLException.class)
 	public void testCreateTableFor() throws SQLException {
-		createTable(Category.class);
+		createTable(RecursiveObject.class);
 	}
 
 	@Test(expected = SQLException.class)
 	public void testDeletionOnUpdateTable() throws SQLException {
-		final de.minee.datamodel.Picture picture = new de.minee.datamodel.Picture();
+		final de.minee.datamodel.SimpleReference picture = new de.minee.datamodel.SimpleReference();
 		picture.setId(UUID.randomUUID());
-		picture.setDescription("abc");
+		picture.setName("abc");
 		insertShallow(picture);
 	}
 
 	@Test
 	public void testEnum() throws SQLException {
-		final PictureContent pictureContent = new PictureContent();
-		pictureContent.setEncryption(Encryption.AES);
+		final EnumObject pictureContent = new EnumObject();
+		pictureContent.setEnumeration(Enumeration.AES);
 
 		final UUID id = insert(pictureContent);
 
 		Assert.assertNotNull(id);
 
-		final PictureContent selectedPictureContent = select(PictureContent.class).byId(id);
+		final EnumObject selectedPictureContent = select(EnumObject.class).byId(id);
 
 		Assert.assertNotNull(selectedPictureContent);
 		Assert.assertEquals(pictureContent.getId(), selectedPictureContent.getId());
-		Assert.assertEquals(pictureContent.getEncryption(), selectedPictureContent.getEncryption());
+		Assert.assertEquals(pictureContent.getEnumeration(), selectedPictureContent.getEnumeration());
+	}
+
+	@Test
+	public void testCycle() throws SQLException {
+		final RecursiveObject recursiveObject = new RecursiveObject();
+		recursiveObject.setChild(recursiveObject);
+
+		insert(recursiveObject);
 	}
 
 	@Test
 	public void testSelectEnum() throws SQLException {
-		final PictureContent pictureContent1 = new PictureContent();
-		pictureContent1.setEncryption(Encryption.AES);
-		final PictureContent pictureContent2 = new PictureContent();
-		pictureContent2.setEncryption(Encryption.PLAIN);
-		final PictureContent pictureContent3 = new PictureContent();
-		pictureContent3.setEncryption(Encryption.AES);
+		final EnumObject pictureContent1 = new EnumObject();
+		pictureContent1.setEnumeration(Enumeration.AES);
+		final EnumObject pictureContent2 = new EnumObject();
+		pictureContent2.setEnumeration(Enumeration.PLAIN);
+		final EnumObject pictureContent3 = new EnumObject();
+		pictureContent3.setEnumeration(Enumeration.AES);
 
 		insert(pictureContent1);
 		insert(pictureContent2);
 		insert(pictureContent3);
 
-		final List<PictureContent> selectedPictureContent1 = select(PictureContent.class)
-				.where(PictureContent::getEncryption).is(Encryption.AES).execute();
+		final List<EnumObject> selectedPictureContent1 = select(EnumObject.class).where(EnumObject::getEnumeration)
+				.is(Enumeration.AES).execute();
 
 		Assert.assertNotNull(selectedPictureContent1);
 		Assert.assertEquals(2, selectedPictureContent1.size());
 
-		final List<PictureContent> selectedPictureContent2 = select(PictureContent.class).execute();
+		final List<EnumObject> selectedPictureContent2 = select(EnumObject.class).execute();
 
 		Assert.assertNotNull(selectedPictureContent2);
 		Assert.assertEquals(3, selectedPictureContent2.size());
@@ -119,23 +115,23 @@ public class AbstractDAOTest extends AbstractDAO {
 
 	@Test
 	public void testList() throws SQLException {
-		final List<Category> categories = new ArrayList<>();
-		final Category category1 = new Category();
-		final Category category2 = new Category();
-		final Category category3 = new Category();
+		final List<RecursiveObject> categories = new ArrayList<>();
+		final RecursiveObject category1 = new RecursiveObject();
+		final RecursiveObject category2 = new RecursiveObject();
+		final RecursiveObject category3 = new RecursiveObject();
 		category1.setId(UUID.randomUUID());
 		category2.setId(UUID.randomUUID());
 		category3.setId(UUID.randomUUID());
 
 		categories.add(category1);
 		categories.add(category2);
-		final Gallery gallery = new Gallery();
+		final ReferenceList gallery = new ReferenceList();
 		gallery.setName("gname");
 		gallery.setCategories(categories);
 
-		select(Gallery.class).where(Gallery::getCategories).is(Arrays.asList(category3)).execute();
+		select(ReferenceList.class).where(ReferenceList::getCategories).is(Arrays.asList(category3)).execute();
 		insert(gallery);
-		final Gallery selectedGallery = select(Gallery.class).byId(gallery.getId());
+		final ReferenceList selectedGallery = select(ReferenceList.class).byId(gallery.getId());
 
 		Assert.assertNotNull(selectedGallery);
 		Assert.assertEquals(gallery.getId(), selectedGallery.getId());
@@ -143,56 +139,25 @@ public class AbstractDAOTest extends AbstractDAO {
 	}
 
 	@Test
-	public void test() throws SQLException {
-		final List<User> user1 = select(User.class).where(User::getName).is("ABC").execute();
-		final User user = new User();
-		user.setId(UUID.randomUUID());
-		user.setName("Name");
-		user.setAuthentication("Auth");
-		final Picture picture = new Picture();
-		picture.setId(UUID.randomUUID());
-		user.setPicture(picture);
-		insertShallow(user);
-		System.out.println(user);
-		final List<User> user2 = select(User.class).execute();
-		System.out.println(user2.get(0));
-		final List<User> user3 = select(User.class).where(User::getName).is("ABC").execute();
-		System.out.println(user3);
-		final List<User> user4 = select(User.class).where(User::getName).is("Name").execute();
-		System.out.println(user4);
-		final List<User> user5 = select(User.class).where(User::getName).in("Name").execute();
-		System.out.println(user5);
-		final User userUpdate = new User();
-		final UUID id = UUID.randomUUID();
-		userUpdate.setId(id);
-		userUpdate.setName("mail");
-		userUpdate.setEmail("a@b.c");
-		insertShallow(userUpdate);
-		final User user6 = select(User.class).byId(id);
-		System.out.println(user6);
-
-	}
-
-	@Test
 	public void testUpdatedLists() throws SQLException {
 
-		final Category category = new Category();
+		final RecursiveObject category = new RecursiveObject();
 		category.setId(UUID.randomUUID());
-		final List<Category> categories = Arrays.asList(category);
+		final List<RecursiveObject> categories = Arrays.asList(category);
 
-		final Picture picture = new Picture();
+		final SimpleReference picture = new SimpleReference();
 		picture.setId(UUID.randomUUID());
-		final List<Picture> pictures = Arrays.asList(picture);
+		final List<SimpleReference> pictures = Arrays.asList(picture);
 
-		final Gallery gallery = new Gallery();
+		final ReferenceList gallery = new ReferenceList();
 		final UUID galleryId = UUID.randomUUID();
 		gallery.setId(galleryId);
 		gallery.setCategories(categories);
 		gallery.setPictures(pictures);
 
-		final Gallery selectedGallery1 = select(Gallery.class).byId(galleryId);
+		final ReferenceList selectedGallery1 = select(ReferenceList.class).byId(galleryId);
 		insert(gallery);
-		final Gallery selectedGallery2 = select(Gallery.class).byId(galleryId);
+		final ReferenceList selectedGallery2 = select(ReferenceList.class).byId(galleryId);
 
 		Assert.assertNull(selectedGallery1);
 		Assert.assertNotNull(selectedGallery2);
@@ -204,8 +169,8 @@ public class AbstractDAOTest extends AbstractDAO {
 
 	@Test
 	public void testShallowInsertList() throws SQLException {
-		final Gallery gallery = new Gallery();
-		gallery.setCategories(Arrays.asList(new Category()));
+		final ReferenceList gallery = new ReferenceList();
+		gallery.setCategories(Arrays.asList(new RecursiveObject()));
 
 		Assert.assertNull(gallery.getId());
 		Assert.assertNull(gallery.getCategories().get(0).getId());
@@ -213,7 +178,7 @@ public class AbstractDAOTest extends AbstractDAO {
 		Assert.assertNotNull(gallery.getId());
 		Assert.assertNull(gallery.getCategories().get(0).getId());
 
-		final Gallery selectedGallery = select(Gallery.class).byId(gallery.getId());
+		final ReferenceList selectedGallery = select(ReferenceList.class).byId(gallery.getId());
 		Assert.assertNotNull(selectedGallery);
 		Assert.assertEquals(0, selectedGallery.getCategories().size());
 
@@ -221,8 +186,8 @@ public class AbstractDAOTest extends AbstractDAO {
 
 	@Test
 	public void testShallowInsertListWithId() throws SQLException {
-		final Gallery gallery = new Gallery();
-		final Category category = new Category();
+		final ReferenceList gallery = new ReferenceList();
+		final RecursiveObject category = new RecursiveObject();
 		category.setId(UUID.randomUUID());
 		gallery.setCategories(Arrays.asList(category));
 
@@ -232,7 +197,7 @@ public class AbstractDAOTest extends AbstractDAO {
 		Assert.assertNotNull(gallery.getId());
 		Assert.assertNotNull(gallery.getCategories().get(0).getId());
 
-		final Gallery selectedGallery = select(Gallery.class).byId(gallery.getId());
+		final ReferenceList selectedGallery = select(ReferenceList.class).byId(gallery.getId());
 		Assert.assertNotNull(selectedGallery);
 		Assert.assertEquals(1, selectedGallery.getCategories().size());
 		Assert.assertNull(selectedGallery.getCategories().get(0));
@@ -241,8 +206,8 @@ public class AbstractDAOTest extends AbstractDAO {
 
 	@Test
 	public void testShallowInsertListWithSeperateInsertedListElement() throws SQLException {
-		final Gallery gallery = new Gallery();
-		final Category category = new Category();
+		final ReferenceList gallery = new ReferenceList();
+		final RecursiveObject category = new RecursiveObject();
 		insertShallow(category);
 		gallery.setCategories(Arrays.asList(category));
 
@@ -252,7 +217,7 @@ public class AbstractDAOTest extends AbstractDAO {
 		Assert.assertNotNull(gallery.getId());
 		Assert.assertNotNull(gallery.getCategories().get(0).getId());
 
-		final Gallery selectedGallery = select(Gallery.class).byId(gallery.getId());
+		final ReferenceList selectedGallery = select(ReferenceList.class).byId(gallery.getId());
 		Assert.assertNotNull(selectedGallery);
 		Assert.assertEquals(1, selectedGallery.getCategories().size());
 		Assert.assertNotNull(selectedGallery.getCategories().get(0));
@@ -261,15 +226,15 @@ public class AbstractDAOTest extends AbstractDAO {
 
 	@Test
 	public void testShallowInsertChild() throws SQLException {
-		final User user = new User();
-		user.setPicture(new Picture());
+		final ReferenceChain user = new ReferenceChain();
+		user.setPicture(new SimpleReference());
 
 		Assert.assertNull(user.getId());
 		Assert.assertNull(user.getPicture().getId());
 		insertShallow(user);
 		Assert.assertNotNull(user.getId());
 		Assert.assertNull(user.getPicture().getId());
-		final User selectedUser = select(User.class).byId(user.getId());
+		final ReferenceChain selectedUser = select(ReferenceChain.class).byId(user.getId());
 		Assert.assertNotNull(selectedUser);
 		Assert.assertNull(selectedUser.getPicture());
 
@@ -279,15 +244,15 @@ public class AbstractDAOTest extends AbstractDAO {
 	public void testAutoSetId() throws SQLException {
 
 		// Direct setting of Id into the Object
-		final Picture picture = new Picture();
+		final SimpleReference picture = new SimpleReference();
 
 		Assert.assertNull(picture.getId());
 		insertShallow(picture);
 		Assert.assertNotNull(picture.getId());
 
 		// Setting indirect Ids into List childs
-		final Gallery gallery = new Gallery();
-		gallery.setCategories(Arrays.asList(new Category()));
+		final ReferenceList gallery = new ReferenceList();
+		gallery.setCategories(Arrays.asList(new RecursiveObject()));
 
 		Assert.assertNull(gallery.getId());
 		Assert.assertNull(gallery.getCategories().get(0).getId());
@@ -296,8 +261,8 @@ public class AbstractDAOTest extends AbstractDAO {
 		Assert.assertNotNull(gallery.getCategories().get(0).getId());
 
 		// Setting indirect Ids into childs
-		final User user = new User();
-		user.setPicture(new Picture());
+		final ReferenceChain user = new ReferenceChain();
+		user.setPicture(new SimpleReference());
 
 		Assert.assertNull(user.getId());
 		Assert.assertNull(user.getPicture().getId());
@@ -305,7 +270,7 @@ public class AbstractDAOTest extends AbstractDAO {
 		Assert.assertNotNull(user.getId());
 		Assert.assertNotNull(user.getPicture().getId());
 
-		final User selectedUser = select(User.class).byId(user.getId());
+		final ReferenceChain selectedUser = select(ReferenceChain.class).byId(user.getId());
 		Assert.assertNotNull(selectedUser.getPicture());
 	}
 

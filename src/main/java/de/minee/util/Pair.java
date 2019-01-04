@@ -37,7 +37,7 @@ public class Pair<S, T> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final Pair other = (Pair) obj;
+		final Pair<?, ?> other = (Pair<?, ?>) obj;
 		if (first == null) {
 			if (other.first != null) {
 				return false;

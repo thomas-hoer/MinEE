@@ -1,18 +1,15 @@
-package de.minee.datamodel.update;
+package de.minee.datamodel;
 
 import java.util.List;
 import java.util.UUID;
 
-import de.minee.datamodel.Category;
-
-public class Gallery {
+public class ReferenceList {
 
 	private UUID id;
-	private List<Category> categories;
-	private User user;
+	private List<RecursiveObject> categories;
+	private ReferenceChain user;
 	private String name;
 	private String description;
-	private List<Picture> pictures;
 
 	public UUID getId() {
 		return id;
@@ -22,19 +19,19 @@ public class Gallery {
 		this.id = id;
 	}
 
-	public List<Category> getCategories() {
+	public List<RecursiveObject> getCategories() {
 		return categories;
 	}
 
-	public void setCategories(final List<Category> categories) {
+	public void setCategories(final List<RecursiveObject> categories) {
 		this.categories = categories;
 	}
 
-	public User getUser() {
+	public ReferenceChain getUser() {
 		return user;
 	}
 
-	public void setUser(final User user) {
+	public void setUser(final ReferenceChain user) {
 		this.user = user;
 	}
 
@@ -52,14 +49,6 @@ public class Gallery {
 
 	public void setDescription(final String description) {
 		this.description = description;
-	}
-
-	public List<Picture> getPictures() {
-		return pictures;
-	}
-
-	public void setPictures(final List<Picture> pictures) {
-		this.pictures = pictures;
 	}
 
 }

@@ -56,7 +56,7 @@ public class ReflectionUtil {
 		Assertions.assertNotNull(cls);
 		final List<Field> fields = new ArrayList<>();
 		fields.addAll(Arrays.asList(cls.getDeclaredFields()));
-		if (!Object.class.equals(cls)) {
+		if (!Object.class.equals(cls) && !cls.isEnum() && !cls.isInterface()) {
 			fields.addAll(getAllFields(cls.getSuperclass()));
 		}
 		return fields;
@@ -65,7 +65,7 @@ public class ReflectionUtil {
 	public static Field getDeclaredField(final Class<?> cls, final String fieldname) {
 		Assertions.assertNotNull(cls);
 		Assertions.assertNotNull(fieldname);
-		if (Object.class.equals(cls)) {
+		if (Object.class.equals(cls) || cls.isEnum() || cls.isInterface()) {
 			return null;
 		}
 		return Arrays.asList(cls.getDeclaredFields()).stream()

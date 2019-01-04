@@ -2,13 +2,13 @@ package de.minee.datamodel.update;
 
 import java.util.UUID;
 
-import de.minee.datamodel.PictureContent;
+import de.minee.datamodel.EnumObject;
 
-public class Picture {
+public class SimpleReference {
 
 	private UUID id;
-	private User owner;
-	private PictureContent content;
+	private ReferenceChain owner;
+	private EnumObject content;
 	private String name;
 
 	public UUID getId() {
@@ -19,19 +19,19 @@ public class Picture {
 		this.id = id;
 	}
 
-	public User getOwner() {
+	public ReferenceChain getOwner() {
 		return owner;
 	}
 
-	public void setOwner(User owner) {
+	public void setOwner(ReferenceChain owner) {
 		this.owner = owner;
 	}
 
-	public PictureContent getContent() {
+	public EnumObject getContent() {
 		return content;
 	}
 
-	public void setContent(PictureContent content) {
+	public void setContent(EnumObject content) {
 		this.content = content;
 	}
 

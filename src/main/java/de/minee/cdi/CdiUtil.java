@@ -31,6 +31,7 @@ public class CdiUtil {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <T> T getInstance(final Class<T> cls) {
 		try {
 			if (!map.containsKey(cls)) {

@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.UUID;
@@ -53,7 +54,7 @@ class MappingHelper {
 		if (mappedType != null) {
 			return mappedType;
 		}
-		if ("List".equals(clazz.getSimpleName())) {
+		if (List.class.isAssignableFrom(clazz)) {
 			return null;
 		}
 		if (clazz.isArray()) {
@@ -70,7 +71,7 @@ class MappingHelper {
 			if (clazz.isEnum()) {
 				final StringJoiner stringJoiner = new StringJoiner(",", "(", ")");
 				Arrays.stream(clazz.getEnumConstants())
-						.forEach((value) -> stringJoiner.add("'" + value.toString() + "'"));
+						.forEach(value -> stringJoiner.add("'" + value.toString() + "'"));
 				return "ENUM" + stringJoiner.toString();
 			}
 			final Field childId = clazz.getDeclaredField("id");
@@ -99,7 +100,7 @@ class MappingHelper {
 			}
 			return object;
 		}
-		if ("List".equals(clazz.getSimpleName())) {
+		if (List.class.isAssignableFrom(clazz)) {
 			return null;
 		}
 		try {

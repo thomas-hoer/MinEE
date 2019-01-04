@@ -2,5 +2,5 @@ package de.minee.jpa;
 
 public enum Cascade {
 
-	NONE, INSERT, UPDATE, MERGE;
+	NONE, INSERT, UPDATE, MERGE, DELETE;
 }

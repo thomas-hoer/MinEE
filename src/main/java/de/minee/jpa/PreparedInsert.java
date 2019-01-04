@@ -5,9 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -16,20 +14,16 @@ import de.minee.util.Assertions;
 import de.minee.util.Pair;
 import de.minee.util.ReflectionUtil;
 
-public class PreparedInsert<T> {
+public class PreparedInsert<T> extends PreparedQueryBase<T> {
 
 	private static final Logger logger = Logger.getLogger(PreparedInsert.class.getName());
 
 	private final List<Field> fieldList = new ArrayList<>();
-	private final Connection connection;
 	private final PreparedStatement preparedStatement;
-	private final Map<Field, PreparedStatement> mappingInsert = new HashMap<>();
-	private final boolean deepInsert;
 
-	public PreparedInsert(final Class<T> clazz, final Connection connection, final boolean deepInsert)
+	public PreparedInsert(final Class<T> clazz, final Connection connection, final Cascade cascade)
 			throws SQLException {
-		this.connection = connection;
-		this.deepInsert = deepInsert;
+		super(connection, cascade);
 		final StringBuilder query = new StringBuilder();
 		final StringJoiner fieldNames = new StringJoiner(",");
 		final StringJoiner values = new StringJoiner(",");
@@ -42,8 +36,7 @@ public class PreparedInsert<T> {
 			field.setAccessible(true);
 			fieldList.add(field);
 			if (List.class.isAssignableFrom(field.getType())) {
-				mappingInsert.put(field, connection.prepareStatement(
-						"INSERT INTO Mapping_" + clazz.getSimpleName() + "_" + field.getName() + " VALUES (?,?)"));
+				prepareInsert(connection, field);
 				continue;
 			}
 			fieldNames.add(field.getName());
@@ -76,8 +69,8 @@ public class PreparedInsert<T> {
 				fieldElementToInsert = objectId;
 			}
 			final Object dbObject = MappingHelper.getDbObject(fieldElementToInsert);
-			if (deepInsert && dbObject != fieldElementToInsert && UUID.class.isInstance(dbObject)) {
-				final UUID id = insert(fieldElementToInsert, connection, deepInsert);
+			if (Cascade.INSERT.equals(cascade) && dbObject != fieldElementToInsert && UUID.class.isInstance(dbObject)) {
+				final UUID id = insert(fieldElementToInsert, connection, cascade);
 				preparedStatement.setObject(i++, id);
 			} else {
 				preparedStatement.setObject(i++, dbObject);
@@ -97,17 +90,6 @@ public class PreparedInsert<T> {
 		return objectId;
 	}
 
-	private UUID handleId(final T objectToInsert, final Field field, final Object fieldElementToInsert) {
-		UUID objectId;
-		if (fieldElementToInsert == null) {
-			objectId = UUID.randomUUID();
-			ReflectionUtil.executeSet(field, objectToInsert, objectId);
-		} else {
-			objectId = (UUID) fieldElementToInsert;
-		}
-		return objectId;
-	}
-
 	private void handleList(final List<Pair<Field, Object>> mappingsToInsert, final Field field,
 			final Object fieldElementToInsert) throws SQLException {
 		if (fieldElementToInsert == null) {
@@ -122,8 +104,8 @@ public class PreparedInsert<T> {
 				mappingsToInsert.add(new Pair<>(field, listElement));
 			} else {
 				final UUID insertId;
-				if (deepInsert) {
-					insertId = insert(listElement, connection, deepInsert);
+				if (Cascade.INSERT.equals(cascade)) {
+					insertId = insert(listElement, connection, cascade);
 				} else {
 					insertId = MappingHelper.getId(listElement);
 				}
@@ -134,10 +116,11 @@ public class PreparedInsert<T> {
 		}
 	}
 
-	protected static <S> UUID insert(final S objectToInsert, final Connection connection, final boolean deepInsert)
+	protected static <S> UUID insert(final S objectToInsert, final Connection connection, final Cascade cascade)
 			throws SQLException {
+		@SuppressWarnings("unchecked")
 		final Class<S> clazz = (Class<S>) objectToInsert.getClass();
-		final PreparedInsert<S> insert = new PreparedInsert<>(clazz, connection, deepInsert);
+		final PreparedInsert<S> insert = new PreparedInsert<>(clazz, connection, cascade);
 		return insert.execute(objectToInsert);
 	}
 }

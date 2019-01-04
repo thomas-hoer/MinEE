@@ -16,23 +16,23 @@ import java.util.logging.Logger;
 import de.minee.util.Assertions;
 import de.minee.util.ReflectionUtil;
 
-class PreparedUpdate<S> extends PreparedQueryBase<S> {
+class PreparedMerge<S> extends PreparedQueryBase<S> {
 
-	private static final Logger logger = Logger.getLogger(PreparedUpdate.class.getName());
+	private static final Logger logger = Logger.getLogger(PreparedMerge.class.getName());
 
 	private final List<Field> fieldList = new ArrayList<>();
 	private final PreparedStatement preparedStatement;
 
-	public PreparedUpdate(final Class<S> clazz, final Connection connection, final Cascade cascade)
-			throws SQLException {
+	public PreparedMerge(final Class<S> clazz, final Connection connection, final Cascade cascade) throws SQLException {
 		super(connection, cascade);
 		final StringBuilder query = new StringBuilder();
+		final StringJoiner fieldNames = new StringJoiner(",");
+		final StringJoiner values = new StringJoiner(",");
 
-		query.append("UPDATE ");
+		query.append("MERGE INTO ");
 		query.append(clazz.getSimpleName());
-		query.append(" SET ");
+
 		final Field[] fields = clazz.getDeclaredFields();
-		final StringJoiner stringJoiner = new StringJoiner(",");
 		for (final Field field : fields) {
 			field.setAccessible(true);
 			fieldList.add(field);
@@ -42,56 +42,56 @@ class PreparedUpdate<S> extends PreparedQueryBase<S> {
 				prepareSelect(connection, field);
 				continue;
 			}
-			stringJoiner.add(field.getName() + "=?");
+			fieldNames.add(field.getName());
+			values.add("?");
 		}
-		query.append(stringJoiner.toString());
-		query.append(" WHERE id = ?");
+		query.append("(");
+		query.append(fieldNames.toString());
+		query.append(") VALUES (");
+		query.append(values.toString());
+		query.append(")");
 
-		final String updateQuery = query.toString();
-		logger.info(updateQuery);
-		preparedStatement = connection.prepareStatement(updateQuery);
+		final String mergeQuery = query.toString();
+		logger.info(mergeQuery);
+		preparedStatement = connection.prepareStatement(mergeQuery);
 	}
 
-	private int execute(final S objectToUpdate) throws SQLException {
-		Assertions.assertNotNull(objectToUpdate);
+	private UUID execute(final S objectToMerge) throws SQLException {
+		Assertions.assertNotNull(objectToMerge);
 		int i = 1;
 		UUID objectId = null;
 		for (final Field field : fieldList) {
-			Object fieldElementToUpdate = ReflectionUtil.executeGet(field, objectToUpdate);
+			Object fieldElementToMerge = ReflectionUtil.executeGet(field, objectToMerge);
 
 			if (List.class.isAssignableFrom(field.getType())) {
 				continue;
 			}
 
 			if ("id".equals(field.getName())) {
-				if (fieldElementToUpdate == null) {
-					objectId = UUID.randomUUID();
-					fieldElementToUpdate = objectId;
-				} else {
-					objectId = (UUID) fieldElementToUpdate;
-				}
+				objectId = handleId(objectToMerge, field, fieldElementToMerge);
+				fieldElementToMerge = objectId;
 			}
-			final Object dbObject = MappingHelper.getDbObject(fieldElementToUpdate);
+
+			final Object dbObject = MappingHelper.getDbObject(fieldElementToMerge);
 			preparedStatement.setObject(i++, dbObject);
-			if (Cascade.UPDATE.equals(cascade) && dbObject != fieldElementToUpdate && UUID.class.isInstance(dbObject)) {
-				update(fieldElementToUpdate, connection, cascade);
+			if (Cascade.MERGE.equals(cascade) && dbObject != fieldElementToMerge && UUID.class.isInstance(dbObject)) {
+				merge(fieldElementToMerge, connection, cascade);
 			}
 		}
 
 		for (final Field field : fieldList) {
 			if (List.class.isAssignableFrom(field.getType())) {
-				final Object fieldElementToUpdate = ReflectionUtil.executeGet(field, objectToUpdate);
-				handleList(field, fieldElementToUpdate, objectId);
+				final Object fieldElementToMerge = ReflectionUtil.executeGet(field, objectToMerge);
+				handleList(field, fieldElementToMerge, objectId);
 			}
 		}
-		// this is for 'UPDATE (...) WHERE id = ?'
-		preparedStatement.setObject(i, objectId);
-		return preparedStatement.executeUpdate();
+		preparedStatement.executeUpdate();
+		return objectId;
 	}
 
-	private void handleList(final Field field, final Object fieldElementToUpdate, final UUID objectId)
+	private void handleList(final Field field, final Object fieldElementToMerge, final UUID objectId)
 			throws SQLException {
-		if (fieldElementToUpdate == null) {
+		if (fieldElementToMerge == null) {
 			return;
 		}
 		final PreparedStatement selectStatement = mappingSelect.get(field);
@@ -106,7 +106,7 @@ class PreparedUpdate<S> extends PreparedQueryBase<S> {
 			}
 		}
 
-		final List<?> list = (List<?>) fieldElementToUpdate;
+		final List<?> list = (List<?>) fieldElementToMerge;
 		for (final Object listElement : list) {
 			if (listElement == null) {
 				continue;
@@ -115,8 +115,8 @@ class PreparedUpdate<S> extends PreparedQueryBase<S> {
 			if (MappingHelper.isSupportedType(listElement.getClass())) {
 				element = listElement;
 			} else {
-				if (Cascade.UPDATE.equals(cascade)) {
-					update(listElement, connection, cascade);
+				if (Cascade.MERGE.equals(cascade)) {
+					merge(listElement, connection, cascade);
 				}
 				element = MappingHelper.getId(listElement);
 			}
@@ -137,11 +137,11 @@ class PreparedUpdate<S> extends PreparedQueryBase<S> {
 		}
 	}
 
-	protected static <T> int update(final T objectToUpdate, final Connection connection, final Cascade cascade)
+	protected static <T> UUID merge(final T objectToMerge, final Connection connection, final Cascade cascade)
 			throws SQLException {
 		@SuppressWarnings("unchecked")
-		final Class<T> clazz = (Class<T>) objectToUpdate.getClass();
-		final PreparedUpdate<T> update = new PreparedUpdate<>(clazz, connection, cascade);
-		return update.execute(objectToUpdate);
+		final Class<T> clazz = (Class<T>) objectToMerge.getClass();
+		final PreparedMerge<T> merge = new PreparedMerge<>(clazz, connection, cascade);
+		return merge.execute(objectToMerge);
 	}
 }

@@ -1,6 +1,6 @@
 package de.minee.datamodel.enumeration;
 
-public enum Encryption {
+public enum Enumeration {
 
 	PLAIN, AES;
 }

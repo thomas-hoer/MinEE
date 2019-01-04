@@ -1,13 +1,14 @@
-package de.minee.datamodel;
+package de.minee.datamodel.update;
 
 import java.util.UUID;
 
-public class User {
+public class ReferenceChain {
 
 	private UUID id;
 	private String name;
 	private String authentication;
-	private Picture picture;
+	private SimpleReference picture;
+	private String email;
 
 	public UUID getId() {
 		return id;
@@ -33,17 +34,26 @@ public class User {
 		this.authentication = authentication;
 	}
 
-	public Picture getPicture() {
+	public SimpleReference getPicture() {
 		return picture;
 	}
 
-	public void setPicture(Picture picture) {
+	public void setPicture(SimpleReference picture) {
 		this.picture = picture;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 	@Override
 	public String toString() {
 		return "User [id=" + id + ", name=" + name + ", authentication=" + authentication + ", picture=" + picture
-				+ "]";
+				+ ", email=" + email + "]";
 	}
+
 }
