@@ -215,8 +215,7 @@ class ManagedResource<T> {
 	private void doPostEdit(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
 		try {
 			final Object instance = type.newInstance();
-			// TODO: ReflectionUtil
-			for (final Field field : type.getDeclaredFields()) {
+			for (final Field field : ReflectionUtil.getAllFields(type)) {
 				field.setAccessible(true);
 				final Object fieldValue = fromString(field.getType(), req.getParameter(field.getName()));
 				if (fieldValue != null) {
@@ -246,4 +245,10 @@ class ManagedResource<T> {
 		writer.write(renderer.forEdit(object));
 	}
 
+	@Override
+	public String toString() {
+		final StringJoiner joiner = new StringJoiner("/");
+		Arrays.stream(path).forEach(joiner::add);
+		return joiner.toString();
+	}
 }

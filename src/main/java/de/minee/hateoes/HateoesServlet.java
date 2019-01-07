@@ -1,6 +1,7 @@
 package de.minee.hateoes;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -15,6 +16,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import de.minee.cdi.CdiAwareHttpServlet;
 import de.minee.cdi.CdiUtil;
+import de.minee.hateoes.renderer.JsonRenderer;
+import de.minee.hateoes.renderer.Renderer;
 import de.minee.jpa.AbstractDAO;
 
 public abstract class HateoesServlet extends CdiAwareHttpServlet {
@@ -78,7 +81,7 @@ public abstract class HateoesServlet extends CdiAwareHttpServlet {
 		final HateoesResource annotation = field.getAnnotation(HateoesResource.class);
 		if (annotation != null) {
 			final Class<?> resourceType = field.getType();
-			managedResource = new ManagedResource(annotation.value(), annotation.allowedOperations(), resourceType);
+			managedResource = new ManagedResource<>(annotation.value(), annotation.allowedOperations(), resourceType);
 			managedResources.add(managedResource);
 		}
 		return managedResource;
@@ -118,9 +121,10 @@ public abstract class HateoesServlet extends CdiAwareHttpServlet {
 	@Override
 	protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
 		final String method = req.getMethod();
-		String pathInfo = req.getPathInfo();
-		if (pathInfo == null) {
-			pathInfo = "/";
+		final String pathInfo = req.getPathInfo();
+		if (pathInfo == null || "/".equals(pathInfo)) {
+			handleRoot(req, resp);
+			return;
 		}
 		for (final ManagedResource<?> managedResource : managedResources) {
 			if (managedResource.matches(pathInfo) && managedResource.isMethodAllowed(method)) {
@@ -131,4 +135,13 @@ public abstract class HateoesServlet extends CdiAwareHttpServlet {
 		resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 
 	}
+
+	private void handleRoot(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
+		final Renderer renderer = new JsonRenderer();
+		final PrintWriter writer = resp.getWriter();
+		final Object[] availableResources = managedResources.stream().map(ManagedResource::toString).toArray();
+		writer.write(renderer.render(availableResources));
+
+	}
+
 }

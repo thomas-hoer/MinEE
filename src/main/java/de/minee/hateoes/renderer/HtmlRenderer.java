@@ -3,12 +3,15 @@ package de.minee.hateoes.renderer;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import de.minee.util.Assertions;
+import de.minee.util.ReflectionUtil;
 
 public class HtmlRenderer extends Renderer {
 
-	private static final Logger logger = Logger.getLogger(HtmlRenderer.class.getName());
+	private static final String TAG_DIV_START = "<div>";
+	private static final String TAG_DIV_END = "</div>";
+	private static final String TAG_DIV_START_CLASS = "<div class=\"%s\">";
 
 	@Override
 	public String render(final Object input) {
@@ -27,21 +30,19 @@ public class HtmlRenderer extends Renderer {
 		}
 		final Class<?> cls = input.getClass();
 		if (String.class.isAssignableFrom(cls)) {
-			sb.append("<div>");
+			sb.append(TAG_DIV_START);
 			sb.append(input.toString());
-			sb.append("</div>");
+			sb.append(TAG_DIV_END);
 			return;
 		}
 		if (cls.isEnum()) {
-			sb.append("<div>");
+			sb.append(TAG_DIV_START);
 			sb.append(input.toString());
-			sb.append("</div>");
+			sb.append(TAG_DIV_END);
 			return;
 		}
 
-		sb.append("<div class=\"");
-		sb.append(cls.getSimpleName());
-		sb.append("\">");
+		sb.append(String.format(TAG_DIV_START_CLASS, cls.getSimpleName()));
 		if (Collection.class.isAssignableFrom(cls)) {
 			((Collection<?>) input).stream().forEach(o -> toHtml(o, sb));
 		} else if (UUID.class.isAssignableFrom(cls) || cls.isPrimitive()) {
@@ -51,20 +52,15 @@ public class HtmlRenderer extends Renderer {
 				if (UUID.class.equals(field.getType()) && "id".equals(field.getName())) {
 					continue;
 				}
-				field.setAccessible(true);
-				try {
-					toHtml(field.get(input), sb);
-				} catch (IllegalArgumentException | IllegalAccessException e) {
-					logger.log(Level.WARNING,
-							"Cannot access field " + field.getType().getSimpleName() + "." + field.getName(), e);
-				}
+				toHtml(ReflectionUtil.executeGet(field, input), sb);
 			}
 		}
-		sb.append("</div>");
+		sb.append(TAG_DIV_END);
 	}
 
 	@Override
 	public String forCreate(final Class<?> cls) {
+		Assertions.assertNotNull(cls);
 		final StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append("<!DOCTYPE html><html><body><form method=\"POST\" action=\"create\">");
 		for (final Field field : cls.getDeclaredFields()) {
