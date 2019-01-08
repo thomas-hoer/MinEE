@@ -1,5 +1,6 @@
 package de.minee.hateoes.renderer;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.List;
@@ -29,10 +30,21 @@ public class JsonRenderer extends Renderer {
 			stringBuilder.append(input);
 			return;
 		}
+		if (cls.isArray()) {
+			stringBuilder.append('[');
+			final StringJoiner stringJoiner = new StringJoiner(",");
+			for (int i = 0; i < Array.getLength(input); i++) {
+				final Object o = Array.get(input, i);
+				stringJoiner.add(render(o));
+			}
+			stringBuilder.append(stringJoiner.toString());
+			stringBuilder.append(']');
+			return;
+		}
 		if (List.class.isAssignableFrom(cls)) {
 			stringBuilder.append('[');
 			final StringJoiner stringJoiner = new StringJoiner(",");
-			for (final Object o : (List) input) {
+			for (final Object o : (List<?>) input) {
 				stringJoiner.add(render(o));
 			}
 			stringBuilder.append(stringJoiner.toString());
