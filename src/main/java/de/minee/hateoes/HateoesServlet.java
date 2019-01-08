@@ -123,7 +123,7 @@ public abstract class HateoesServlet extends CdiAwareHttpServlet {
 		final String method = req.getMethod();
 		final String pathInfo = req.getPathInfo();
 		if (pathInfo == null || "/".equals(pathInfo)) {
-			handleRoot(req, resp);
+			handleRoot(resp);
 			return;
 		}
 		for (final ManagedResource<?> managedResource : managedResources) {
@@ -136,7 +136,7 @@ public abstract class HateoesServlet extends CdiAwareHttpServlet {
 
 	}
 
-	private void handleRoot(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
+	private void handleRoot(final HttpServletResponse resp) throws IOException {
 		final Renderer renderer = new JsonRenderer();
 		final PrintWriter writer = resp.getWriter();
 		final Object[] availableResources = managedResources.stream().map(ManagedResource::toString).toArray();

@@ -7,7 +7,7 @@ import de.minee.datamodel.EnumObject;
 public class SimpleReference {
 
 	private UUID id;
-	private ReferenceChain owner;
+	private ReferenceChain referenceChain;
 	private EnumObject content;
 	private String name;
 
@@ -15,23 +15,23 @@ public class SimpleReference {
 		return id;
 	}
 
-	public void setId(UUID id) {
+	public void setId(final UUID id) {
 		this.id = id;
 	}
 
-	public ReferenceChain getOwner() {
-		return owner;
+	public ReferenceChain setReferenceChain() {
+		return referenceChain;
 	}
 
-	public void setOwner(ReferenceChain owner) {
-		this.owner = owner;
+	public void setReferenceChain(final ReferenceChain referenceChain) {
+		this.referenceChain = referenceChain;
 	}
 
 	public EnumObject getContent() {
 		return content;
 	}
 
-	public void setContent(EnumObject content) {
+	public void setContent(final EnumObject content) {
 		this.content = content;
 	}
 
@@ -39,12 +39,8 @@ public class SimpleReference {
 		return name;
 	}
 
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 
-	@Override
-	public String toString() {
-		return "Picture [id=" + id + ", owner=" + owner + ", content=" + content + ", name=" + name + "]";
-	}
 }

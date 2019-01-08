@@ -14,9 +14,9 @@ import de.minee.datamodel.EnumObject;
 import de.minee.datamodel.PrimitiveList;
 import de.minee.datamodel.RecursiveObject;
 import de.minee.datamodel.enumeration.Enumeration;
+import de.minee.datamodel.update.ReferenceChain;
 import de.minee.datamodel.update.ReferenceList;
 import de.minee.datamodel.update.SimpleReference;
-import de.minee.datamodel.update.ReferenceChain;
 
 public class AbstractDAOTest extends AbstractDAO {
 

@@ -10,7 +10,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 //TODO: search for reflections
-//TODO: tests
 public class ReflectionUtil {
 
 	private static final Logger logger = Logger.getLogger(ReflectionUtil.class.getName());
@@ -43,6 +42,7 @@ public class ReflectionUtil {
 		final Map<String, Object> result = new HashMap<>();
 		final Class<?> cls = source.getClass();
 		for (final Field field : getAllFields(cls)) {
+			field.setAccessible(true);
 			try {
 				result.put(field.getName(), field.get(source));
 			} catch (IllegalArgumentException | IllegalAccessException e) {
@@ -83,6 +83,8 @@ public class ReflectionUtil {
 	 * @return true if set was successful, false otherwise
 	 */
 	public static boolean executeSet(final Field field, final Object base, final Object forSet) {
+		Assertions.assertNotNull(field);
+		Assertions.assertNotNull(base);
 		field.setAccessible(true);
 		try {
 			field.set(base, forSet);
@@ -94,6 +96,8 @@ public class ReflectionUtil {
 	}
 
 	public static Object executeGet(final Field field, final Object object) {
+		Assertions.assertNotNull(field);
+		Assertions.assertNotNull(object);
 		field.setAccessible(true);
 		try {
 			return field.get(object);

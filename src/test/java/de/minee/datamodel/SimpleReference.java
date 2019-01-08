@@ -5,7 +5,7 @@ import java.util.UUID;
 public class SimpleReference {
 
 	private UUID id;
-	private ReferenceChain owner;
+	private ReferenceChain referenceChain;
 	private EnumObject content;
 	private String name;
 	private String value;// this is ment to be deleted on de.minee.datamodel.update.SimpleReference
@@ -18,12 +18,12 @@ public class SimpleReference {
 		this.id = id;
 	}
 
-	public ReferenceChain getOwner() {
-		return owner;
+	public ReferenceChain getReferenceChain() {
+		return referenceChain;
 	}
 
-	public void setOwner(final ReferenceChain owner) {
-		this.owner = owner;
+	public void setReferenceChain(final ReferenceChain referenceChain) {
+		this.referenceChain = referenceChain;
 	}
 
 	public EnumObject getContent() {
@@ -46,7 +46,7 @@ public class SimpleReference {
 		return value;
 	}
 
-	public void setValue(String value) {
+	public void setValue(final String value) {
 		this.value = value;
 	}
 
