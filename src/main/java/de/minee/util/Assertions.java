@@ -1,6 +1,6 @@
 package de.minee.util;
 
-public class Assertions {
+public final class Assertions {
 
 	private Assertions() {
 	}

@@ -20,10 +20,10 @@ import de.minee.hateoes.renderer.JsonRenderer;
 import de.minee.hateoes.renderer.Renderer;
 import de.minee.jpa.AbstractDAO;
 
-public abstract class HateoesServlet extends CdiAwareHttpServlet {
+public class HateoesServlet extends CdiAwareHttpServlet {
 
 	private static final long serialVersionUID = -5213801706760630081L;
-	private static final Logger logger = Logger.getLogger(HateoesServlet.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(HateoesServlet.class.getName());
 
 	private final List<ManagedResource<?>> managedResources = new ArrayList<>();
 
@@ -37,7 +37,6 @@ public abstract class HateoesServlet extends CdiAwareHttpServlet {
 		final Class<? extends HateoesServlet> cls = this.getClass();
 		boolean daoNeeded = false;
 		AbstractDAO persistentDao = null;
-		AbstractDAO inMemDao = null;
 		final Set<ManagedResource<?>> needsPersistentDao = new HashSet<>();
 		final Set<Class<?>> inMemTypes = new HashSet<>();
 
@@ -51,10 +50,20 @@ public abstract class HateoesServlet extends CdiAwareHttpServlet {
 			throw new HateoesException("A DataAccessObject is needed to provide a persistend managed HateoesResouce");
 		}
 
-		inMemDao = new AbstractDAO() {
+		final AbstractDAO inMemDao = new AbstractDAO() {
 			@Override
 			protected String getConnectionString() {
 				return "jdbc:h2:mem:";
+			}
+
+			@Override
+			protected String getUserName() {
+				return "";
+			}
+
+			@Override
+			protected String getPassword() {
+				return "";
 			}
 
 			@Override
@@ -87,7 +96,7 @@ public abstract class HateoesServlet extends CdiAwareHttpServlet {
 		return managedResource;
 	}
 
-	private boolean checkPersistentAnnotation(final Set<ManagedResource<?>> needsPersistentDao,
+	private static boolean checkPersistentAnnotation(final Set<ManagedResource<?>> needsPersistentDao,
 			final Set<Class<?>> inMemTypes, final Field field, final ManagedResource<?> managedResource) {
 		boolean daoNeeded = false;
 		if (field.getAnnotation(Persistent.class) != null) {
@@ -107,7 +116,7 @@ public abstract class HateoesServlet extends CdiAwareHttpServlet {
 		if (field.getAnnotation(DataAccessObject.class) != null
 				&& AbstractDAO.class.isAssignableFrom(field.getType())) {
 			field.setAccessible(true);
-			logger.info("Use as DataAccessObject: " + field.getName());
+			LOGGER.info("Use as DataAccessObject: " + field.getName());
 			try {
 				persistentDao = (AbstractDAO) CdiUtil.getInstance(field.getType());
 				field.set(this, persistentDao);
@@ -120,14 +129,14 @@ public abstract class HateoesServlet extends CdiAwareHttpServlet {
 
 	@Override
 	protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
-		final String method = req.getMethod();
 		final String pathInfo = req.getPathInfo();
 		if (pathInfo == null || "/".equals(pathInfo)) {
 			handleRoot(resp);
 			return;
 		}
+		final String method = req.getMethod();
 		for (final ManagedResource<?> managedResource : managedResources) {
-			if (managedResource.matches(pathInfo) && managedResource.isMethodAllowed(method)) {
+			if (managedResource.isMatch(pathInfo) && managedResource.isMethodAllowed(method)) {
 				managedResource.serve(req, resp);
 				return;
 			}

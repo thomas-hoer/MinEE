@@ -24,7 +24,7 @@ import de.minee.util.ReflectionUtil;
 
 class ManagedResource<T> {
 
-	private static final Logger logger = Logger.getLogger(ManagedResource.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(ManagedResource.class.getName());
 
 	private final String[] path;
 	private final boolean[] varMap;
@@ -62,8 +62,9 @@ class ManagedResource<T> {
 		this.dao = dao;
 	}
 
-	boolean matches(final String pathInfo) {
+	boolean isMatch(final String pathInfo) {
 		final String[] pathSplit = pathInfo.split("/");
+		boolean isMatch = false;
 		if (pathSplit.length == path.length || pathSplit.length == path.length + 1) {
 			for (int i = 0; i < path.length; i++) {
 				if (!varMap[i] && !path[i].equals(pathSplit[i])) {
@@ -72,12 +73,12 @@ class ManagedResource<T> {
 			}
 			if (pathSplit.length == path.length + 1) {
 				final String action = pathSplit[path.length];
-				return "create".equals(action) || "edit".equals(action);
+				isMatch = "create".equals(action) || "edit".equals(action);
+			} else {
+				isMatch = true;
 			}
-			return true;
-		} else {
-			return false;
 		}
+		return isMatch;
 	}
 
 	boolean isMethodAllowed(final String method) {
@@ -110,7 +111,7 @@ class ManagedResource<T> {
 				writer.write(renderer.render(result));
 			}
 		} catch (final SQLException e) {
-			logger.log(Level.SEVERE, "Cannot access database or database entities", e);
+			LOGGER.log(Level.SEVERE, "Cannot access database or database entities", e);
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}
 
@@ -199,7 +200,7 @@ class ManagedResource<T> {
 				if (fieldValue != null) {
 					field.set(instance, fieldValue);
 				}
-				logger.info(() -> req.getParameter(field.getName()));
+				LOGGER.info(() -> field.getName() + ": " + req.getParameter(field.getName()));
 			}
 			final UUID newId = dao.insertShallow(instance);
 			resp.getWriter().write("Success\nNew ID:" + newId);
@@ -221,7 +222,7 @@ class ManagedResource<T> {
 				if (fieldValue != null) {
 					field.set(instance, fieldValue);
 				}
-				logger.info(() -> req.getParameter(field.getName()));
+				LOGGER.info(() -> field.getName() + ": " + req.getParameter(field.getName()));
 			}
 			final int updatedElements = dao.update(instance);
 			resp.getWriter().write("Success\n" + updatedElements + " Elements updated");

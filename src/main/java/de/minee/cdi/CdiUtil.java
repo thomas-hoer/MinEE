@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CdiUtil {
+public final class CdiUtil {
 
 	private static Map<Class<?>, Object> map = new HashMap<>();
 

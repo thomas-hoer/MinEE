@@ -21,7 +21,7 @@ import de.minee.util.ReflectionUtil;
 
 public abstract class AbstractDAO {
 
-	private static Logger logger = Logger.getLogger(AbstractDAO.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(AbstractDAO.class.getName());
 	private final Map<String, Connection> connections = new HashMap<>();
 	private Connection localConnection;
 	private Statement statementForSchemaUpdate;
@@ -47,7 +47,7 @@ public abstract class AbstractDAO {
 		try {
 			Class.forName("org.h2.Driver");
 		} catch (final ClassNotFoundException e) {
-			logger.log(Level.SEVERE, "Cannot load Driver for H2 Database", e);
+			LOGGER.log(Level.SEVERE, "Cannot load Driver for H2 Database", e);
 		}
 		final Connection connection = DriverManager.getConnection(getConnectionString(), getUserName(), getPassword());
 		checkVersion(connection);
@@ -66,7 +66,7 @@ public abstract class AbstractDAO {
 		int dbSchemaVersion = 0;
 		try (Statement statement = con.createStatement();
 				ResultSet resultSetCustomProperties = statement.executeQuery(
-						"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'CUSTOMPROPERTY'");) {
+						"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'CUSTOMPROPERTY'")) {
 			resultSetCustomProperties.next();
 			final boolean tableFound = resultSetCustomProperties.getInt(1) == 1;
 			if (!tableFound) {
@@ -111,7 +111,7 @@ public abstract class AbstractDAO {
 			throw new SQLException("dropTable is only allowed during updateDatabaseSchema process");
 		}
 		final String dropTableQuery = String.format("DROP TABLE %s", table);
-		logger.info(dropTableQuery);
+		LOGGER.info(dropTableQuery);
 		statementForSchemaUpdate.execute(dropTableQuery);
 	}
 
@@ -142,7 +142,7 @@ public abstract class AbstractDAO {
 		stringBuilder.setLength(stringBuilder.length() - 1);
 		stringBuilder.append(")");
 		final String createTableQuery = stringBuilder.toString();
-		logger.info(createTableQuery);
+		LOGGER.info(createTableQuery);
 		statementForSchemaUpdate.execute(createTableQuery);
 	}
 
@@ -165,7 +165,7 @@ public abstract class AbstractDAO {
 				if (existingFields.get(fieldName).equalsIgnoreCase(mappedType)) {
 					existingFields.remove(fieldName);
 				} else if (List.class.isAssignableFrom(field.getType())
-						&& existingFields.get(fieldName).equals("List")) {
+						&& "List".equals(existingFields.get(fieldName))) {
 					existingFields.remove(fieldName);
 				} else {
 					throw new UnsupportedOperationException("Cannot change field type");
@@ -179,7 +179,7 @@ public abstract class AbstractDAO {
 			if (allowDeletion) {
 				alterTableDropField(cls, entry);
 			} else {
-				logger.warning("Warning: Field " + entry.getKey() + " of class " + cls.getSimpleName() + " is unused");
+				LOGGER.warning("Warning: Field " + entry.getKey() + " of class " + cls.getSimpleName() + " is unused");
 			}
 		}
 
@@ -214,7 +214,7 @@ public abstract class AbstractDAO {
 		query.append(entry.getKey());
 		query.append(";");
 		final String alterTableQuery = query.toString();
-		logger.info(alterTableQuery);
+		LOGGER.info(alterTableQuery);
 		statementForSchemaUpdate.execute(alterTableQuery);
 	}
 
@@ -230,7 +230,7 @@ public abstract class AbstractDAO {
 			query.append(mappedType);
 			query.append(";");
 			final String alterTableQuery = query.toString();
-			logger.info(alterTableQuery);
+			LOGGER.info(alterTableQuery);
 			statementForSchemaUpdate.execute(alterTableQuery);
 		} else {
 			createMappingTableFor(field, statementForSchemaUpdate);
@@ -268,7 +268,7 @@ public abstract class AbstractDAO {
 		stringBuilder.append(")");
 
 		final String createTableQuery = stringBuilder.toString();
-		logger.info(createTableQuery);
+		LOGGER.info(createTableQuery);
 		statement.execute(createTableQuery);
 
 	}

@@ -9,7 +9,7 @@ import javax.naming.NamingException;
 
 public class Environment {
 
-	private static final Logger logger = Logger.getLogger(Environment.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(Environment.class.getName());
 
 	private static Context initCtx;
 	private static Context envCtx;
@@ -18,14 +18,18 @@ public class Environment {
 			initCtx = new InitialContext();
 			envCtx = (Context) initCtx.lookup("java:comp/env");
 		} catch (final NamingException e) {
-			logger.log(Level.SEVERE, "Cannot load Environment Variables", e);
+			LOGGER.log(Level.SEVERE, "Cannot load Environment Variables", e);
 		}
 	}
 
 	public static String getEnvironmentVariable(final String key) {
+		if (envCtx == null) {
+			return "";
+		}
 		try {
 			return (String) envCtx.lookup(key);
 		} catch (final NamingException e) {
+			LOGGER.log(Level.WARNING, "Failed to lookup key " + key, e);
 			return "";
 		}
 	}
