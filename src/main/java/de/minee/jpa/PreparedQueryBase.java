@@ -1,16 +1,19 @@
 package de.minee.jpa;
 
+import de.minee.util.Assertions;
+import de.minee.util.ReflectionUtil;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import de.minee.util.Assertions;
-import de.minee.util.ReflectionUtil;
+import java.util.function.Consumer;
 
 public class PreparedQueryBase<T> {
 
@@ -29,13 +32,13 @@ public class PreparedQueryBase<T> {
 		this.cascade = cascade;
 	}
 
-	protected void prepareInsert(final Connection connection, final Field field) throws SQLException {
+	protected final void prepareInsert(final Connection connection, final Field field) throws SQLException {
 		final Class<?> cls = field.getDeclaringClass();
 		mappingInsert.put(field, connection.prepareStatement(
 				String.format("INSERT INTO Mapping_%s_%s VALUES (?,?)", cls.getSimpleName(), field.getName())));
 	}
 
-	protected void prepareSelect(final Connection connection, final Field field) throws SQLException {
+	protected final void prepareSelect(final Connection connection, final Field field) throws SQLException {
 		final Class<?> cls = field.getDeclaringClass();
 		final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
 		final Class<?> type = (Class<?>) mapToType.getActualTypeArguments()[0];
@@ -44,7 +47,7 @@ public class PreparedQueryBase<T> {
 						type.getSimpleName(), cls.getSimpleName(), field.getName())));
 	}
 
-	protected void prepareDelete(final Connection connection, final Field field) throws SQLException {
+	protected final void prepareDelete(final Connection connection, final Field field) throws SQLException {
 		final Class<?> cls = field.getDeclaringClass();
 		final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
 		final Class<?> type = (Class<?>) mapToType.getActualTypeArguments()[0];
@@ -66,4 +69,22 @@ public class PreparedQueryBase<T> {
 		}
 		return objectId;
 	}
+
+	protected void executeQuery(final PreparedStatement statement, final Consumer<ResultSet> consumer)
+			throws SQLException {
+		try (ResultSet resultSet = statement.executeQuery()) {
+			while (resultSet.next()) {
+				consumer.accept(resultSet);
+			}
+		}
+	}
+
+	protected void executeQuery(final String query, final Consumer<ResultSet> consumer) throws SQLException {
+		try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(query)) {
+			while (resultSet.next()) {
+				consumer.accept(resultSet);
+			}
+		}
+	}
+
 }

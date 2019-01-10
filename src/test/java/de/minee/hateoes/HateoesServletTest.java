@@ -4,15 +4,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import de.minee.datamodel.ReferenceList;
+import de.minee.jpa.DAOImpl;
+
 import java.io.IOException;
 
 import javax.servlet.ServletException;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import de.minee.datamodel.ReferenceList;
-import de.minee.jpa.DAOImpl;
 
 public class HateoesServletTest {
 	private static HateoesServlet hateoesTestServlet = new HateoesServlet() {
@@ -33,7 +33,7 @@ public class HateoesServletTest {
 	}
 
 	@Test
-	public void testRoot() throws ServletException, IOException {
+	public void testRoot() throws IOException {
 		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl();
 		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
 		hateoesTestServlet.service(request, response);
@@ -69,32 +69,34 @@ public class HateoesServletTest {
 
 		MockHttpServletRequestImpl request;
 		MockHttpServletResponseImpl response;
-		String output;
 
 		// Check for empty Database
 		request = new MockHttpServletRequestImpl("rlists");
 		response = new MockHttpServletResponseImpl();
 		hateoesServlet.service(request, response);
-		output = response.getWrittenOutput();
-		assertNotNull(output);
-		assertFalse(output.contains("ReferenceList"));
+		final String outputCheckEmpty = response.getWrittenOutput();
 
 		// Insert new Element
 		request = new MockHttpServletRequestImpl("rlists/create", Operation.POST, "");
 		response = new MockHttpServletResponseImpl();
 		hateoesServlet.service(request, response);
-		output = response.getWrittenOutput();
-		assertNotNull(output);
-		assertTrue(output.contains("Success"));
-		assertTrue(output.contains("New ID"));
+		final String outputPostResource = response.getWrittenOutput();
 
 		// Check again all entries of ReferenceList in Database
 		request = new MockHttpServletRequestImpl("rlists");
 		response = new MockHttpServletResponseImpl();
 		hateoesServlet.service(request, response);
-		output = response.getWrittenOutput();
-		assertNotNull(output);
-		assertTrue(output.contains("ReferenceList"));
+		final String outputCheckResourceIsPersisted = response.getWrittenOutput();
+
+		assertNotNull(outputCheckEmpty);
+		assertFalse(outputCheckEmpty.contains("ReferenceList"));
+
+		assertNotNull(outputPostResource);
+		assertTrue(outputPostResource.contains("Success"));
+		assertTrue(outputPostResource.contains("New ID"));
+
+		assertNotNull(outputCheckResourceIsPersisted);
+		assertTrue(outputCheckResourceIsPersisted.contains("ReferenceList"));
 
 	}
 }

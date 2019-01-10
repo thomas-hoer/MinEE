@@ -1,14 +1,5 @@
 package de.minee.jpa;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import de.minee.datamodel.ArrayTypes;
 import de.minee.datamodel.EnumObject;
 import de.minee.datamodel.PrimitiveList;
@@ -17,6 +8,15 @@ import de.minee.datamodel.enumeration.Enumeration;
 import de.minee.datamodel.update.ReferenceChain;
 import de.minee.datamodel.update.ReferenceList;
 import de.minee.datamodel.update.SimpleReference;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 public class AbstractDAOTest extends AbstractDAO {
 
@@ -84,7 +84,12 @@ public class AbstractDAOTest extends AbstractDAO {
 		final RecursiveObject recursiveObject = new RecursiveObject();
 		recursiveObject.setChild(recursiveObject);
 
-		insert(recursiveObject);
+		final UUID id = insert(recursiveObject);
+
+		final RecursiveObject selectedObject = select(RecursiveObject.class).byId(id);
+
+		Assert.assertNotNull(selectedObject);
+		Assert.assertEquals(selectedObject, selectedObject.getChild());
 	}
 
 	@Test

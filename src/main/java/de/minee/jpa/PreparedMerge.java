@@ -1,5 +1,8 @@
 package de.minee.jpa;
 
+import de.minee.util.Assertions;
+import de.minee.util.ReflectionUtil;
+
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,12 +16,9 @@ import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import de.minee.util.Assertions;
-import de.minee.util.ReflectionUtil;
-
 class PreparedMerge<S> extends PreparedQueryBase<S> {
 
-	private static final Logger logger = Logger.getLogger(PreparedMerge.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(PreparedMerge.class.getName());
 
 	private final List<Field> fieldList = new ArrayList<>();
 	private final PreparedStatement preparedStatement;
@@ -52,7 +52,7 @@ class PreparedMerge<S> extends PreparedQueryBase<S> {
 		query.append(")");
 
 		final String mergeQuery = query.toString();
-		logger.info(mergeQuery);
+		LOGGER.info(mergeQuery);
 		preparedStatement = connection.prepareStatement(mergeQuery);
 	}
 
@@ -74,7 +74,7 @@ class PreparedMerge<S> extends PreparedQueryBase<S> {
 
 			final Object dbObject = MappingHelper.getDbObject(fieldElementToMerge);
 			preparedStatement.setObject(i++, dbObject);
-			if (Cascade.MERGE.equals(cascade) && dbObject != fieldElementToMerge && UUID.class.isInstance(dbObject)) {
+			if (Cascade.MERGE == cascade && dbObject != fieldElementToMerge && UUID.class.isInstance(dbObject)) {
 				merge(fieldElementToMerge, connection, cascade);
 			}
 		}
@@ -99,7 +99,7 @@ class PreparedMerge<S> extends PreparedQueryBase<S> {
 		final PreparedStatement insertStatement = mappingInsert.get(field);
 		final Set<Object> existingElements = new HashSet<>();
 		selectStatement.setObject(1, objectId);
-		logger.info(selectStatement::toString);
+		LOGGER.info(selectStatement::toString);
 		try (ResultSet rs = selectStatement.executeQuery()) {
 			while (rs.next()) {
 				existingElements.add(rs.getObject(1));
@@ -115,7 +115,7 @@ class PreparedMerge<S> extends PreparedQueryBase<S> {
 			if (MappingHelper.isSupportedType(listElement.getClass())) {
 				element = listElement;
 			} else {
-				if (Cascade.MERGE.equals(cascade)) {
+				if (Cascade.MERGE == cascade) {
 					merge(listElement, connection, cascade);
 				}
 				element = MappingHelper.getId(listElement);
@@ -125,14 +125,14 @@ class PreparedMerge<S> extends PreparedQueryBase<S> {
 			} else {
 				insertStatement.setObject(1, objectId);
 				insertStatement.setObject(2, element);
-				logger.info(insertStatement::toString);
+				LOGGER.info(insertStatement::toString);
 				insertStatement.execute();
 			}
 		}
 		for (final Object element : existingElements) {
 			deleteStatement.setObject(1, objectId);
 			deleteStatement.setObject(2, element);
-			logger.info(deleteStatement::toString);
+			LOGGER.info(deleteStatement::toString);
 			deleteStatement.execute();
 		}
 	}

@@ -1,5 +1,8 @@
 package de.minee.jpa;
 
+import de.minee.env.Environment;
+import de.minee.util.ReflectionUtil;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.sql.Connection;
@@ -15,9 +18,6 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import de.minee.env.Environment;
-import de.minee.util.ReflectionUtil;
 
 public abstract class AbstractDAO {
 
@@ -282,11 +282,11 @@ public abstract class AbstractDAO {
 	}
 
 	/**
-	 * Deep insert of the Object and recursively their children
+	 * Deep insert of the Object and recursively their children.
 	 *
-	 * @param objectToInsert
-	 * @return
-	 * @throws SQLException
+	 * @param objectToInsert object that should be persisted
+	 * @return id of the inserted object
+	 * @throws SQLException SQLException in case of an error
 	 */
 	public <T> UUID insert(final T objectToInsert) throws SQLException {
 		return PreparedInsert.insert(objectToInsert, getConnection(), Cascade.INSERT);

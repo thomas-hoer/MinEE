@@ -1,5 +1,7 @@
 package de.minee.jpa;
 
+import de.minee.util.ReflectionUtil;
+
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Base64;
@@ -9,7 +11,7 @@ import java.util.Map;
 import java.util.StringJoiner;
 import java.util.UUID;
 
-class MappingHelper {
+final class MappingHelper {
 
 	private static final String VARCHAR = "VARCHAR";
 	private static final String DOUBLE = "DOUBLE";
@@ -78,7 +80,7 @@ class MappingHelper {
 			return childId.getType().getSimpleName();
 		} catch (final NoSuchFieldException e) {
 			throw new MappingException(
-					"Not supported field type: " + clazz.getSimpleName() + " in Class " + field.getDeclaringClass());
+					"Not supported field type: " + clazz.getSimpleName() + " in Class " + field.getDeclaringClass(), e);
 		}
 	}
 
@@ -117,14 +119,7 @@ class MappingHelper {
 	}
 
 	public static UUID getId(final Object object) {
-		try {
-			final Class<?> clazz = object.getClass();
-			final Field childId = clazz.getDeclaredField("id");
-			childId.setAccessible(true);
-			return (UUID) childId.get(object);
-		} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
-			return null;
-		}
+		return (UUID) ReflectionUtil.executeGet("id", object);
 	}
 
 	public static Object getEnum(final Class<?> cls, final String enumString) {

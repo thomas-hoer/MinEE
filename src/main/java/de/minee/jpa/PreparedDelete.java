@@ -1,5 +1,8 @@
 package de.minee.jpa;
 
+import de.minee.util.Assertions;
+import de.minee.util.ReflectionUtil;
+
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,12 +15,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import de.minee.util.Assertions;
-import de.minee.util.ReflectionUtil;
-
 public class PreparedDelete<T> extends PreparedQueryBase<T> {
 
-	private static final Logger logger = Logger.getLogger(PreparedDelete.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(PreparedDelete.class.getName());
 
 	private final List<Field> fieldList = new ArrayList<>();
 	private final PreparedStatement preparedStatement;
@@ -25,7 +25,7 @@ public class PreparedDelete<T> extends PreparedQueryBase<T> {
 	public PreparedDelete(final Class<T> clazz, final Connection connection, final Cascade cascade)
 			throws SQLException {
 		super(connection, cascade);
-		if (!(Cascade.DELETE.equals(cascade) || Cascade.NONE.equals(cascade))) {
+		if (!(Cascade.DELETE == cascade || Cascade.NONE == cascade)) {
 			throw new IllegalArgumentException("Only NONE and DELETE are allowed values for Cascade");
 		}
 		final StringBuilder query = new StringBuilder();
@@ -45,7 +45,7 @@ public class PreparedDelete<T> extends PreparedQueryBase<T> {
 		}
 
 		final String deleteQuery = query.toString();
-		logger.info(deleteQuery);
+		LOGGER.info(deleteQuery);
 		preparedStatement = connection.prepareStatement(deleteQuery);
 	}
 
@@ -63,7 +63,7 @@ public class PreparedDelete<T> extends PreparedQueryBase<T> {
 			}
 
 			final Object dbObject = MappingHelper.getDbObject(fieldElementToDelete);
-			if (Cascade.DELETE.equals(cascade) && dbObject != fieldElementToDelete && UUID.class.isInstance(dbObject)) {
+			if (Cascade.DELETE == cascade && dbObject != fieldElementToDelete && UUID.class.isInstance(dbObject)) {
 				delete(fieldElementToDelete, connection, cascade);
 			}
 		}
@@ -78,11 +78,10 @@ public class PreparedDelete<T> extends PreparedQueryBase<T> {
 			return;
 		}
 		final PreparedStatement selectStatement = mappingSelect.get(field);
-		final PreparedStatement deleteStatement = mappingDeleteAll.get(field);
 
 		final Set<Object> existingElements = new HashSet<>();
 		selectStatement.setObject(1, objectId);
-		logger.info(selectStatement::toString);
+		LOGGER.info(selectStatement::toString);
 		try (ResultSet rs = selectStatement.executeQuery()) {
 			while (rs.next()) {
 				existingElements.add(rs.getObject(1));
@@ -98,7 +97,7 @@ public class PreparedDelete<T> extends PreparedQueryBase<T> {
 			if (!MappingHelper.isSupportedType(listElement.getClass())) {
 				final Object element = MappingHelper.getId(listElement);
 				if (existingElements.contains(element)) {
-					if (Cascade.DELETE.equals(cascade)) {
+					if (Cascade.DELETE == cascade) {
 						delete(listElement, connection, cascade);
 					}
 				} else {
@@ -108,9 +107,11 @@ public class PreparedDelete<T> extends PreparedQueryBase<T> {
 			}
 		}
 
-		deleteStatement.setObject(1, objectId);
-		logger.info(deleteStatement::toString);
-		deleteStatement.execute();
+		try (final PreparedStatement deleteStatement = mappingDeleteAll.get(field)) {
+			deleteStatement.setObject(1, objectId);
+			LOGGER.info(deleteStatement::toString);
+			deleteStatement.execute();
+		}
 	}
 
 	protected static <S> void delete(final S objectToDelete, final Connection connection, final Cascade cascade)

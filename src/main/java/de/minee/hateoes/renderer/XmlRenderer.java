@@ -1,6 +1,6 @@
 package de.minee.hateoes.renderer;
 
-public class XmlRenderer extends Renderer {
+public class XmlRenderer extends AbstractRenderer {
 
 	@Override
 	public String render(Object input) {

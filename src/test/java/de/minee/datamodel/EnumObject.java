@@ -1,8 +1,8 @@
 package de.minee.datamodel;
 
-import java.util.UUID;
-
 import de.minee.datamodel.enumeration.Enumeration;
+
+import java.util.UUID;
 
 public class EnumObject {
 

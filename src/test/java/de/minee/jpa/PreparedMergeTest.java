@@ -1,19 +1,19 @@
 package de.minee.jpa;
 
+import de.minee.datamodel.ArrayTypes;
+import de.minee.datamodel.EnumObject;
+import de.minee.datamodel.PrimitiveList;
+import de.minee.datamodel.RecursiveObject;
+import de.minee.datamodel.ReferenceChain;
+import de.minee.datamodel.ReferenceList;
+import de.minee.datamodel.SimpleReference;
+
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
-
-import de.minee.datamodel.ArrayTypes;
-import de.minee.datamodel.RecursiveObject;
-import de.minee.datamodel.ReferenceList;
-import de.minee.datamodel.SimpleReference;
-import de.minee.datamodel.EnumObject;
-import de.minee.datamodel.PrimitiveList;
-import de.minee.datamodel.ReferenceChain;
 
 public class PreparedMergeTest extends AbstractDAO {
 

@@ -1,8 +1,8 @@
 package de.minee.datamodel.update;
 
-import java.util.UUID;
-
 import de.minee.datamodel.EnumObject;
+
+import java.util.UUID;
 
 public class SimpleReference {
 

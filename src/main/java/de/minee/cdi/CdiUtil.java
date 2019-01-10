@@ -11,7 +11,7 @@ public final class CdiUtil {
 	private CdiUtil() {
 	}
 
-	protected static void injectResources(final Object o) {
+	static void injectResources(final Object o) {
 		final Class<?> clazz = o.getClass();
 		if (map.containsKey(clazz)) {
 			throw new CdiException("CDI Cycle found");
@@ -31,6 +31,13 @@ public final class CdiUtil {
 		}
 	}
 
+	/**
+	 * Creates an instance of type cls. The fields of the instance also gets
+	 * injected recursively. As of now the utility does not support Interfaces.
+	 *
+	 * @param cls Class of what a instance should be created
+	 * @return Instance of type cls
+	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T getInstance(final Class<T> cls) {
 		try {

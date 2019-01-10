@@ -1,5 +1,11 @@
 package de.minee.hateoes;
 
+import de.minee.cdi.CdiAwareHttpServlet;
+import de.minee.cdi.CdiUtil;
+import de.minee.hateoes.renderer.AbstractRenderer;
+import de.minee.hateoes.renderer.JsonRenderer;
+import de.minee.jpa.AbstractDAO;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
@@ -13,12 +19,6 @@ import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import de.minee.cdi.CdiAwareHttpServlet;
-import de.minee.cdi.CdiUtil;
-import de.minee.hateoes.renderer.JsonRenderer;
-import de.minee.hateoes.renderer.Renderer;
-import de.minee.jpa.AbstractDAO;
 
 public class HateoesServlet extends CdiAwareHttpServlet {
 
@@ -112,19 +112,20 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 		return daoNeeded;
 	}
 
-	private AbstractDAO checkDataAccessObjectAnnotation(AbstractDAO persistentDao, final Field field) {
+	private AbstractDAO checkDataAccessObjectAnnotation(final AbstractDAO persistentDAO, final Field field) {
 		if (field.getAnnotation(DataAccessObject.class) != null
 				&& AbstractDAO.class.isAssignableFrom(field.getType())) {
 			field.setAccessible(true);
 			LOGGER.info("Use as DataAccessObject: " + field.getName());
 			try {
-				persistentDao = (AbstractDAO) CdiUtil.getInstance(field.getType());
-				field.set(this, persistentDao);
+				final AbstractDAO newDAOInstance = (AbstractDAO) CdiUtil.getInstance(field.getType());
+				field.set(this, newDAOInstance);
+				return newDAOInstance;
 			} catch (IllegalArgumentException | IllegalAccessException e) {
 				throw new HateoesException(e);
 			}
 		}
-		return persistentDao;
+		return persistentDAO;
 	}
 
 	@Override
@@ -146,11 +147,11 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 	}
 
 	private void handleRoot(final HttpServletResponse resp) throws IOException {
-		final Renderer renderer = new JsonRenderer();
-		final PrintWriter writer = resp.getWriter();
-		final Object[] availableResources = managedResources.stream().map(ManagedResource::toString).toArray();
-		writer.write(renderer.render(availableResources));
-
+		final AbstractRenderer renderer = new JsonRenderer();
+		try (final PrintWriter writer = resp.getWriter()) {
+			final Object[] availableResources = managedResources.stream().map(ManagedResource::toString).toArray();
+			writer.write(renderer.render(availableResources));
+		}
 	}
 
 }

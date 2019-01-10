@@ -1,17 +1,17 @@
 package de.minee.util;
 
+import de.minee.datamodel.EnumObject;
+import de.minee.datamodel.RecursiveObject;
+import de.minee.datamodel.RecursiveObjectDerivation;
+import de.minee.datamodel.ReferenceChain;
+import de.minee.datamodel.SimpleReference;
+
 import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
-
-import de.minee.datamodel.EnumObject;
-import de.minee.datamodel.RecursiveObject;
-import de.minee.datamodel.RecursiveObjectDerivation;
-import de.minee.datamodel.ReferenceChain;
-import de.minee.datamodel.SimpleReference;
 
 public class ReflectionUtilTest {
 
@@ -34,7 +34,7 @@ public class ReflectionUtilTest {
 	}
 
 	@Test
-	public void testGetDeclaredFieldNotFound() throws NoSuchFieldException, SecurityException {
+	public void testGetDeclaredFieldNotFound() {
 		final String fieldName = "foobar";
 		final Field actual = ReflectionUtil.getDeclaredField(RecursiveObject.class, fieldName);
 
@@ -87,7 +87,7 @@ public class ReflectionUtilTest {
 		Assert.assertEquals("Name", name);
 	}
 
-	private SimpleReference createObject() {
+	private static SimpleReference createObject() {
 		final SimpleReference object = new SimpleReference();
 		object.setId(RANDOM_UUID);
 		object.setName("Name");
@@ -155,7 +155,7 @@ public class ReflectionUtilTest {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void testExecuteSetNullField() throws NoSuchFieldException, SecurityException {
+	public void testExecuteSetNullField() {
 		final Object object = new Object();
 
 		ReflectionUtil.executeSet(null, object, "");

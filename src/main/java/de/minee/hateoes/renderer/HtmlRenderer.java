@@ -1,13 +1,13 @@
 package de.minee.hateoes.renderer;
 
+import de.minee.util.Assertions;
+import de.minee.util.ReflectionUtil;
+
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.UUID;
 
-import de.minee.util.Assertions;
-import de.minee.util.ReflectionUtil;
-
-public class HtmlRenderer extends Renderer {
+public class HtmlRenderer extends AbstractRenderer {
 
 	private static final String TAG_DIV_START = "<div>";
 	private static final String TAG_DIV_END = "</div>";
@@ -24,7 +24,7 @@ public class HtmlRenderer extends Renderer {
 		return stringBuilder.toString();
 	}
 
-	private void toHtml(final Object input, final StringBuilder sb) {
+	private static void toHtml(final Object input, final StringBuilder sb) {
 		if (input == null) {
 			return;
 		}

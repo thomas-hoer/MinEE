@@ -1,9 +1,9 @@
 package de.minee.datamodel.update;
 
+import de.minee.datamodel.RecursiveObject;
+
 import java.util.List;
 import java.util.UUID;
-
-import de.minee.datamodel.RecursiveObject;
 
 public class ReferenceList {
 

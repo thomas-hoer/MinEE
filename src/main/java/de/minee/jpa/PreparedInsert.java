@@ -1,5 +1,9 @@
 package de.minee.jpa;
 
+import de.minee.util.Assertions;
+import de.minee.util.Pair;
+import de.minee.util.ReflectionUtil;
+
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,13 +14,9 @@ import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import de.minee.util.Assertions;
-import de.minee.util.Pair;
-import de.minee.util.ReflectionUtil;
-
 public class PreparedInsert<T> extends PreparedQueryBase<T> {
 
-	private static final Logger logger = Logger.getLogger(PreparedInsert.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(PreparedInsert.class.getName());
 
 	private final List<Field> fieldList = new ArrayList<>();
 	private final PreparedStatement preparedStatement;
@@ -49,7 +49,7 @@ public class PreparedInsert<T> extends PreparedQueryBase<T> {
 		query.append(")");
 
 		final String insertQuery = query.toString();
-		logger.info(insertQuery);
+		LOGGER.info(insertQuery);
 		preparedStatement = connection.prepareStatement(insertQuery);
 	}
 
@@ -69,21 +69,21 @@ public class PreparedInsert<T> extends PreparedQueryBase<T> {
 				fieldElementToInsert = objectId;
 			}
 			final Object dbObject = MappingHelper.getDbObject(fieldElementToInsert);
-			if (Cascade.INSERT.equals(cascade) && dbObject != fieldElementToInsert && UUID.class.isInstance(dbObject)) {
+			if (Cascade.INSERT == cascade && dbObject != fieldElementToInsert && UUID.class.isInstance(dbObject)) {
 				final UUID id = insert(fieldElementToInsert, connection, cascade);
 				preparedStatement.setObject(i++, id);
 			} else {
 				preparedStatement.setObject(i++, dbObject);
 			}
 		}
-		logger.info(preparedStatement::toString);
+		LOGGER.info(preparedStatement::toString);
 		preparedStatement.execute();
 
 		for (final Pair<Field, Object> mappingToInsert : mappingsToInsert) {
 			final PreparedStatement preparedMappingStatement = mappingInsert.get(mappingToInsert.first());
 			preparedMappingStatement.setObject(1, objectId);
 			preparedMappingStatement.setObject(2, mappingToInsert.second());
-			logger.info(preparedMappingStatement::toString);
+			LOGGER.info(preparedMappingStatement::toString);
 			preparedMappingStatement.execute();
 		}
 
@@ -104,7 +104,7 @@ public class PreparedInsert<T> extends PreparedQueryBase<T> {
 				mappingsToInsert.add(new Pair<>(field, listElement));
 			} else {
 				final UUID insertId;
-				if (Cascade.INSERT.equals(cascade)) {
+				if (Cascade.INSERT == cascade) {
 					insertId = insert(listElement, connection, cascade);
 				} else {
 					insertId = MappingHelper.getId(listElement);

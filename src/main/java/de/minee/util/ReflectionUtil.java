@@ -10,9 +10,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 //TODO: search for reflections
-public class ReflectionUtil {
+public final class ReflectionUtil {
 
-	private static final Logger logger = Logger.getLogger(ReflectionUtil.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(ReflectionUtil.class.getName());
 
 	private ReflectionUtil() {
 	}
@@ -27,11 +27,7 @@ public class ReflectionUtil {
 			if (field == null) {
 				success = false;
 			} else {
-				try {
-					field.set(destination, entry.getValue());
-				} catch (IllegalArgumentException | IllegalAccessException e) {
-					success = false;
-				}
+				executeSet(field, destination, entry.getValue());
 			}
 		}
 		return success;
@@ -43,11 +39,7 @@ public class ReflectionUtil {
 		final Class<?> cls = source.getClass();
 		for (final Field field : getAllFields(cls)) {
 			field.setAccessible(true);
-			try {
-				result.put(field.getName(), field.get(source));
-			} catch (IllegalArgumentException | IllegalAccessException e) {
-				result.put(field.getName(), null);
-			}
+			result.put(field.getName(), executeGet(field, source));
 		}
 		return result;
 	}
@@ -77,9 +69,9 @@ public class ReflectionUtil {
 	 * Performs a direct setting into the field without calling a setter method.
 	 * base.setField(forSet);
 	 *
-	 * @param field
-	 * @param base
-	 * @param forSet
+	 * @param field  Field of base
+	 * @param base   Object which field should be injected
+	 * @param forSet Object to be injected into base
 	 * @return true if set was successful, false otherwise
 	 */
 	public static boolean executeSet(final Field field, final Object base, final Object forSet) {
@@ -90,7 +82,7 @@ public class ReflectionUtil {
 			field.set(base, forSet);
 			return true;
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			logger.log(Level.WARNING, "", e);
+			LOGGER.log(Level.WARNING, "", e);
 		}
 		return false;
 	}
@@ -102,8 +94,13 @@ public class ReflectionUtil {
 		try {
 			return field.get(object);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			logger.log(Level.WARNING, "", e);
+			LOGGER.log(Level.WARNING, "", e);
 			return null;
 		}
+	}
+
+	public static Object executeGet(final String string, final Object object) {
+		final Field field = getDeclaredField(object.getClass(), string);
+		return field != null ? executeGet(field, object) : null;
 	}
 }

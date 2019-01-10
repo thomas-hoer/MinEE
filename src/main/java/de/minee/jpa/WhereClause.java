@@ -1,5 +1,8 @@
 package de.minee.jpa;
 
+import de.minee.util.Assertions;
+import de.minee.util.ReflectionUtil;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.sql.SQLException;
@@ -8,15 +11,12 @@ import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.function.Function;
 
-import de.minee.util.Assertions;
-import de.minee.util.ReflectionUtil;
-
 public class WhereClause<S, T> {
 
 	private final SelectStatement<T> selectStatement;
 
-	private boolean conditionSet = false;
-	private boolean conditionForPrepare = false;
+	private boolean conditionSet;
+	private boolean conditionForPrepare;
 	private Operator operator;
 	private String condition;
 	private final String fieldName;
@@ -76,13 +76,7 @@ public class WhereClause<S, T> {
 		return selectStatement;
 	}
 
-	private void setCondition(final Operator operator) {
-		conditionSet = true;
-		this.operator = operator;
-		this.condition = "";
-	}
-
-	private String computeConditionValue(final Object condition) {
+	private static String computeConditionValue(final Object condition) {
 		final UUID id = MappingHelper.getId(condition);
 		return id != null ? id.toString() : condition.toString();
 	}
@@ -105,6 +99,12 @@ public class WhereClause<S, T> {
 			stringBuilder.append(")");
 			this.condition = stringBuilder.toString();
 		}
+	}
+
+	private void setCondition(final Operator operator) {
+		conditionSet = true;
+		this.operator = operator;
+		this.condition = "";
 	}
 
 	private void setCondition(final Operator operator, final S condition) {
@@ -165,7 +165,7 @@ public class WhereClause<S, T> {
 
 		private String sqlOperation;
 
-		private Operator(final String value) {
+		Operator(final String value) {
 			sqlOperation = value;
 		}
 

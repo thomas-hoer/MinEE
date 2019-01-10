@@ -1,5 +1,7 @@
 package de.minee.jpa;
 
+import de.minee.util.Assertions;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -18,24 +20,33 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
-import de.minee.util.Assertions;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyFactory;
 
+/**
+ *
+ *
+ * @param <T> Class that corresponds to a database table
+ */
 public class SelectStatement<T> {
 
-	private static final Logger logger = Logger.getLogger(SelectStatement.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(SelectStatement.class.getName());
 
 	private final ProxyFactory proxyFactory;
 
 	private final Class<T> clazz;
 	private final Connection connection;
-	private String id = null;
 	private final List<WhereClause<?, ?>> whereClauses = new ArrayList<>();
 	private final List<Field> fieldList = new ArrayList<>();
 	private String additionalWhereClause;
 
+	/**
+	 * Creates a base for a SELECT statement.
+	 *
+	 * @param clazz      Class that corresponds to a database table
+	 * @param connection Database connection
+	 */
 	public SelectStatement(final Class<T> clazz, final Connection connection) {
 		Assertions.assertNotNull(clazz);
 		Assertions.assertNotNull(connection);
@@ -47,15 +58,6 @@ public class SelectStatement<T> {
 		}
 		proxyFactory = new ProxyFactory();
 		proxyFactory.setSuperclass(clazz);
-	}
-
-	public SelectStatement<T> id(final String id) {
-		Assertions.assertNotNull(id);
-		if (this.id != null) {
-			throw new MappingException("Id already set. Please don't call this method twice.");
-		}
-		this.id = id;
-		return this;
 	}
 
 	public <S> WhereClause<S, T> where(final Function<T, S> whereField) throws SQLException {
@@ -72,30 +74,30 @@ public class SelectStatement<T> {
 		query.append(id.toString());
 		query.append("'");
 		final String selectQuery = query.toString();
-		logger.info(selectQuery);
-		try (Statement statement = connection.createStatement(); ResultSet rs = statement.executeQuery(selectQuery);) {
+		LOGGER.info(selectQuery);
+		try (Statement statement = connection.createStatement(); ResultSet rs = statement.executeQuery(selectQuery)) {
 			return rs.next() ? mapResultSet(rs) : null;
 		}
 	}
 
 	public List<T> execute(final Collection<?> args) throws SQLException {
 		final String query = assembleQuery();
-		logger.info(query);
+		LOGGER.info(query);
 
 		final List<T> resultList = new ArrayList<>();
-		ResultSet rs = null;
+		ResultSet resultSet = null;
 		try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 			int i = 1;
 			for (final Object arg : args) {
 				preparedStatement.setObject(i++, arg);
 			}
-			rs = preparedStatement.executeQuery();
-			while (rs.next()) {
-				resultList.add(mapResultSet(rs));
+			resultSet = preparedStatement.executeQuery();
+			while (resultSet.next()) {
+				resultList.add(mapResultSet(resultSet));
 			}
 		} finally {
-			if (rs != null) {
-				rs.close();
+			if (resultSet != null) {
+				resultSet.close();
 			}
 		}
 		return resultList;
@@ -103,10 +105,10 @@ public class SelectStatement<T> {
 
 	public List<T> execute() throws SQLException {
 		final String query = assembleQuery();
-		logger.info(query);
+		LOGGER.info(query);
 		final List<T> resultList = new ArrayList<>();
 		try (final Statement statement = connection.createStatement();
-				final ResultSet rs = statement.executeQuery(query);) {
+				final ResultSet rs = statement.executeQuery(query)) {
 			while (rs.next()) {
 				resultList.add(mapResultSet(rs));
 			}
@@ -184,7 +186,7 @@ public class SelectStatement<T> {
 		final List<Object> list = new ArrayList<>();
 		try (Statement statement = connection.createStatement();
 				ResultSet resultSet = statement.executeQuery("SELECT " + type.getSimpleName() + " FROM Mapping_"
-						+ clazz.getSimpleName() + "_" + field.getName());) {
+						+ clazz.getSimpleName() + "_" + field.getName())) {
 			while (resultSet.next()) {
 				if (supportedType) {
 					list.add(resultSet.getObject(1));
@@ -218,18 +220,18 @@ public class SelectStatement<T> {
 		return clazz;
 	}
 
-	private class ProxyMethodHandler implements MethodHandler {
+	private static class ProxyMethodHandler implements MethodHandler {
 
+		private static final int SUBSTR_GET = 3;
 		private String lastCalledMethod;
 
 		@Override
-		public Object invoke(final Object self, final Method thisMethod, final Method proceed, final Object[] args)
-				throws Throwable {
+		public Object invoke(final Object self, final Method thisMethod, final Method proceed, final Object[] args) {
 			final String methodName = thisMethod.getName();
 			if ("toString".equals(methodName)) {
 				return lastCalledMethod;
 			}
-			lastCalledMethod = methodName.substring(3);
+			lastCalledMethod = methodName.substring(SUBSTR_GET);
 			return null;
 		}
 

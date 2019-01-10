@@ -2,8 +2,6 @@ package de.minee.jpa;
 
 import java.sql.SQLException;
 
-import de.minee.jpa.AbstractDAO;
-
 public class DAOImpl extends AbstractDAO {
 
 	@Override
@@ -22,7 +20,7 @@ public class DAOImpl extends AbstractDAO {
 	}
 
 	@Override
-	protected int updateDatabaseSchema(int oldDbSchemaVersion) throws SQLException {
+	protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
 		return 0;
 	}
 

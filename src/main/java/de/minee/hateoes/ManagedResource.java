@@ -1,5 +1,10 @@
 package de.minee.hateoes;
 
+import de.minee.hateoes.renderer.AbstractRenderer;
+import de.minee.hateoes.renderer.HtmlRenderer;
+import de.minee.jpa.AbstractDAO;
+import de.minee.util.ReflectionUtil;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
@@ -17,11 +22,6 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import de.minee.hateoes.renderer.HtmlRenderer;
-import de.minee.hateoes.renderer.Renderer;
-import de.minee.jpa.AbstractDAO;
-import de.minee.util.ReflectionUtil;
-
 class ManagedResource<T> {
 
 	private static final Logger LOGGER = Logger.getLogger(ManagedResource.class.getName());
@@ -31,7 +31,7 @@ class ManagedResource<T> {
 	private final Set<Operation> allowedOperations;
 	private final Class<T> type;
 	private AbstractDAO dao;
-	private final Renderer renderer = new HtmlRenderer();
+	private final AbstractRenderer renderer = new HtmlRenderer();
 
 	ManagedResource(final String path, final Operation[] allowedOperations, final Class<T> type) {
 		this.path = path.split("/");
@@ -88,6 +88,7 @@ class ManagedResource<T> {
 	void serve(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
 		final String pathInfo = req.getPathInfo();
 		final String[] pathSplit = pathInfo.split("/");
+		final List<?> result;
 		try {
 			if (pathSplit.length == path.length + 1) {
 				final String action = pathSplit[path.length];
@@ -101,8 +102,13 @@ class ManagedResource<T> {
 				resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
 				return;
 			}
-			final List<?> result = getSelectedResource(pathSplit);
-			final PrintWriter writer = resp.getWriter();
+			result = getSelectedResource(pathSplit);
+		} catch (final SQLException e) {
+			LOGGER.log(Level.SEVERE, "Cannot access database or database entities", e);
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			return;
+		}
+		try (final PrintWriter writer = resp.getWriter()) {
 			if (result.isEmpty()) {
 				writer.write(renderer.render(null));
 			} else if (result.size() == 1) {
@@ -110,11 +116,7 @@ class ManagedResource<T> {
 			} else {
 				writer.write(renderer.render(result));
 			}
-		} catch (final SQLException e) {
-			LOGGER.log(Level.SEVERE, "Cannot access database or database entities", e);
-			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}
-
 	}
 
 	private void serveEdit(final HttpServletRequest req, final HttpServletResponse resp, final String[] pathSplit)
@@ -186,9 +188,8 @@ class ManagedResource<T> {
 			} catch (final SQLException e) {
 				throw new HateoesException("Cannot translate String to type " + type.getSimpleName(), e);
 			}
-		} else {
-			throw new HateoesException("Not able to map String to type " + type.getSimpleName());
 		}
+		throw new HateoesException("Not able to map String to type " + type.getSimpleName());
 	}
 
 	private void doPostCreate(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
@@ -236,14 +237,16 @@ class ManagedResource<T> {
 	}
 
 	private void doGetCreate(final HttpServletResponse resp) throws IOException {
-		final PrintWriter writer = resp.getWriter();
-		writer.write(renderer.forCreate(type));
+		try (final PrintWriter writer = resp.getWriter()) {
+			writer.write(renderer.forCreate(type));
+		}
 	}
 
 	private void doGetEdit(final T object, final HttpServletResponse resp) throws IOException {
 		assert (object != null);
-		final PrintWriter writer = resp.getWriter();
-		writer.write(renderer.forEdit(object));
+		try (final PrintWriter writer = resp.getWriter()) {
+			writer.write(renderer.forEdit(object));
+		}
 	}
 
 	@Override

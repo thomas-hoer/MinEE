@@ -1,8 +1,7 @@
 package de.minee.hateoes;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.StringReader;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -13,7 +12,6 @@ import javax.servlet.AsyncContext;
 import javax.servlet.DispatcherType;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -60,7 +58,8 @@ public class MockHttpServletRequestImpl implements HttpServletRequest {
 	}
 
 	@Override
-	public void setCharacterEncoding(final String env) throws UnsupportedEncodingException {
+	public void setCharacterEncoding(final String env) {
+		// Just a Mock method
 	}
 
 	@Override
@@ -79,7 +78,7 @@ public class MockHttpServletRequestImpl implements HttpServletRequest {
 	}
 
 	@Override
-	public ServletInputStream getInputStream() throws IOException {
+	public ServletInputStream getInputStream() {
 		return null;
 	}
 
@@ -127,9 +126,8 @@ public class MockHttpServletRequestImpl implements HttpServletRequest {
 	}
 
 	@Override
-	public BufferedReader getReader() throws IOException {
-
-		return null;
+	public BufferedReader getReader() {
+		return new BufferedReader(new StringReader(content));
 	}
 
 	@Override
@@ -146,12 +144,12 @@ public class MockHttpServletRequestImpl implements HttpServletRequest {
 
 	@Override
 	public void setAttribute(final String name, final Object o) {
-
+		// Just a Mock method
 	}
 
 	@Override
 	public void removeAttribute(final String name) {
-
+		// Just a Mock method
 	}
 
 	@Override
@@ -178,9 +176,9 @@ public class MockHttpServletRequestImpl implements HttpServletRequest {
 		return null;
 	}
 
+	@Deprecated
 	@Override
 	public String getRealPath(final String path) {
-
 		return null;
 	}
 
@@ -400,6 +398,7 @@ public class MockHttpServletRequestImpl implements HttpServletRequest {
 		return false;
 	}
 
+	@Deprecated
 	@Override
 	public boolean isRequestedSessionIdFromUrl() {
 
@@ -407,36 +406,33 @@ public class MockHttpServletRequestImpl implements HttpServletRequest {
 	}
 
 	@Override
-	public boolean authenticate(final HttpServletResponse response) throws IOException, ServletException {
+	public boolean authenticate(final HttpServletResponse response) {
 
 		return false;
 	}
 
 	@Override
-	public void login(final String username, final String password) throws ServletException {
-
+	public void login(final String username, final String password) {
+		// Just a Mock method
 	}
 
 	@Override
-	public void logout() throws ServletException {
-
+	public void logout() {
+		// Just a Mock method
 	}
 
 	@Override
-	public Collection<Part> getParts() throws IOException, ServletException {
-
+	public Collection<Part> getParts() {
 		return null;
 	}
 
 	@Override
-	public Part getPart(final String name) throws IOException, ServletException {
-
+	public Part getPart(final String name) {
 		return null;
 	}
 
 	@Override
-	public <T extends HttpUpgradeHandler> T upgrade(final Class<T> handlerClass) throws IOException, ServletException {
-
+	public <T extends HttpUpgradeHandler> T upgrade(final Class<T> handlerClass) {
 		return null;
 	}
 
