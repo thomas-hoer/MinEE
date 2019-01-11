@@ -273,7 +273,14 @@ public abstract class AbstractDAO {
 
 	}
 
-	public <T> SelectStatement<T> select(final Class<T> clazz) throws SQLException {
+	/**
+	 * Creates a Query for selecting Objects of type clazz.
+	 *
+	 * @param clazz
+	 * @return
+	 * @throws SQLException SQLException in case of an error
+	 */
+	public <T> AbstractStatement<T> select(final Class<T> clazz) throws SQLException {
 		return SelectStatement.select(clazz, getConnection());
 	}
 
@@ -302,5 +309,15 @@ public abstract class AbstractDAO {
 
 	public <T> UUID merge(final T objectToMerge) throws SQLException {
 		return PreparedMerge.merge(objectToMerge, getConnection(), Cascade.MERGE);
+	}
+
+	/**
+	 * Directly deletes a Object.
+	 *
+	 * @param objectToDelete
+	 * @throws SQLException
+	 */
+	public <T> void delete(final T objectToDelete) throws SQLException {
+		PreparedDelete.delete(objectToDelete, getConnection(), Cascade.DELETE);
 	}
 }

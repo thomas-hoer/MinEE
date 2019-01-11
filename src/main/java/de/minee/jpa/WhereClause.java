@@ -13,7 +13,7 @@ import java.util.function.Function;
 
 public class WhereClause<S, T> {
 
-	private final SelectStatement<T> selectStatement;
+	private final AbstractStatement<T> selectStatement;
 
 	private boolean conditionSet;
 	private boolean conditionForPrepare;
@@ -22,7 +22,7 @@ public class WhereClause<S, T> {
 	private final String fieldName;
 	private final String joinClause;
 
-	public WhereClause(final Function<T, S> whereField, final SelectStatement<T> selectStatement) throws SQLException {
+	public WhereClause(final Function<T, S> whereField, final AbstractStatement<T> selectStatement) throws SQLException {
 		Assertions.assertNotNull(selectStatement);
 		Assertions.assertNotNull(whereField);
 
@@ -47,14 +47,14 @@ public class WhereClause<S, T> {
 		}
 	}
 
-	public SelectStatement<T> is() {
+	public AbstractStatement<T> is() {
 		checkConditionSet();
 		conditionForPrepare = true;
 		setCondition(Operator.EQUALS);
 		return selectStatement;
 	}
 
-	public SelectStatement<T> is(final S isEqual) {
+	public AbstractStatement<T> is(final S isEqual) {
 		checkConditionSet();
 		if (isEqual instanceof List) {
 			setJoinCondition((List<?>) isEqual);
@@ -64,13 +64,13 @@ public class WhereClause<S, T> {
 		return selectStatement;
 	}
 
-	public SelectStatement<T> in(final S... inElements) {
+	public AbstractStatement<T> in(final S... inElements) {
 		checkConditionSet();
 		setCondition(Operator.IN, inElements);
 		return selectStatement;
 	}
 
-	public SelectStatement<T> isNull() {
+	public AbstractStatement<T> isNull() {
 		checkConditionSet();
 		setCondition(Operator.IS_NULL);
 		return selectStatement;
