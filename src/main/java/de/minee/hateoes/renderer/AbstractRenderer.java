@@ -19,7 +19,7 @@ public abstract class AbstractRenderer {
 	 * Applies the toString method on the value Object of entry. If the value is an
 	 * object with 'id' it will return the String representation of the Id.
 	 *
-	 * @param entry
+	 * @param entry Value of a Field
 	 * @return String representation of the value of entry or its id if available.
 	 *         If the value is null it returns an empty String ("").
 	 */

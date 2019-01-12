@@ -22,7 +22,8 @@ public class WhereClause<S, T> {
 	private final String fieldName;
 	private final String joinClause;
 
-	public WhereClause(final Function<T, S> whereField, final AbstractStatement<T> selectStatement) throws SQLException {
+	public WhereClause(final Function<T, S> whereField, final AbstractStatement<T> selectStatement)
+			throws SQLException {
 		Assertions.assertNotNull(selectStatement);
 		Assertions.assertNotNull(whereField);
 
@@ -148,7 +149,7 @@ public class WhereClause<S, T> {
 	}
 
 	private String getEvaluationValue() {
-		return (conditionSet || conditionForPrepare) ? condition : "?";
+		return (conditionSet && !conditionForPrepare) ? condition : "?";
 	}
 
 	public String getJoinClause() {

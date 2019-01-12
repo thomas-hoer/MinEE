@@ -276,12 +276,13 @@ public abstract class AbstractDAO {
 	/**
 	 * Creates a Query for selecting Objects of type clazz.
 	 *
-	 * @param clazz
-	 * @return
+	 * @param clazz Class corresponding to a DB Table
+	 * @return Fluent style based query builder
 	 * @throws SQLException SQLException in case of an error
 	 */
-	public <T> AbstractStatement<T> select(final Class<T> clazz) throws SQLException {
-		return SelectStatement.select(clazz, getConnection());
+	public <T> InitialQueryConnection<T> select(final Class<T> clazz) throws SQLException {
+		final AbstractStatement<T> statement = SelectStatement.select(clazz, getConnection());
+		return new InitialQueryConnection<>(statement);
 	}
 
 	public <T> UUID insertShallow(final T objectToInsert) throws SQLException {
@@ -312,10 +313,10 @@ public abstract class AbstractDAO {
 	}
 
 	/**
-	 * Directly deletes a Object.
+	 * Directly deletes a Object and recursively its children.
 	 *
-	 * @param objectToDelete
-	 * @throws SQLException
+	 * @param objectToDelete Object that shall be deleted from Database
+	 * @throws SQLException SQLException in case of an error
 	 */
 	public <T> void delete(final T objectToDelete) throws SQLException {
 		PreparedDelete.delete(objectToDelete, getConnection(), Cascade.DELETE);

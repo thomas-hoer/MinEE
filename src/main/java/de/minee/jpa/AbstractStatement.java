@@ -13,9 +13,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.logging.Logger;
 
 import javassist.util.proxy.MethodHandler;
@@ -23,7 +21,7 @@ import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyFactory;
 
 /**
- *
+ * Base class for the query builder that contain WHERE restrictions.
  *
  * @param <T> Class that corresponds to a database table
  */
@@ -35,7 +33,6 @@ public abstract class AbstractStatement<T> {
 
 	private final Class<T> clazz;
 	private final Connection connection;
-	private final List<WhereClause<?, ?>> whereClauses = new ArrayList<>();
 	private final List<AbstractAndOrConnection<T>> connections = new ArrayList<>();
 	private final List<Field> fieldList = new ArrayList<>();
 	private String additionalWhereClause;
@@ -63,12 +60,21 @@ public abstract class AbstractStatement<T> {
 		connections.add(connection);
 	}
 
-	public <S> WhereClause<S, T> where(final Function<T, S> whereField) throws SQLException {
-		final WhereClause<S, T> where = new WhereClause<>(whereField, this);
-		whereClauses.add(where);
-		return where;
+	public AbstractAndOrConnection<T> and() {
+		return new AndQueryConnection<>(this);
 	}
 
+	public AbstractAndOrConnection<T> or() {
+		return new OrQueryConnection<>(this);
+	}
+
+	/**
+	 * Selects a Object directly by its Id.
+	 *
+	 * @param id Id of the entry
+	 * @return Object with Id id or null if no entry can be found
+	 * @throws SQLException SQLException in case of an error
+	 */
 	public T byId(final UUID id) throws SQLException {
 		final StringBuilder query = new StringBuilder();
 		query.append("SELECT * FROM ");
@@ -106,6 +112,12 @@ public abstract class AbstractStatement<T> {
 		return resultList;
 	}
 
+	/**
+	 * Executes the Query.
+	 *
+	 * @return A list of the found database entries
+	 * @throws SQLException SQLException in case of an error
+	 */
 	public List<T> execute() throws SQLException {
 		final String query = assembleQuery();
 		LOGGER.info(query);
@@ -124,20 +136,22 @@ public abstract class AbstractStatement<T> {
 		query.append("SELECT * FROM ");
 		query.append(clazz.getSimpleName());
 		query.append(" ");
-		for (final WhereClause<?, ?> whereClause : whereClauses) {
+		for (final AbstractAndOrConnection<T> queryConnection : connections) {
+			final WhereClause<?, ?> whereClause = queryConnection.getClause();
 			query.append(whereClause.getJoinClause());
 		}
-		if (!whereClauses.isEmpty() || (additionalWhereClause != null && !"".equals(additionalWhereClause))) {
+		if (!connections.isEmpty() || (additionalWhereClause != null && !"".equals(additionalWhereClause))) {
 			query.append("WHERE ");
 		}
-		final StringJoiner stringJoiner = new StringJoiner(" AND ");
 		if (additionalWhereClause != null) {
-			stringJoiner.add(additionalWhereClause);
+			query.append(additionalWhereClause);
 		}
-		for (final WhereClause<?, ?> whereClause : whereClauses) {
-			stringJoiner.add(whereClause.toString());
+		//
+		for (final AbstractAndOrConnection<T> queryConnection : connections) {
+			final WhereClause<?, ?> whereClause = queryConnection.getClause();
+			query.append(queryConnection.getConnectionString());
+			query.append(whereClause.toString());
 		}
-		query.append(stringJoiner.toString());
 		return query.toString();
 	}
 
