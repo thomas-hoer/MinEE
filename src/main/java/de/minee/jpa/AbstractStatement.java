@@ -12,7 +12,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -26,6 +28,8 @@ import javassist.util.proxy.ProxyFactory;
  * @param <T> Class that corresponds to a database table
  */
 public abstract class AbstractStatement<T> {
+
+	private static final String INSTANTIATION_ERROR_MESSAGE = "Cannot instanciate object of type ";
 
 	private static final Logger LOGGER = Logger.getLogger(AbstractStatement.class.getName());
 
@@ -69,13 +73,30 @@ public abstract class AbstractStatement<T> {
 	}
 
 	/**
-	 * Selects a Object directly by its Id.
+	 * Selects an Object directly by its Id.
 	 *
 	 * @param id Id of the entry
 	 * @return Object with Id id or null if no entry can be found
 	 * @throws SQLException SQLException in case of an error
 	 */
 	public T byId(final UUID id) throws SQLException {
+		return byId(id, new HashMap<>());
+	}
+
+	/**
+	 * Selects an Object directly by its Id or returns a cached Object of the
+	 * current session. The cache improves performance, ensures object references
+	 * and avoids endless cycles.
+	 *
+	 * @param id             Id of the entry
+	 * @param handledObjects Object cache of fetched entries in the same session
+	 * @return Object with Id id or null if no entry can be found
+	 * @throws SQLException SQLException in case of an error
+	 */
+	protected T byId(final UUID id, final Map<Object, Object> handledObjects) throws SQLException {
+		if (handledObjects.containsKey(id)) {
+			return (T) handledObjects.get(id);
+		}
 		final StringBuilder query = new StringBuilder();
 		query.append("SELECT * FROM ");
 		query.append(clazz.getSimpleName());
@@ -84,8 +105,13 @@ public abstract class AbstractStatement<T> {
 		query.append("'");
 		final String selectQuery = query.toString();
 		LOGGER.info(selectQuery);
+
 		try (Statement statement = connection.createStatement(); ResultSet rs = statement.executeQuery(selectQuery)) {
-			return rs.next() ? mapResultSet(rs) : null;
+			final T obj = clazz.newInstance();
+			handledObjects.put(id, obj);
+			return rs.next() ? mapResultSet(rs, obj, handledObjects) : null;
+		} catch (final InstantiationException | IllegalAccessException e) {
+			throw new SQLException(INSTANTIATION_ERROR_MESSAGE + clazz.getName(), e);
 		}
 	}
 
@@ -104,13 +130,17 @@ public abstract class AbstractStatement<T> {
 		ResultSet resultSet = null;
 		try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 			int i = 1;
+			final Map<Object, Object> handledObjects = new HashMap<>();
 			for (final Object arg : args) {
 				preparedStatement.setObject(i++, arg);
 			}
 			resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
-				resultList.add(mapResultSet(resultSet));
+				final T obj = clazz.newInstance();
+				resultList.add(mapResultSet(resultSet, obj, handledObjects));
 			}
+		} catch (final InstantiationException | IllegalAccessException e) {
+			throw new SQLException(INSTANTIATION_ERROR_MESSAGE + clazz.getName(), e);
 		} finally {
 			if (resultSet != null) {
 				resultSet.close();
@@ -131,9 +161,13 @@ public abstract class AbstractStatement<T> {
 		final List<T> resultList = new ArrayList<>();
 		try (final Statement statement = connection.createStatement();
 				final ResultSet rs = statement.executeQuery(query)) {
+			final Map<Object, Object> handledObjects = new HashMap<>();
 			while (rs.next()) {
-				resultList.add(mapResultSet(rs));
+				final T obj = clazz.newInstance();
+				resultList.add(mapResultSet(rs, obj, handledObjects));
 			}
+		} catch (final InstantiationException | IllegalAccessException e) {
+			throw new SQLException(INSTANTIATION_ERROR_MESSAGE + clazz.getName(), e);
 		}
 		return resultList;
 	}
@@ -162,26 +196,28 @@ public abstract class AbstractStatement<T> {
 		return query.toString();
 	}
 
-	private T mapResultSet(final ResultSet rs) throws SQLException {
-		try {
-			final T obj = clazz.newInstance();
-			for (final Field field : fieldList) {
+	private T mapResultSet(final ResultSet rs, final T instance, final Map<Object, Object> handledObjects)
+			throws SQLException {
+		for (final Field field : fieldList) {
+			try {
 				if (List.class.isAssignableFrom(field.getType())) {
-					handleList(obj, field);
+					handleList(instance, field, handledObjects);
 					continue;
 				}
-				handleFieldColumn(field, rs, obj);
+				handleFieldColumn(field, rs, instance, handledObjects);
+			} catch (final IllegalAccessException e) {
+				throw new SQLException("Unable to set value for Field " + field.getName() + " in " + clazz.getName(),
+						e);
 			}
-			return obj;
-		} catch (IllegalAccessException | InstantiationException e) {
-			throw new SQLException("Cannot instanciate object of type " + clazz.getName(), e);
 		}
+		return instance;
 	}
 
-	abstract void handleList(final T obj, final Field field) throws SQLException, IllegalAccessException;
-
-	abstract void handleFieldColumn(final Field field, final ResultSet rs, final T obj)
+	abstract void handleList(final T obj, final Field field, final Map<Object, Object> handledObjects)
 			throws SQLException, IllegalAccessException;
+
+	abstract void handleFieldColumn(final Field field, final ResultSet rs, final T obj,
+			final Map<Object, Object> handledObjects) throws SQLException, IllegalAccessException;
 
 	protected Connection getConnection() {
 		return connection;

@@ -9,7 +9,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -63,11 +65,16 @@ public class PreparedInsert<T> extends PreparedQueryBase<T> {
 	/**
 	 *
 	 * @param objectToInsert
+	 * @param handledObjects
 	 * @return
 	 * @throws SQLException
 	 */
-	public UUID execute(final T objectToInsert) throws SQLException {
+	private UUID execute(final T objectToInsert, final Set<Object> handledObjects) throws SQLException {
 		Assertions.assertNotNull(objectToInsert);
+		if (handledObjects.contains(objectToInsert)) {
+			return MappingHelper.getId(objectToInsert);
+		}
+		handledObjects.add(objectToInsert);
 		int i = 1;
 		final List<Pair<Field, Object>> mappingsToInsert = new ArrayList<>();
 		UUID objectId = null;
@@ -83,7 +90,7 @@ public class PreparedInsert<T> extends PreparedQueryBase<T> {
 			}
 			final Object dbObject = MappingHelper.getDbObject(fieldElementToInsert);
 			if (Cascade.INSERT == cascade && dbObject != fieldElementToInsert && UUID.class.isInstance(dbObject)) {
-				final UUID id = insert(fieldElementToInsert, connection, cascade);
+				final UUID id = insert(fieldElementToInsert, connection, cascade, handledObjects);
 				preparedStatement.setObject(i++, id);
 			} else {
 				preparedStatement.setObject(i++, dbObject);
@@ -134,6 +141,15 @@ public class PreparedInsert<T> extends PreparedQueryBase<T> {
 		@SuppressWarnings("unchecked")
 		final Class<S> clazz = (Class<S>) objectToInsert.getClass();
 		final PreparedInsert<S> insert = new PreparedInsert<>(clazz, connection, cascade);
-		return insert.execute(objectToInsert);
+		return insert.execute(objectToInsert, new HashSet<>());
 	}
+
+	private static <S> UUID insert(final S objectToInsert, final Connection connection, final Cascade cascade,
+			final Set<Object> handledObjects) throws SQLException {
+		@SuppressWarnings("unchecked")
+		final Class<S> clazz = (Class<S>) objectToInsert.getClass();
+		final PreparedInsert<S> insert = new PreparedInsert<>(clazz, connection, cascade);
+		return insert.execute(objectToInsert, handledObjects);
+	}
+
 }

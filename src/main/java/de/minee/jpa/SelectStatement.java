@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class SelectStatement<T> extends AbstractStatement<T> {
@@ -22,14 +23,15 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 	}
 
 	@Override
-	void handleFieldColumn(final Field field, final ResultSet rs, final T obj)
+	void handleFieldColumn(final Field field, final ResultSet rs, final T obj, final Map<Object, Object> handledObjects)
 			throws SQLException, IllegalAccessException {
 		final Object value = rs.getObject(field.getName());
 		if (value != null) {
 			if (value.getClass().isAssignableFrom(field.getType())) {
 				field.set(obj, value);
 			} else if (UUID.class.equals(value.getClass())) {
-				final Object resolvedValue = select(field.getType(), getConnection()).byId((UUID) value);
+				final Object resolvedValue = select(field.getType(), getConnection()).byId((UUID) value,
+						handledObjects);
 				field.set(obj, resolvedValue);
 			} else if (field.getType().isEnum()) {
 				final String stringValue = rs.getString(field.getName());
@@ -48,7 +50,8 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 	}
 
 	@Override
-	void handleList(final T obj, final Field field) throws SQLException, IllegalAccessException {
+	void handleList(final T obj, final Field field, final Map<Object, Object> handledObjects)
+			throws SQLException, IllegalAccessException {
 		final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
 		final Class<?> type = (Class<?>) mapToType.getActualTypeArguments()[0];
 		final boolean supportedType = MappingHelper.isSupportedType(type);
@@ -60,7 +63,7 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 				if (supportedType) {
 					list.add(resultSet.getObject(1));
 				} else {
-					final Object o = select(type, getConnection()).byId((UUID) resultSet.getObject(1));
+					final Object o = select(type, getConnection()).byId((UUID) resultSet.getObject(1), handledObjects);
 					list.add(o);
 				}
 			}

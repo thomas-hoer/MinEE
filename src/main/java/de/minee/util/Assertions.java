@@ -6,11 +6,13 @@ public final class Assertions {
 	}
 
 	/**
+	 * Ensures that a specific object o is not null. Throws an
+	 * IllegalArgumentException if the object is null.
 	 *
-	 * @param o
+	 * @param object Object for check that is not null
 	 */
-	public static void assertNotNull(final Object o) {
-		if (o == null) {
+	public static void assertNotNull(final Object object) {
+		if (object == null) {
 			throw new IllegalArgumentException();
 		}
 	}
