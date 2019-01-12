@@ -89,6 +89,13 @@ public abstract class AbstractStatement<T> {
 		}
 	}
 
+	/**
+	 * Executes a prepared statement by handing over the query arguments.
+	 *
+	 * @param args Arguments for the prepared statement
+	 * @return A list of the found database entries
+	 * @throws SQLException SQLException in case of an error
+	 */
 	public List<T> execute(final Collection<?> args) throws SQLException {
 		final String query = assembleQuery();
 		LOGGER.info(query);

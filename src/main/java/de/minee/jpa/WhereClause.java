@@ -22,6 +22,12 @@ public class WhereClause<S, T> {
 	private final String fieldName;
 	private final String joinClause;
 
+	/**
+	 *
+	 * @param whereField
+	 * @param selectStatement
+	 * @throws SQLException
+	 */
 	public WhereClause(final Function<T, S> whereField, final AbstractStatement<T> selectStatement)
 			throws SQLException {
 		Assertions.assertNotNull(selectStatement);
@@ -48,6 +54,10 @@ public class WhereClause<S, T> {
 		}
 	}
 
+	/**
+	 *
+	 * @return
+	 */
 	public AbstractStatement<T> is() {
 		checkConditionSet();
 		conditionForPrepare = true;
@@ -55,6 +65,11 @@ public class WhereClause<S, T> {
 		return selectStatement;
 	}
 
+	/**
+	 *
+	 * @param isEqual
+	 * @return
+	 */
 	public AbstractStatement<T> is(final S isEqual) {
 		checkConditionSet();
 		if (isEqual instanceof List) {
@@ -65,12 +80,21 @@ public class WhereClause<S, T> {
 		return selectStatement;
 	}
 
+	/**
+	 *
+	 * @param inElements
+	 * @return
+	 */
 	public AbstractStatement<T> in(final S... inElements) {
 		checkConditionSet();
 		setCondition(Operator.IN, inElements);
 		return selectStatement;
 	}
 
+	/**
+	 *
+	 * @return
+	 */
 	public AbstractStatement<T> isNull() {
 		checkConditionSet();
 		setCondition(Operator.IS_NULL);

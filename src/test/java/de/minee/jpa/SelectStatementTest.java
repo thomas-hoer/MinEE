@@ -40,6 +40,11 @@ public class SelectStatementTest extends AbstractDAO {
 		return 1;
 	}
 
+	/**
+	 * Inserts some entries for the test cases.
+	 *
+	 * @throws SQLException SQLException in case of an error
+	 */
 	@Before
 	public void init() throws SQLException {
 		SimpleReference simpleReference;

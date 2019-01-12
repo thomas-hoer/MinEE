@@ -17,6 +17,12 @@ public final class ReflectionUtil {
 	private ReflectionUtil() {
 	}
 
+	/**
+	 *
+	 * @param values
+	 * @param destination
+	 * @return
+	 */
 	public static boolean setAll(final Map<String, Object> values, final Object destination) {
 		Assertions.assertNotNull(values);
 		Assertions.assertNotNull(destination);
@@ -33,6 +39,11 @@ public final class ReflectionUtil {
 		return success;
 	}
 
+	/**
+	 *
+	 * @param source
+	 * @return
+	 */
 	public static Map<String, Object> getAll(final Object source) {
 		Assertions.assertNotNull(source);
 		final Map<String, Object> result = new HashMap<>();
@@ -44,6 +55,11 @@ public final class ReflectionUtil {
 		return result;
 	}
 
+	/**
+	 *
+	 * @param cls
+	 * @return
+	 */
 	public static List<Field> getAllFields(final Class<?> cls) {
 		Assertions.assertNotNull(cls);
 		final List<Field> fields = new ArrayList<>();
@@ -54,6 +70,12 @@ public final class ReflectionUtil {
 		return fields;
 	}
 
+	/**
+	 *
+	 * @param cls
+	 * @param fieldname
+	 * @return
+	 */
 	public static Field getDeclaredField(final Class<?> cls, final String fieldname) {
 		Assertions.assertNotNull(cls);
 		Assertions.assertNotNull(fieldname);
@@ -87,6 +109,12 @@ public final class ReflectionUtil {
 		return false;
 	}
 
+	/**
+	 *
+	 * @param field
+	 * @param object
+	 * @return
+	 */
 	public static Object executeGet(final Field field, final Object object) {
 		Assertions.assertNotNull(field);
 		Assertions.assertNotNull(object);

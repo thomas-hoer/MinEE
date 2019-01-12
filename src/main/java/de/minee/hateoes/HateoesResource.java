@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 /**
  * Marks a Field as fully managed HateoesResource.
  *
+ * <p>
  * If you create a HateoesServlet like the following example, a valid resource
  * path could be http://localhost:8080/rest/type/name depending on your context
  * root.
@@ -19,8 +20,7 @@ import java.lang.annotation.Target;
  * 	MyType gallery;
  * }
  * </pre>
- *
- *
+ * </p>
  */
 @Target({ ElementType.FIELD, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)

@@ -21,6 +21,13 @@ public class PreparedInsert<T> extends PreparedQueryBase<T> {
 	private final List<Field> fieldList = new ArrayList<>();
 	private final PreparedStatement preparedStatement;
 
+	/**
+	 *
+	 * @param clazz
+	 * @param connection
+	 * @param cascade
+	 * @throws SQLException
+	 */
 	public PreparedInsert(final Class<T> clazz, final Connection connection, final Cascade cascade)
 			throws SQLException {
 		super(connection, cascade);
@@ -53,6 +60,12 @@ public class PreparedInsert<T> extends PreparedQueryBase<T> {
 		preparedStatement = connection.prepareStatement(insertQuery);
 	}
 
+	/**
+	 *
+	 * @param objectToInsert
+	 * @return
+	 * @throws SQLException
+	 */
 	public UUID execute(final T objectToInsert) throws SQLException {
 		Assertions.assertNotNull(objectToInsert);
 		int i = 1;
