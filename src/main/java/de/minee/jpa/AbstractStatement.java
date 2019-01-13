@@ -3,8 +3,6 @@ package de.minee.jpa;
 import de.minee.util.Assertions;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,10 +16,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import javassist.util.proxy.MethodHandler;
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyFactory;
-
 /**
  * Base class for the query builder that contain WHERE restrictions.
  *
@@ -32,8 +26,6 @@ public abstract class AbstractStatement<T> {
 	private static final String INSTANTIATION_ERROR_MESSAGE = "Cannot instanciate object of type ";
 
 	private static final Logger LOGGER = Logger.getLogger(AbstractStatement.class.getName());
-
-	private final ProxyFactory proxyFactory;
 
 	private final Class<T> clazz;
 	private final Connection connection;
@@ -53,11 +45,8 @@ public abstract class AbstractStatement<T> {
 		this.clazz = clazz;
 		this.connection = connection;
 		for (final Field field : clazz.getDeclaredFields()) {
-			field.setAccessible(true);
 			fieldList.add(field);
 		}
-		proxyFactory = new ProxyFactory();
-		proxyFactory.setSuperclass(clazz);
 	}
 
 	void add(final AbstractAndOrConnection<T> connection) {
@@ -181,7 +170,7 @@ public abstract class AbstractStatement<T> {
 			final WhereClause<?, ?> whereClause = queryConnection.getClause();
 			query.append(whereClause.getJoinClause());
 		}
-		if (!connections.isEmpty() || (additionalWhereClause != null && !"".equals(additionalWhereClause))) {
+		if (!connections.isEmpty() || (additionalWhereClause != null)) {
 			query.append("WHERE ");
 		}
 		if (additionalWhereClause != null) {
@@ -223,41 +212,12 @@ public abstract class AbstractStatement<T> {
 		return connection;
 	}
 
-	@SuppressWarnings("unchecked")
-	protected T getProxy() throws SQLException {
-		final MethodHandler handler = new ProxyMethodHandler();
-		try {
-			final Object proxy = proxyFactory.create(new Class<?>[0], new Object[0]);
-			((Proxy) proxy).setHandler(handler);
-			return (T) proxy;
-		} catch (NoSuchMethodException | IllegalArgumentException | InstantiationException | IllegalAccessException
-				| InvocationTargetException e) {
-			throw new SQLException("Cannot instantiate Object of type " + clazz.getName(), e);
-		}
-	}
-
 	protected Class<T> getType() {
 		return clazz;
 	}
 
-	private static class ProxyMethodHandler implements MethodHandler {
-
-		private static final int SUBSTR_GET = 3;
-		private String lastCalledMethod;
-
-		@Override
-		public Object invoke(final Object self, final Method thisMethod, final Method proceed, final Object[] args) {
-			final String methodName = thisMethod.getName();
-			if ("toString".equals(methodName)) {
-				return lastCalledMethod;
-			}
-			lastCalledMethod = methodName.substring(SUBSTR_GET);
-			return null;
-		}
-
-	}
-
-	public AbstractStatement<T> query(final String whereClause) {
+	AbstractStatement<T> query(final String whereClause) {
+		Assertions.assertNotEmpty(whereClause);
 		additionalWhereClause = whereClause;
 		return this;
 	}

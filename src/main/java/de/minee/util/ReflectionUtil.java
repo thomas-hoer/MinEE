@@ -9,12 +9,12 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-//TODO: search for reflections
 public final class ReflectionUtil {
 
 	private static final Logger LOGGER = Logger.getLogger(ReflectionUtil.class.getName());
 
 	private ReflectionUtil() {
+		// Static Class don't need an instance.
 	}
 
 	/**

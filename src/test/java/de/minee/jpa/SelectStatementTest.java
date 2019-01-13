@@ -88,9 +88,14 @@ public class SelectStatementTest extends AbstractDAO {
 		assertEquals(3, result.size());
 	}
 
-	@Test
-	public void testQuery() throws SQLException {
-		final List<SimpleReference> result = select(SimpleReference.class).query("").execute();
+	@Test(expected = IllegalArgumentException.class)
+	public void testEmptyQuery() throws SQLException {
+		select(SimpleReference.class).query("").execute();
 	}
 
+	@Test
+	public void testQuery() throws SQLException {
+		final List<SimpleReference> result = select(SimpleReference.class).query("Name = '" + NAME_1 + "'").execute();
+		assertEquals(2, result.size());
+	}
 }

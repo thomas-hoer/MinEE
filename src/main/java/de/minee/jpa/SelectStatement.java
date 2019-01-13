@@ -1,5 +1,7 @@
 package de.minee.jpa;
 
+import de.minee.util.ReflectionUtil;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.sql.Connection;
@@ -28,19 +30,19 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 		final Object value = rs.getObject(field.getName());
 		if (value != null) {
 			if (value.getClass().isAssignableFrom(field.getType())) {
-				field.set(obj, value);
+				ReflectionUtil.executeSet(field, obj, value);
 			} else if (UUID.class.equals(value.getClass())) {
 				final Object resolvedValue = select(field.getType(), getConnection()).byId((UUID) value,
 						handledObjects);
-				field.set(obj, resolvedValue);
+				ReflectionUtil.executeSet(field, obj, resolvedValue);
 			} else if (field.getType().isEnum()) {
 				final String stringValue = rs.getString(field.getName());
-				field.set(obj, MappingHelper.getEnum(field.getType(), stringValue));
+				ReflectionUtil.executeSet(field, obj, MappingHelper.getEnum(field.getType(), stringValue));
 			} else if (field.getType().isArray()) {
 				if (byte.class.equals(field.getType().getComponentType())) {
-					field.set(obj, Base64.getDecoder().decode((String) value));
+					ReflectionUtil.executeSet(field, obj, Base64.getDecoder().decode((String) value));
 				} else {
-					field.set(obj, rs.getArray(field.getName()).getArray());
+					ReflectionUtil.executeSet(field, obj, rs.getArray(field.getName()).getArray());
 				}
 			} else {
 				throw new SQLException("Cannot set value of type " + value.getClass() + " to " + field.getName()
@@ -68,6 +70,6 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 				}
 			}
 		}
-		field.set(obj, list);
+		ReflectionUtil.executeSet(field, obj, list);
 	}
 }

@@ -43,7 +43,6 @@ public class PreparedDelete<T> extends PreparedQueryBase<T> {
 
 		final Field[] fields = clazz.getDeclaredFields();
 		for (final Field field : fields) {
-			field.setAccessible(true);
 			fieldList.add(field);
 			if (List.class.isAssignableFrom(field.getType())) {
 				prepareDelete(connection, field);

@@ -3,6 +3,7 @@ package de.minee.util;
 public final class Assertions {
 
 	private Assertions() {
+		// Static Class don't need an instance.
 	}
 
 	/**
@@ -13,6 +14,17 @@ public final class Assertions {
 	 */
 	public static void assertNotNull(final Object object) {
 		if (object == null) {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	/**
+	 * Assert that a String is not null or empty.
+	 *
+	 * @param string
+	 */
+	public static void assertNotEmpty(final String string) {
+		if (string == null || "".equals(string.trim())) {
 			throw new IllegalArgumentException();
 		}
 	}

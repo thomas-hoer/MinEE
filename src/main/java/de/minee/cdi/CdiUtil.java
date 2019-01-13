@@ -1,5 +1,8 @@
 package de.minee.cdi;
 
+import de.minee.util.Assertions;
+import de.minee.util.ReflectionUtil;
+
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,21 +15,13 @@ public final class CdiUtil {
 	}
 
 	static void injectResources(final Object o) {
-		final Class<?> clazz = o.getClass();
-		if (map.containsKey(clazz)) {
+		final Class<?> cls = o.getClass();
+		if (map.containsKey(cls)) {
 			throw new CdiException("CDI Cycle found");
 		}
-		for (final Field field : clazz.getDeclaredFields()) {
+		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			if (field.isAnnotationPresent(Stateless.class)) {
-				field.setAccessible(true);
-				final Class<?> type = field.getType();
-				try {
-					field.set(o, getInstance(type));
-				} catch (IllegalArgumentException | IllegalAccessException e) {
-					throw new CdiException(
-							"Cannot inject or instanciate object of type " + type.getSimpleName() + " in field" + field,
-							e);
-				}
+				ReflectionUtil.executeSet(field, o, getInstance(field.getType()));
 			}
 		}
 	}
@@ -40,6 +35,7 @@ public final class CdiUtil {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T getInstance(final Class<T> cls) {
+		Assertions.assertNotNull(cls);
 		try {
 			if (!map.containsKey(cls)) {
 				final Object instance = cls.newInstance();

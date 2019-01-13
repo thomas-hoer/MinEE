@@ -106,14 +106,12 @@ final class MappingHelper {
 			return null;
 		}
 		try {
-			final Field childId = clazz.getDeclaredField("id");
-			childId.setAccessible(true);
-			final UUID id = (UUID) childId.get(object);
+			final UUID id = (UUID) ReflectionUtil.executeGet("id", object);
 			if (id == null) {
 				return NULL_UUID;
 			}
 			return id;
-		} catch (NoSuchFieldException | IllegalArgumentException | IllegalAccessException e) {
+		} catch (final IllegalArgumentException e) {
 			throw new MappingException("No Field id found in Class " + clazz.getName(), e);
 		}
 	}

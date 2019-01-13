@@ -5,6 +5,7 @@ import de.minee.cdi.CdiUtil;
 import de.minee.hateoes.renderer.AbstractRenderer;
 import de.minee.hateoes.renderer.JsonRenderer;
 import de.minee.jpa.AbstractDAO;
+import de.minee.util.ReflectionUtil;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -40,7 +41,7 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 		final Set<ManagedResource<?>> needsPersistentDao = new HashSet<>();
 		final Set<Class<?>> inMemTypes = new HashSet<>();
 
-		for (final Field field : cls.getDeclaredFields()) {
+		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			final ManagedResource<?> managedResource = checkHateoesResourceAnnotation(field);
 			daoNeeded |= checkPersistentAnnotation(needsPersistentDao, inMemTypes, field, managedResource);
 			persistentDao = checkDataAccessObjectAnnotation(persistentDao, field);
@@ -50,30 +51,7 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 			throw new HateoesException("A DataAccessObject is needed to provide a persistend managed HateoesResouce");
 		}
 
-		final AbstractDAO inMemDao = new AbstractDAO() {
-			@Override
-			protected String getConnectionString() {
-				return "jdbc:h2:mem:";
-			}
-
-			@Override
-			protected String getUserName() {
-				return "";
-			}
-
-			@Override
-			protected String getPassword() {
-				return "";
-			}
-
-			@Override
-			protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
-				for (final Class<?> type : inMemTypes) {
-					createTable(type);
-				}
-				return 1;
-			}
-		};
+		final AbstractDAO inMemDao = new InMemDAO(inMemTypes);
 
 		for (final ManagedResource<?> managedResource : managedResources) {
 			if (needsPersistentDao.contains(managedResource)) {
@@ -115,15 +93,10 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 	private AbstractDAO checkDataAccessObjectAnnotation(final AbstractDAO persistentDAO, final Field field) {
 		if (field.getAnnotation(DataAccessObject.class) != null
 				&& AbstractDAO.class.isAssignableFrom(field.getType())) {
-			field.setAccessible(true);
 			LOGGER.info("Use as DataAccessObject: " + field.getName());
-			try {
-				final AbstractDAO newDAOInstance = (AbstractDAO) CdiUtil.getInstance(field.getType());
-				field.set(this, newDAOInstance);
-				return newDAOInstance;
-			} catch (IllegalArgumentException | IllegalAccessException e) {
-				throw new HateoesException(e);
-			}
+			final AbstractDAO newDAOInstance = (AbstractDAO) CdiUtil.getInstance(field.getType());
+			ReflectionUtil.executeSet(field, this, newDAOInstance);
+			return newDAOInstance;
 		}
 		return persistentDAO;
 	}
@@ -154,4 +127,34 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 		}
 	}
 
+	private static final class InMemDAO extends AbstractDAO {
+		private final Set<Class<?>> inMemTypes;
+
+		private InMemDAO(final Set<Class<?>> inMemTypes) {
+			this.inMemTypes = inMemTypes;
+		}
+
+		@Override
+		protected String getConnectionString() {
+			return "jdbc:h2:mem:";
+		}
+
+		@Override
+		protected String getUserName() {
+			return "";
+		}
+
+		@Override
+		protected String getPassword() {
+			return "";
+		}
+
+		@Override
+		protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
+			for (final Class<?> type : inMemTypes) {
+				createTable(type);
+			}
+			return 1;
+		}
+	}
 }

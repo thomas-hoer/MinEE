@@ -42,7 +42,6 @@ public class PreparedInsert<T> extends PreparedQueryBase<T> {
 
 		final Field[] fields = clazz.getDeclaredFields();
 		for (final Field field : fields) {
-			field.setAccessible(true);
 			fieldList.add(field);
 			if (List.class.isAssignableFrom(field.getType())) {
 				prepareInsert(connection, field);
@@ -63,11 +62,13 @@ public class PreparedInsert<T> extends PreparedQueryBase<T> {
 	}
 
 	/**
+	 * Executes the insert of the object objectToInsert and persists it in the
+	 * Database.
 	 *
-	 * @param objectToInsert
-	 * @param handledObjects
-	 * @return
-	 * @throws SQLException
+	 * @param objectToInsert Object that should be persisted
+	 * @param handledObjects Object cache of inserted entries in the same session
+	 * @return Id of the inserted Object
+	 * @throws SQLException SQLException in case of an error
 	 */
 	private UUID execute(final T objectToInsert, final Set<Object> handledObjects) throws SQLException {
 		Assertions.assertNotNull(objectToInsert);

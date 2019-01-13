@@ -1,6 +1,7 @@
 package de.minee.jpa;
 
 import de.minee.util.Assertions;
+import de.minee.util.ProxyFactory;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
@@ -35,7 +36,7 @@ public class WhereClause<S, T> {
 
 		this.selectStatement = selectStatement;
 
-		final T proxy = selectStatement.getProxy();
+		final T proxy = ProxyFactory.getProxy(selectStatement.getType());
 		whereField.apply(proxy);
 		final String proxyFieldName = proxy.toString();
 		final Class<T> type = selectStatement.getType();

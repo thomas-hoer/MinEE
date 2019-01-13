@@ -48,7 +48,7 @@ public class HtmlRenderer extends AbstractRenderer {
 		} else if (UUID.class.isAssignableFrom(cls) || cls.isPrimitive()) {
 			sb.append(input.toString());
 		} else {
-			for (final Field field : cls.getDeclaredFields()) {
+			for (final Field field : ReflectionUtil.getAllFields(cls)) {
 				if (UUID.class.equals(field.getType()) && "id".equals(field.getName())) {
 					continue;
 				}
@@ -63,9 +63,10 @@ public class HtmlRenderer extends AbstractRenderer {
 		Assertions.assertNotNull(cls);
 		final StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append("<!DOCTYPE html><html><body><form method=\"POST\" action=\"create\">");
-		for (final Field field : cls.getDeclaredFields()) {
-			stringBuilder.append("<input type=\"text\" placeholder=\"").append(field.getName()).append("\" name=\"")
-					.append(field.getName()).append("\"><br/>");
+		for (final Field field : ReflectionUtil.getAllFields(cls)) {
+			final String fieldName = field.getName();
+			stringBuilder.append("<input type=\"text\" placeholder=\"").append(fieldName).append("\" name=\"")
+					.append(fieldName).append("\"><br/>");
 		}
 		stringBuilder.append("<input type=\"submit\" value=\"Create\"></form></body></html>");
 		return stringBuilder.toString();

@@ -34,7 +34,6 @@ class PreparedUpdate<S> extends PreparedQueryBase<S> {
 		final Field[] fields = clazz.getDeclaredFields();
 		final StringJoiner stringJoiner = new StringJoiner(",");
 		for (final Field field : fields) {
-			field.setAccessible(true);
 			fieldList.add(field);
 			if (List.class.isAssignableFrom(field.getType())) {
 				prepareInsert(connection, field);

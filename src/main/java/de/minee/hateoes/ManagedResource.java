@@ -146,7 +146,6 @@ class ManagedResource<T> {
 	}
 
 	private List<T> getSelectedResource(final String[] pathSplit) throws SQLException {
-		final StringBuilder query = new StringBuilder();
 		final List<String> parameter = new ArrayList<>();
 		final StringJoiner stringJoiner = new StringJoiner(" AND ");
 		for (int i = 0; i < path.length; i++) {
@@ -155,8 +154,10 @@ class ManagedResource<T> {
 				parameter.add(pathSplit[i]);
 			}
 		}
-		query.append(stringJoiner.toString());
-		return dao.select(type).query(query.toString()).execute(parameter);
+		if (parameter.isEmpty()) {
+			return dao.select(type).execute();
+		}
+		return dao.select(type).query(stringJoiner.toString()).execute(parameter);
 	}
 
 	private Object fromString(final Class<?> type, final String parameter) {
@@ -195,11 +196,10 @@ class ManagedResource<T> {
 	private void doPostCreate(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
 		try {
 			final Object instance = type.newInstance();
-			for (final Field field : type.getDeclaredFields()) {
-				field.setAccessible(true);
+			for (final Field field : ReflectionUtil.getAllFields(type)) {
 				final Object fieldValue = fromString(field.getType(), req.getParameter(field.getName()));
 				if (fieldValue != null) {
-					field.set(instance, fieldValue);
+					ReflectionUtil.executeSet(field, instance, fieldValue);
 				}
 				LOGGER.info(() -> field.getName() + ": " + req.getParameter(field.getName()));
 			}
@@ -218,10 +218,9 @@ class ManagedResource<T> {
 		try {
 			final Object instance = type.newInstance();
 			for (final Field field : ReflectionUtil.getAllFields(type)) {
-				field.setAccessible(true);
 				final Object fieldValue = fromString(field.getType(), req.getParameter(field.getName()));
 				if (fieldValue != null) {
-					field.set(instance, fieldValue);
+					ReflectionUtil.executeSet(field, instance, fieldValue);
 				}
 				LOGGER.info(() -> field.getName() + ": " + req.getParameter(field.getName()));
 			}

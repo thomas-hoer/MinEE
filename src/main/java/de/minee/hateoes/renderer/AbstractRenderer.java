@@ -36,8 +36,7 @@ public abstract class AbstractRenderer {
 	protected List<Entry> getFields(final Object object) {
 		final Class<?> cls = object.getClass();
 		final List<Entry> result = new ArrayList<>();
-		for (final Field field : cls.getDeclaredFields()) {
-			field.setAccessible(true);
+		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			final Object value = ReflectionUtil.executeGet(field, object);
 			final Entry entry = new Entry(field.getName(), value);
 			result.add(entry);
