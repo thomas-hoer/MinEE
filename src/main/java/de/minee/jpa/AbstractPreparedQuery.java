@@ -9,17 +9,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-public class PreparedQueryBase<T> {
+public abstract class AbstractPreparedQuery<T> extends AbstractQuery {
 
-	private static final Logger LOGGER = Logger.getLogger(PreparedQueryBase.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(AbstractPreparedQuery.class.getName());
 
 	protected final Cascade cascade;
 	protected final Connection connection;
@@ -29,7 +27,7 @@ public class PreparedQueryBase<T> {
 	protected final Map<Field, PreparedStatement> mappingDelete = new HashMap<>();
 	protected final Map<Field, PreparedStatement> mappingDeleteAll = new HashMap<>();
 
-	protected PreparedQueryBase(final Connection connection, final Cascade cascade) {
+	protected AbstractPreparedQuery(final Connection connection, final Cascade cascade) {
 		Assertions.assertNotNull(connection);
 		Assertions.assertNotNull(cascade);
 		this.connection = connection;
@@ -74,21 +72,8 @@ public class PreparedQueryBase<T> {
 		return objectId;
 	}
 
-	protected void executeQuery(final PreparedStatement statement, final Consumer<ResultSet> consumer)
-			throws SQLException {
-		try (ResultSet resultSet = statement.executeQuery()) {
-			while (resultSet.next()) {
-				consumer.accept(resultSet);
-			}
-		}
-	}
-
-	protected void executeQuery(final String query, final Consumer<ResultSet> consumer) throws SQLException {
-		try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(query)) {
-			while (resultSet.next()) {
-				consumer.accept(resultSet);
-			}
-		}
+	protected interface ResultSetConsumer {
+		void accept(ResultSet resultSet) throws SQLException;
 	}
 
 	void removeReferences(final Field field, final UUID objectId, final Set<Object> existingElements)
@@ -100,5 +85,10 @@ public class PreparedQueryBase<T> {
 			LOGGER.info(deleteStatement::toString);
 			deleteStatement.execute();
 		}
+	}
+
+	@Override
+	protected Connection getConnection() {
+		return connection;
 	}
 }

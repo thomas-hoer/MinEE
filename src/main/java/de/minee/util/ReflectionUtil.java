@@ -18,31 +18,11 @@ public final class ReflectionUtil {
 	}
 
 	/**
+	 * Get all field values of the source object as key value map. The key is is a
+	 * String with the fields name.
 	 *
-	 * @param values
-	 * @param destination
-	 * @return
-	 */
-	public static boolean setAll(final Map<String, Object> values, final Object destination) {
-		Assertions.assertNotNull(values);
-		Assertions.assertNotNull(destination);
-		boolean success = true;
-		final Class<?> cls = destination.getClass();
-		for (final Map.Entry<String, Object> entry : values.entrySet()) {
-			final Field field = getDeclaredField(cls, entry.getKey());
-			if (field == null) {
-				success = false;
-			} else {
-				executeSet(field, destination, entry.getValue());
-			}
-		}
-		return success;
-	}
-
-	/**
-	 *
-	 * @param source
-	 * @return
+	 * @param source Source Object
+	 * @return Key Value Map of all field maps
 	 */
 	public static Map<String, Object> getAll(final Object source) {
 		Assertions.assertNotNull(source);

@@ -2,7 +2,6 @@ package de.minee.util;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.SQLException;
 
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.Proxy;
@@ -13,8 +12,16 @@ public final class ProxyFactory {
 		// Static Class don't need an instance.
 	}
 
+	/**
+	 * Creates a proxy instance on which you can check what method is called. The
+	 * last called method can be retrieved by invoking toString().
+	 *
+	 * @param cls Type of the proxy
+	 * @return proxy instance of type cls
+	 * @throws ProxyException ProxyException in case of an Error
+	 */
 	@SuppressWarnings("unchecked")
-	public static <T> T getProxy(final Class<T> cls) throws SQLException {
+	public static <T> T getProxy(final Class<T> cls) throws ProxyException {
 		final javassist.util.proxy.ProxyFactory proxyFactory = new javassist.util.proxy.ProxyFactory();
 		proxyFactory.setSuperclass(cls);
 		final MethodHandler handler = new ProxyMethodHandler();
@@ -24,7 +31,7 @@ public final class ProxyFactory {
 			return (T) proxy;
 		} catch (NoSuchMethodException | IllegalArgumentException | InstantiationException | IllegalAccessException
 				| InvocationTargetException e) {
-			throw new SQLException("Cannot instantiate Object of type " + cls.getName(), e);
+			throw new ProxyException("Cannot instantiate Object of type " + cls.getName(), e);
 		}
 	}
 
@@ -44,4 +51,13 @@ public final class ProxyFactory {
 		}
 
 	}
+
+	public static class ProxyException extends Exception {
+		private static final long serialVersionUID = -326621728067431728L;
+
+		public ProxyException(final String message, final Throwable cause) {
+			super(message, cause);
+		}
+	}
+
 }

@@ -1,11 +1,9 @@
 package de.minee.jpa;
 
-import java.sql.SQLException;
-
 public class DAOImpl extends AbstractTestDAO {
 
 	@Override
-	protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
+	protected int updateDatabaseSchema(final int oldDbSchemaVersion) {
 		return 0;
 	}
 

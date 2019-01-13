@@ -3,15 +3,12 @@ package de.minee.hateoes.renderer;
 import de.minee.util.Assertions;
 import de.minee.util.ReflectionUtil;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 public class JsonRenderer extends AbstractRenderer {
 
@@ -24,19 +21,6 @@ public class JsonRenderer extends AbstractRenderer {
 		final StringBuilder stringBuilder = new StringBuilder();
 		toJson(input, stringBuilder, knownObjects);
 		return stringBuilder.toString();
-	}
-
-	private static void forEach(final Object arrayOrCollection, final Consumer<Object> predicate) {
-		if (arrayOrCollection instanceof Collection) {
-			for (final Object o : (Collection<?>) arrayOrCollection) {
-				predicate.accept(o);
-			}
-		} else {
-			for (int i = 0; i < Array.getLength(arrayOrCollection); i++) {
-				final Object o = Array.get(arrayOrCollection, i);
-				predicate.accept(o);
-			}
-		}
 	}
 
 	private void toJson(final Object input, final StringBuilder stringBuilder, final Set<Object> knownObjects) {
@@ -56,7 +40,7 @@ public class JsonRenderer extends AbstractRenderer {
 		if (cls.isArray() || List.class.isAssignableFrom(cls)) {
 			stringBuilder.append('[');
 			final StringJoiner stringJoiner = new StringJoiner(",");
-			forEach(input, o -> stringJoiner.add(render(o)));
+			forEach(input, o -> stringJoiner.add(render(o, knownObjects)));
 			stringBuilder.append(stringJoiner.toString());
 			stringBuilder.append(']');
 			return;

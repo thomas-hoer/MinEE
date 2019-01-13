@@ -6,7 +6,6 @@ import de.minee.util.ReflectionUtil;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -15,7 +14,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-public class PreparedDelete<T> extends PreparedQueryBase<T> {
+public class PreparedDelete<T> extends AbstractPreparedQuery<T> {
 
 	private static final Logger LOGGER = Logger.getLogger(PreparedDelete.class.getName());
 
@@ -23,11 +22,13 @@ public class PreparedDelete<T> extends PreparedQueryBase<T> {
 	private final PreparedStatement preparedStatement;
 
 	/**
+	 * Creates a PreparedStatement for a delete query.
 	 *
-	 * @param clazz
-	 * @param connection
-	 * @param cascade
-	 * @throws SQLException
+	 * @param clazz      Class corresponding to the table where a entry should be
+	 *                   deleted
+	 * @param connection Database connection
+	 * @param cascade    Rule how referenced objects should be threaded
+	 * @throws SQLException SQLException in case of an error
 	 */
 	public PreparedDelete(final Class<T> clazz, final Connection connection, final Cascade cascade)
 			throws SQLException {
@@ -55,9 +56,10 @@ public class PreparedDelete<T> extends PreparedQueryBase<T> {
 	}
 
 	/**
+	 * Executes a prepared delete statement on element objectToDelete.
 	 *
-	 * @param objectToDelete
-	 * @throws SQLException
+	 * @param objectToDelete Object that gets deleted
+	 * @throws SQLException SQLException in case of an error
 	 */
 	public void execute(final T objectToDelete) throws SQLException {
 		Assertions.assertNotNull(objectToDelete);
@@ -92,11 +94,7 @@ public class PreparedDelete<T> extends PreparedQueryBase<T> {
 		final Set<Object> existingElements = new HashSet<>();
 		selectStatement.setObject(1, objectId);
 		LOGGER.info(selectStatement::toString);
-		try (ResultSet rs = selectStatement.executeQuery()) {
-			while (rs.next()) {
-				existingElements.add(rs.getObject(1));
-			}
-		}
+		executeQuery(selectStatement, rs -> existingElements.add(rs.getObject(1)));
 
 		final List<?> list = (List<?>) fieldElementToDelete;
 		for (final Object listElement : list) {

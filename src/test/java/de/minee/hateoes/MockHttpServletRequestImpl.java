@@ -36,13 +36,6 @@ public class MockHttpServletRequestImpl implements HttpServletRequest {
 		this(pathInfo, Operation.GET, null);
 	}
 
-	/**
-	 *
-	 *
-	 * @param pathInfo
-	 * @param operation
-	 * @param content
-	 */
 	public MockHttpServletRequestImpl(final String pathInfo, final Operation operation, final String content) {
 		this.pathInfo = pathInfo;
 		this.method = operation.name();

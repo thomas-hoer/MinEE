@@ -193,7 +193,12 @@ class ManagedResource<T> {
 		throw new HateoesException("Not able to map String to type " + type.getSimpleName());
 	}
 
-	private void doPostCreate(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
+	private interface ManagedResourceConsumer {
+		String accept(Object instance) throws SQLException;
+	}
+
+	private void assembleRequestObject(final HttpServletRequest req, final HttpServletResponse resp,
+			final ManagedResourceConsumer consumer) throws IOException {
 		try {
 			final Object instance = type.newInstance();
 			for (final Field field : ReflectionUtil.getAllFields(type)) {
@@ -203,8 +208,7 @@ class ManagedResource<T> {
 				}
 				LOGGER.info(() -> field.getName() + ": " + req.getParameter(field.getName()));
 			}
-			final UUID newId = dao.insertShallow(instance);
-			resp.getWriter().write("Success\nNew ID:" + newId);
+			resp.getWriter().write(consumer.accept(instance));
 		} catch (final RuntimeException e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			throw e;
@@ -214,25 +218,18 @@ class ManagedResource<T> {
 		}
 	}
 
+	private void doPostCreate(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
+		assembleRequestObject(req, resp, instance -> {
+			final UUID newId = dao.insertShallow(instance);
+			return "Success\nNew ID:" + newId;
+		});
+	}
+
 	private void doPostEdit(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
-		try {
-			final Object instance = type.newInstance();
-			for (final Field field : ReflectionUtil.getAllFields(type)) {
-				final Object fieldValue = fromString(field.getType(), req.getParameter(field.getName()));
-				if (fieldValue != null) {
-					ReflectionUtil.executeSet(field, instance, fieldValue);
-				}
-				LOGGER.info(() -> field.getName() + ": " + req.getParameter(field.getName()));
-			}
+		assembleRequestObject(req, resp, instance -> {
 			final int updatedElements = dao.update(instance);
-			resp.getWriter().write("Success\n" + updatedElements + " Elements updated");
-		} catch (final RuntimeException e) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-			throw e;
-		} catch (InstantiationException | IllegalAccessException | SQLException | IOException e) {
-			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			throw new IOException(e);
-		}
+			return "Success\n" + updatedElements + " Elements updated";
+		});
 	}
 
 	private void doGetCreate(final HttpServletResponse resp) throws IOException {

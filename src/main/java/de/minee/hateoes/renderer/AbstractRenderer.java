@@ -3,9 +3,12 @@ package de.minee.hateoes.renderer;
 import de.minee.util.Assertions;
 import de.minee.util.ReflectionUtil;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class AbstractRenderer {
 
@@ -61,4 +64,18 @@ public abstract class AbstractRenderer {
 			return value;
 		}
 	}
+
+	protected static void forEach(final Object arrayOrCollection, final Consumer<Object> predicate) {
+		if (arrayOrCollection instanceof Collection) {
+			for (final Object o : (Collection<?>) arrayOrCollection) {
+				predicate.accept(o);
+			}
+		} else {
+			for (int i = 0; i < Array.getLength(arrayOrCollection); i++) {
+				final Object o = Array.get(arrayOrCollection, i);
+				predicate.accept(o);
+			}
+		}
+	}
+
 }

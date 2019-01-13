@@ -16,7 +16,7 @@ import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-public class PreparedInsert<T> extends PreparedQueryBase<T> {
+public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 
 	private static final Logger LOGGER = Logger.getLogger(PreparedInsert.class.getName());
 
@@ -24,11 +24,13 @@ public class PreparedInsert<T> extends PreparedQueryBase<T> {
 	private final PreparedStatement preparedStatement;
 
 	/**
+	 * Creates a PreparedStatement for a insert query.
 	 *
-	 * @param cls
-	 * @param connection
-	 * @param cascade
-	 * @throws SQLException
+	 * @param cls        Class corresponding to the table where a entry should be
+	 *                   inserted
+	 * @param connection Database connection
+	 * @param cascade    Rule how referenced objects should be threaded
+	 * @throws SQLException SQLException in case of an error
 	 */
 	public PreparedInsert(final Class<T> cls, final Connection connection, final Cascade cascade) throws SQLException {
 		super(connection, cascade);

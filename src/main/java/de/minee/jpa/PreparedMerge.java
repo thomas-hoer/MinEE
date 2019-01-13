@@ -6,7 +6,6 @@ import de.minee.util.ReflectionUtil;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -16,13 +15,22 @@ import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-class PreparedMerge<S> extends PreparedQueryBase<S> {
+class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 
 	private static final Logger LOGGER = Logger.getLogger(PreparedMerge.class.getName());
 
 	private final List<Field> fieldList = new ArrayList<>();
 	private final PreparedStatement preparedStatement;
 
+	/**
+	 * Creates a PreparedStatement for a merge query.
+	 *
+	 * @param cls        Class corresponding to the table where a entry should be
+	 *                   merged
+	 * @param connection Database connection
+	 * @param cascade    Rule how referenced objects should be threaded
+	 * @throws SQLException SQLException in case of an error
+	 */
 	public PreparedMerge(final Class<S> cls, final Connection connection, final Cascade cascade) throws SQLException {
 		super(connection, cascade);
 		final StringBuilder query = new StringBuilder();
@@ -97,11 +105,7 @@ class PreparedMerge<S> extends PreparedQueryBase<S> {
 		final Set<Object> existingElements = new HashSet<>();
 		selectStatement.setObject(1, objectId);
 		LOGGER.info(selectStatement::toString);
-		try (ResultSet rs = selectStatement.executeQuery()) {
-			while (rs.next()) {
-				existingElements.add(rs.getObject(1));
-			}
-		}
+		executeQuery(selectStatement, rs -> existingElements.add(rs.getObject(1)));
 
 		final List<?> list = (List<?>) fieldElementToMerge;
 		for (final Object listElement : list) {

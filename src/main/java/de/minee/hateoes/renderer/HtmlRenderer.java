@@ -5,6 +5,8 @@ import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class HtmlRenderer extends AbstractRenderer {
@@ -18,44 +20,49 @@ public class HtmlRenderer extends AbstractRenderer {
 		final StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append("<!DOCTYPE html><html><body>");
 		if (input != null) {
-			toHtml(input, stringBuilder);
+			toHtml(input, stringBuilder, new HashSet<>());
 		}
 		stringBuilder.append("</body></html>");
 		return stringBuilder.toString();
 	}
 
-	private static void toHtml(final Object input, final StringBuilder sb) {
+	private static void toHtml(final Object input, final StringBuilder stringBuilder, final Set<Object> knownObjects) {
 		if (input == null) {
 			return;
 		}
-		final Class<?> cls = input.getClass();
-		if (String.class.isAssignableFrom(cls)) {
-			sb.append(TAG_DIV_START);
-			sb.append(input.toString());
-			sb.append(TAG_DIV_END);
+		if (knownObjects.contains(input)) {
+			append(stringBuilder, ReflectionUtil.executeGet("id", input));
 			return;
 		}
-		if (cls.isEnum()) {
-			sb.append(TAG_DIV_START);
-			sb.append(input.toString());
-			sb.append(TAG_DIV_END);
+		final Class<?> cls = input.getClass();
+		if (isDirectPrintable(cls)) {
+			append(stringBuilder, input.toString());
 			return;
 		}
 
-		sb.append(String.format(TAG_DIV_START_CLASS, cls.getSimpleName()));
-		if (Collection.class.isAssignableFrom(cls)) {
-			((Collection<?>) input).stream().forEach(o -> toHtml(o, sb));
+		stringBuilder.append(String.format(TAG_DIV_START_CLASS, cls.getSimpleName()));
+		if (cls.isArray() || Collection.class.isAssignableFrom(cls)) {
+			forEach(input, o -> toHtml(o, stringBuilder, knownObjects));
 		} else if (UUID.class.isAssignableFrom(cls) || cls.isPrimitive()) {
-			sb.append(input.toString());
+			stringBuilder.append(input.toString());
 		} else {
-			for (final Field field : ReflectionUtil.getAllFields(cls)) {
-				if (UUID.class.equals(field.getType()) && "id".equals(field.getName())) {
-					continue;
-				}
-				toHtml(ReflectionUtil.executeGet(field, input), sb);
-			}
+			knownObjects.add(input);
+			ReflectionUtil.getAllFields(cls).stream()
+					.filter(field -> !UUID.class.equals(field.getType()) || !"id".equals(field.getName()))
+					.forEach(field -> toHtml(ReflectionUtil.executeGet(field, input), stringBuilder, knownObjects));
+			knownObjects.remove(input);
 		}
-		sb.append(TAG_DIV_END);
+		stringBuilder.append(TAG_DIV_END);
+	}
+
+	private static boolean isDirectPrintable(final Class<?> cls) {
+		return String.class.isAssignableFrom(cls) || cls.isEnum();
+	}
+
+	private static void append(final StringBuilder stringBuilder, final Object content) {
+		stringBuilder.append(TAG_DIV_START);
+		stringBuilder.append(content);
+		stringBuilder.append(TAG_DIV_END);
 	}
 
 	@Override

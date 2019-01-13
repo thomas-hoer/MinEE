@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  *
  * @param <T> Class that corresponds to a database table
  */
-public abstract class AbstractStatement<T> {
+public abstract class AbstractStatement<T> extends AbstractQuery {
 
 	private static final String INSTANTIATION_ERROR_MESSAGE = "Cannot instanciate object of type ";
 
@@ -209,6 +209,7 @@ public abstract class AbstractStatement<T> {
 	abstract void handleFieldColumn(final Field field, final ResultSet rs, final T obj,
 			final Map<Object, Object> handledObjects) throws SQLException, IllegalAccessException;
 
+	@Override
 	protected Connection getConnection() {
 		return connection;
 	}
