@@ -16,9 +16,6 @@ public final class CdiUtil {
 
 	static void injectResources(final Object o) {
 		final Class<?> cls = o.getClass();
-		if (map.containsKey(cls)) {
-			throw new CdiException("CDI Cycle found");
-		}
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			if (field.isAnnotationPresent(Stateless.class)) {
 				ReflectionUtil.executeSet(field, o, getInstance(field.getType()));
@@ -39,8 +36,8 @@ public final class CdiUtil {
 		try {
 			if (!map.containsKey(cls)) {
 				final Object instance = cls.newInstance();
-				injectResources(instance);
 				map.put(cls, instance);
+				injectResources(instance);
 			}
 			return (T) map.get(cls);
 		} catch (InstantiationException | IllegalAccessException e) {

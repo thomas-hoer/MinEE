@@ -12,10 +12,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 public class PreparedQueryBase<T> {
+
+	private static final Logger LOGGER = Logger.getLogger(PreparedQueryBase.class.getName());
 
 	protected final Cascade cascade;
 	protected final Connection connection;
@@ -87,4 +91,14 @@ public class PreparedQueryBase<T> {
 		}
 	}
 
+	void removeReferences(final Field field, final UUID objectId, final Set<Object> existingElements)
+			throws SQLException {
+		final PreparedStatement deleteStatement = mappingDelete.get(field);
+		for (final Object element : existingElements) {
+			deleteStatement.setObject(1, objectId);
+			deleteStatement.setObject(2, element);
+			LOGGER.info(deleteStatement::toString);
+			deleteStatement.execute();
+		}
+	}
 }

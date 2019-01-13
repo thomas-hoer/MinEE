@@ -8,7 +8,6 @@ import de.minee.cdi.beans.RecursiveBean;
 import de.minee.cdi.beans.SimpleBean;
 import de.minee.datamodel.SimpleReference;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class CdiUtilTest {
@@ -37,7 +36,6 @@ public class CdiUtilTest {
 	}
 
 	@Test
-	@Ignore
 	public void testGetInstanceRecursiveBean() {
 		final RecursiveBean recursiveBean = CdiUtil.getInstance(RecursiveBean.class);
 		assertNotNull(recursiveBean);
@@ -46,5 +44,16 @@ public class CdiUtilTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testGetInstanceNull() {
 		CdiUtil.getInstance(null);
+	}
+
+	@Test(expected = CdiException.class)
+	public void testCdiException() {
+		CdiUtil.getInstance(NotInstanciatable.class);
+	}
+
+	private static class NotInstanciatable {
+		private NotInstanciatable() {
+			throw new RuntimeException();
+		}
 	}
 }

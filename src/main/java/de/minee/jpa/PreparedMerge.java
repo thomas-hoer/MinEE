@@ -93,7 +93,6 @@ class PreparedMerge<S> extends PreparedQueryBase<S> {
 			return;
 		}
 		final PreparedStatement selectStatement = mappingSelect.get(field);
-		final PreparedStatement deleteStatement = mappingDelete.get(field);
 		final PreparedStatement insertStatement = mappingInsert.get(field);
 		final Set<Object> existingElements = new HashSet<>();
 		selectStatement.setObject(1, objectId);
@@ -127,12 +126,7 @@ class PreparedMerge<S> extends PreparedQueryBase<S> {
 				insertStatement.execute();
 			}
 		}
-		for (final Object element : existingElements) {
-			deleteStatement.setObject(1, objectId);
-			deleteStatement.setObject(2, element);
-			LOGGER.info(deleteStatement::toString);
-			deleteStatement.execute();
-		}
+		removeReferences(field, objectId, existingElements);
 	}
 
 	protected static <T> UUID merge(final T objectToMerge, final Connection connection, final Cascade cascade)

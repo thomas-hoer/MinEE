@@ -1,13 +1,13 @@
 package de.minee.util;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public final class ReflectionUtil {
 
@@ -56,18 +56,20 @@ public final class ReflectionUtil {
 	}
 
 	/**
+	 * Returns a list of all fields of the class and its parent classes. This
+	 * includes private and protected fields.
 	 *
-	 * @param cls
-	 * @return
+	 * @param cls Class that should explored
+	 * @return List of all fields
 	 */
 	public static List<Field> getAllFields(final Class<?> cls) {
 		Assertions.assertNotNull(cls);
-		final List<Field> fields = new ArrayList<>();
 
 		final Field[] declaredFields = cls.getDeclaredFields();
 		// The filter is needed such that the code behave the same with and without the
 		// Jacoco plugin
-		Arrays.stream(declaredFields).filter(field -> !"$jacocoData".equals(field.getName())).forEach(fields::add);
+		final List<Field> fields = Arrays.stream(declaredFields).filter(field -> !"$jacocoData".equals(field.getName()))
+				.collect(Collectors.toList());
 		if (!Object.class.equals(cls) && !cls.isEnum() && !cls.isInterface()) {
 			fields.addAll(getAllFields(cls.getSuperclass()));
 		}

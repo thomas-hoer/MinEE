@@ -15,22 +15,7 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class PreparedMergeTest extends AbstractDAO {
-
-	@Override
-	protected String getConnectionString() {
-		return "jdbc:h2:mem:";
-	}
-
-	@Override
-	protected String getUserName() {
-		return "";
-	}
-
-	@Override
-	protected String getPassword() {
-		return "";
-	}
+public class PreparedMergeTest extends AbstractTestDAO {
 
 	@Override
 	protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
@@ -69,8 +54,8 @@ public class PreparedMergeTest extends AbstractDAO {
 		final ReferenceList selectedGallery1 = select(ReferenceList.class).byId(id);
 
 		Assert.assertEquals(3, selectedGallery1.getRecursiveObjects().size());
-		final Object[] categoryNames = selectedGallery1.getRecursiveObjects().stream().map(RecursiveObject::getName).sorted()
-				.toArray();
+		final Object[] categoryNames = selectedGallery1.getRecursiveObjects().stream().map(RecursiveObject::getName)
+				.sorted().toArray();
 		Assert.assertArrayEquals(new String[] { "Name1-1", "Name2", "Name3" }, categoryNames);
 
 		// Prepare 2nd merge

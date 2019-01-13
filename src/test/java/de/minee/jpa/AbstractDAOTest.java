@@ -18,22 +18,7 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class AbstractDAOTest extends AbstractDAO {
-
-	@Override
-	protected String getConnectionString() {
-		return "jdbc:h2:mem:";
-	}
-
-	@Override
-	protected String getUserName() {
-		return "";
-	}
-
-	@Override
-	protected String getPassword() {
-		return "";
-	}
+public class AbstractDAOTest extends AbstractTestDAO {
 
 	@Override
 	protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {

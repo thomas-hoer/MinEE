@@ -23,8 +23,7 @@ class PreparedUpdate<S> extends PreparedQueryBase<S> {
 	private final List<Field> fieldList = new ArrayList<>();
 	private final PreparedStatement preparedStatement;
 
-	public PreparedUpdate(final Class<S> cls, final Connection connection, final Cascade cascade)
-			throws SQLException {
+	public PreparedUpdate(final Class<S> cls, final Connection connection, final Cascade cascade) throws SQLException {
 		super(connection, cascade);
 		final StringBuilder query = new StringBuilder();
 
@@ -93,7 +92,6 @@ class PreparedUpdate<S> extends PreparedQueryBase<S> {
 			return;
 		}
 		final PreparedStatement selectStatement = mappingSelect.get(field);
-		final PreparedStatement deleteStatement = mappingDelete.get(field);
 		final PreparedStatement insertStatement = mappingInsert.get(field);
 		final Set<Object> existingElements = new HashSet<>();
 		selectStatement.setObject(1, objectId);
@@ -127,12 +125,7 @@ class PreparedUpdate<S> extends PreparedQueryBase<S> {
 				insertStatement.execute();
 			}
 		}
-		for (final Object element : existingElements) {
-			deleteStatement.setObject(1, objectId);
-			deleteStatement.setObject(2, element);
-			LOGGER.info(deleteStatement::toString);
-			deleteStatement.execute();
-		}
+		removeReferences(field, objectId, existingElements);
 	}
 
 	protected static <T> int update(final T objectToUpdate, final Connection connection, final Cascade cascade)

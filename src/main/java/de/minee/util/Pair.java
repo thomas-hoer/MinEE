@@ -1,6 +1,7 @@
 package de.minee.util;
 
 public class Pair<S, T> {
+
 	private final S first;
 	private final T second;
 

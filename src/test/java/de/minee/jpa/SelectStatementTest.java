@@ -12,27 +12,14 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-public class SelectStatementTest extends AbstractDAO {
+public class SelectStatementTest extends AbstractTestDAO {
 
 	private static final String NAME_1 = "XX";
 	private static final String NAME_2 = "WW";
+	private static final String NAME_3 = "XY";
 	private static final String VALUE_1 = "YY";
 	private static final String VALUE_2 = "ZZ";
-
-	@Override
-	protected String getConnectionString() {
-		return "jdbc:h2:mem:";
-	}
-
-	@Override
-	protected String getUserName() {
-		return "";
-	}
-
-	@Override
-	protected String getPassword() {
-		return "";
-	}
+	private static final String VALUE_3 = "YZ";
 
 	@Override
 	protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
@@ -68,6 +55,11 @@ public class SelectStatementTest extends AbstractDAO {
 		simpleReference.setName(NAME_2);
 		simpleReference.setValue(VALUE_2);
 		insert(simpleReference);
+
+		simpleReference = new SimpleReference();
+		simpleReference.setName(NAME_3);
+		simpleReference.setValue(VALUE_3);
+		insert(simpleReference);
 	}
 
 	@Test
@@ -97,5 +89,14 @@ public class SelectStatementTest extends AbstractDAO {
 	public void testQuery() throws SQLException {
 		final List<SimpleReference> result = select(SimpleReference.class).query("Name = '" + NAME_1 + "'").execute();
 		assertEquals(2, result.size());
+	}
+
+	@Test
+	public void testSelectIn() throws SQLException {
+		final List<SimpleReference> result = select(SimpleReference.class).where(SimpleReference::getName)
+				.in(NAME_1, NAME_3).execute();
+
+		assertNotNull(result);
+		assertEquals(3, result.size());
 	}
 }
