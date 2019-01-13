@@ -41,8 +41,7 @@ public class PreparedDelete<T> extends PreparedQueryBase<T> {
 		query.append(clazz.getSimpleName());
 		query.append(" WHERE id = ?");
 
-		final Field[] fields = clazz.getDeclaredFields();
-		for (final Field field : fields) {
+		for (final Field field : ReflectionUtil.getAllFields(clazz)) {
 			fieldList.add(field);
 			if (List.class.isAssignableFrom(field.getType())) {
 				prepareDelete(connection, field);

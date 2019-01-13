@@ -23,17 +23,16 @@ class PreparedUpdate<S> extends PreparedQueryBase<S> {
 	private final List<Field> fieldList = new ArrayList<>();
 	private final PreparedStatement preparedStatement;
 
-	public PreparedUpdate(final Class<S> clazz, final Connection connection, final Cascade cascade)
+	public PreparedUpdate(final Class<S> cls, final Connection connection, final Cascade cascade)
 			throws SQLException {
 		super(connection, cascade);
 		final StringBuilder query = new StringBuilder();
 
 		query.append("UPDATE ");
-		query.append(clazz.getSimpleName());
+		query.append(cls.getSimpleName());
 		query.append(" SET ");
-		final Field[] fields = clazz.getDeclaredFields();
 		final StringJoiner stringJoiner = new StringJoiner(",");
-		for (final Field field : fields) {
+		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			fieldList.add(field);
 			if (List.class.isAssignableFrom(field.getType())) {
 				prepareInsert(connection, field);

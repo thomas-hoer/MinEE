@@ -63,7 +63,11 @@ public final class ReflectionUtil {
 	public static List<Field> getAllFields(final Class<?> cls) {
 		Assertions.assertNotNull(cls);
 		final List<Field> fields = new ArrayList<>();
-		fields.addAll(Arrays.asList(cls.getDeclaredFields()));
+
+		final Field[] declaredFields = cls.getDeclaredFields();
+		// The filter is needed such that the code behave the same with and without the
+		// Jacoco plugin
+		Arrays.stream(declaredFields).filter(field -> !"$jacocoData".equals(field.getName())).forEach(fields::add);
 		if (!Object.class.equals(cls) && !cls.isEnum() && !cls.isInterface()) {
 			fields.addAll(getAllFields(cls.getSuperclass()));
 		}
@@ -104,7 +108,7 @@ public final class ReflectionUtil {
 			field.set(base, forSet);
 			return true;
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			LOGGER.log(Level.WARNING, "", e);
+			LOGGER.log(Level.WARNING, e.getMessage(), e);
 		}
 		return false;
 	}

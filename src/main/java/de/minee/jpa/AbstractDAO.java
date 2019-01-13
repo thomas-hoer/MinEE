@@ -120,7 +120,7 @@ public abstract class AbstractDAO {
 			throw new SQLException("createTable is only allowed during updateDatabaseSchema process");
 		}
 		final StringBuilder stringBuilder = new StringBuilder();
-		final Field[] fields = cls.getDeclaredFields();
+		final List<Field> fields = ReflectionUtil.getAllFields(cls);
 		stringBuilder.append("CREATE TABLE ");
 		stringBuilder.append(cls.getSimpleName());
 		stringBuilder.append("(");

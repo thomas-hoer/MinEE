@@ -1,6 +1,7 @@
 package de.minee.jpa;
 
 import de.minee.util.Assertions;
+import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -36,15 +37,15 @@ public abstract class AbstractStatement<T> {
 	/**
 	 * Creates a base for a SELECT statement.
 	 *
-	 * @param clazz      Class that corresponds to a database table
+	 * @param cls        Class that corresponds to a database table
 	 * @param connection Database connection
 	 */
-	public AbstractStatement(final Class<T> clazz, final Connection connection) {
-		Assertions.assertNotNull(clazz);
+	public AbstractStatement(final Class<T> cls, final Connection connection) {
+		Assertions.assertNotNull(cls);
 		Assertions.assertNotNull(connection);
-		this.clazz = clazz;
+		this.clazz = cls;
 		this.connection = connection;
-		for (final Field field : clazz.getDeclaredFields()) {
+		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			fieldList.add(field);
 		}
 	}

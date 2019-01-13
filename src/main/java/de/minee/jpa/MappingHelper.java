@@ -69,19 +69,13 @@ final class MappingHelper {
 						+ field.getDeclaringClass());
 			}
 		}
-		try {
-			if (clazz.isEnum()) {
-				final StringJoiner stringJoiner = new StringJoiner(",", "(", ")");
-				Arrays.stream(clazz.getEnumConstants())
-						.forEach(value -> stringJoiner.add("'" + value.toString() + "'"));
-				return "ENUM" + stringJoiner.toString();
-			}
-			final Field childId = clazz.getDeclaredField("id");
-			return childId.getType().getSimpleName();
-		} catch (final NoSuchFieldException e) {
-			throw new MappingException(
-					"Not supported field type: " + clazz.getSimpleName() + " in Class " + field.getDeclaringClass(), e);
+		if (clazz.isEnum()) {
+			final StringJoiner stringJoiner = new StringJoiner(",", "(", ")");
+			Arrays.stream(clazz.getEnumConstants()).forEach(value -> stringJoiner.add("'" + value.toString() + "'"));
+			return "ENUM" + stringJoiner.toString();
 		}
+		final Field childId = ReflectionUtil.getDeclaredField(clazz, "id");
+		return childId.getType().getSimpleName();
 	}
 
 	public static Object getDbObject(final Object object) {

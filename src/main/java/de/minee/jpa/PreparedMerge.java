@@ -23,17 +23,16 @@ class PreparedMerge<S> extends PreparedQueryBase<S> {
 	private final List<Field> fieldList = new ArrayList<>();
 	private final PreparedStatement preparedStatement;
 
-	public PreparedMerge(final Class<S> clazz, final Connection connection, final Cascade cascade) throws SQLException {
+	public PreparedMerge(final Class<S> cls, final Connection connection, final Cascade cascade) throws SQLException {
 		super(connection, cascade);
 		final StringBuilder query = new StringBuilder();
 		final StringJoiner fieldNames = new StringJoiner(",");
 		final StringJoiner values = new StringJoiner(",");
 
 		query.append("MERGE INTO ");
-		query.append(clazz.getSimpleName());
+		query.append(cls.getSimpleName());
 
-		final Field[] fields = clazz.getDeclaredFields();
-		for (final Field field : fields) {
+		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			fieldList.add(field);
 			if (List.class.isAssignableFrom(field.getType())) {
 				prepareInsert(connection, field);

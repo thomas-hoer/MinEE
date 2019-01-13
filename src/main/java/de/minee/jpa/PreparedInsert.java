@@ -25,23 +25,21 @@ public class PreparedInsert<T> extends PreparedQueryBase<T> {
 
 	/**
 	 *
-	 * @param clazz
+	 * @param cls
 	 * @param connection
 	 * @param cascade
 	 * @throws SQLException
 	 */
-	public PreparedInsert(final Class<T> clazz, final Connection connection, final Cascade cascade)
-			throws SQLException {
+	public PreparedInsert(final Class<T> cls, final Connection connection, final Cascade cascade) throws SQLException {
 		super(connection, cascade);
 		final StringBuilder query = new StringBuilder();
 		final StringJoiner fieldNames = new StringJoiner(",");
 		final StringJoiner values = new StringJoiner(",");
 
 		query.append("INSERT INTO ");
-		query.append(clazz.getSimpleName());
+		query.append(cls.getSimpleName());
 
-		final Field[] fields = clazz.getDeclaredFields();
-		for (final Field field : fields) {
+		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			fieldList.add(field);
 			if (List.class.isAssignableFrom(field.getType())) {
 				prepareInsert(connection, field);
