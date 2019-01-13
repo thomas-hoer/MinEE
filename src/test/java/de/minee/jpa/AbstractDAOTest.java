@@ -132,15 +132,15 @@ public class AbstractDAOTest extends AbstractDAO {
 		categories.add(category2);
 		final ReferenceList gallery = new ReferenceList();
 		gallery.setName("gname");
-		gallery.setCategories(categories);
+		gallery.setRecursiveObjects(categories);
 
-		select(ReferenceList.class).where(ReferenceList::getCategories).is(Arrays.asList(category3)).execute();
+		select(ReferenceList.class).where(ReferenceList::getRecursiveObjects).is(Arrays.asList(category3)).execute();
 		insert(gallery);
 		final ReferenceList selectedGallery = select(ReferenceList.class).byId(gallery.getId());
 
 		Assert.assertNotNull(selectedGallery);
 		Assert.assertEquals(gallery.getId(), selectedGallery.getId());
-		Assert.assertEquals(2, selectedGallery.getCategories().size());
+		Assert.assertEquals(2, selectedGallery.getRecursiveObjects().size());
 	}
 
 	@Test
@@ -157,7 +157,7 @@ public class AbstractDAOTest extends AbstractDAO {
 		final ReferenceList gallery = new ReferenceList();
 		final UUID galleryId = UUID.randomUUID();
 		gallery.setId(galleryId);
-		gallery.setCategories(categories);
+		gallery.setRecursiveObjects(categories);
 		gallery.setPictures(pictures);
 
 		final ReferenceList selectedGallery1 = select(ReferenceList.class).byId(galleryId);
@@ -167,7 +167,7 @@ public class AbstractDAOTest extends AbstractDAO {
 		Assert.assertNull(selectedGallery1);
 		Assert.assertNotNull(selectedGallery2);
 		Assert.assertEquals(gallery.getId(), selectedGallery2.getId());
-		Assert.assertEquals(1, selectedGallery2.getCategories().size());
+		Assert.assertEquals(1, selectedGallery2.getRecursiveObjects().size());
 		Assert.assertEquals(1, selectedGallery2.getPictures().size());
 
 	}
@@ -175,17 +175,17 @@ public class AbstractDAOTest extends AbstractDAO {
 	@Test
 	public void testShallowInsertList() throws SQLException {
 		final ReferenceList gallery = new ReferenceList();
-		gallery.setCategories(Arrays.asList(new RecursiveObject()));
+		gallery.setRecursiveObjects(Arrays.asList(new RecursiveObject()));
 
 		Assert.assertNull(gallery.getId());
-		Assert.assertNull(gallery.getCategories().get(0).getId());
+		Assert.assertNull(gallery.getRecursiveObjects().get(0).getId());
 		insertShallow(gallery);
 		Assert.assertNotNull(gallery.getId());
-		Assert.assertNull(gallery.getCategories().get(0).getId());
+		Assert.assertNull(gallery.getRecursiveObjects().get(0).getId());
 
 		final ReferenceList selectedGallery = select(ReferenceList.class).byId(gallery.getId());
 		Assert.assertNotNull(selectedGallery);
-		Assert.assertEquals(0, selectedGallery.getCategories().size());
+		Assert.assertEquals(0, selectedGallery.getRecursiveObjects().size());
 
 	}
 
@@ -194,18 +194,18 @@ public class AbstractDAOTest extends AbstractDAO {
 		final ReferenceList gallery = new ReferenceList();
 		final RecursiveObject category = new RecursiveObject();
 		category.setId(UUID.randomUUID());
-		gallery.setCategories(Arrays.asList(category));
+		gallery.setRecursiveObjects(Arrays.asList(category));
 
 		Assert.assertNull(gallery.getId());
-		Assert.assertNotNull(gallery.getCategories().get(0).getId());
+		Assert.assertNotNull(gallery.getRecursiveObjects().get(0).getId());
 		insertShallow(gallery);
 		Assert.assertNotNull(gallery.getId());
-		Assert.assertNotNull(gallery.getCategories().get(0).getId());
+		Assert.assertNotNull(gallery.getRecursiveObjects().get(0).getId());
 
 		final ReferenceList selectedGallery = select(ReferenceList.class).byId(gallery.getId());
 		Assert.assertNotNull(selectedGallery);
-		Assert.assertEquals(1, selectedGallery.getCategories().size());
-		Assert.assertNull(selectedGallery.getCategories().get(0));
+		Assert.assertEquals(1, selectedGallery.getRecursiveObjects().size());
+		Assert.assertNull(selectedGallery.getRecursiveObjects().get(0));
 
 	}
 
@@ -214,18 +214,18 @@ public class AbstractDAOTest extends AbstractDAO {
 		final ReferenceList gallery = new ReferenceList();
 		final RecursiveObject category = new RecursiveObject();
 		insertShallow(category);
-		gallery.setCategories(Arrays.asList(category));
+		gallery.setRecursiveObjects(Arrays.asList(category));
 
 		Assert.assertNull(gallery.getId());
-		Assert.assertNotNull(gallery.getCategories().get(0).getId());
+		Assert.assertNotNull(gallery.getRecursiveObjects().get(0).getId());
 		insertShallow(gallery);
 		Assert.assertNotNull(gallery.getId());
-		Assert.assertNotNull(gallery.getCategories().get(0).getId());
+		Assert.assertNotNull(gallery.getRecursiveObjects().get(0).getId());
 
 		final ReferenceList selectedGallery = select(ReferenceList.class).byId(gallery.getId());
 		Assert.assertNotNull(selectedGallery);
-		Assert.assertEquals(1, selectedGallery.getCategories().size());
-		Assert.assertNotNull(selectedGallery.getCategories().get(0));
+		Assert.assertEquals(1, selectedGallery.getRecursiveObjects().size());
+		Assert.assertNotNull(selectedGallery.getRecursiveObjects().get(0));
 
 	}
 
@@ -257,13 +257,13 @@ public class AbstractDAOTest extends AbstractDAO {
 
 		// Setting indirect Ids into List childs
 		final ReferenceList gallery = new ReferenceList();
-		gallery.setCategories(Arrays.asList(new RecursiveObject()));
+		gallery.setRecursiveObjects(Arrays.asList(new RecursiveObject()));
 
 		Assert.assertNull(gallery.getId());
-		Assert.assertNull(gallery.getCategories().get(0).getId());
+		Assert.assertNull(gallery.getRecursiveObjects().get(0).getId());
 		insert(gallery);
 		Assert.assertNotNull(gallery.getId());
-		Assert.assertNotNull(gallery.getCategories().get(0).getId());
+		Assert.assertNotNull(gallery.getRecursiveObjects().get(0).getId());
 
 		// Setting indirect Ids into childs
 		final ReferenceChain user = new ReferenceChain();

@@ -6,7 +6,7 @@ import java.util.UUID;
 public class ReferenceList {
 
 	private UUID id;
-	private List<RecursiveObject> categories;
+	private List<RecursiveObject> recursiveObjects;
 	private ReferenceChain user;
 	private String name;
 	private String description;
@@ -19,12 +19,12 @@ public class ReferenceList {
 		this.id = id;
 	}
 
-	public List<RecursiveObject> getCategories() {
-		return categories;
+	public List<RecursiveObject> getRecursiveObjects() {
+		return recursiveObjects;
 	}
 
-	public void setCategories(final List<RecursiveObject> categories) {
-		this.categories = categories;
+	public void setRecursiveObjects(final List<RecursiveObject> recursiveObjects) {
+		this.recursiveObjects = recursiveObjects;
 	}
 
 	public ReferenceChain getUser() {

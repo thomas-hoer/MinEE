@@ -17,8 +17,12 @@ public class JsonRenderer extends AbstractRenderer {
 
 	@Override
 	public String render(final Object input) {
+		return render(input, new HashSet<>());
+	}
+
+	private String render(final Object input, final Set<Object> knownObjects) {
 		final StringBuilder stringBuilder = new StringBuilder();
-		toJson(input, stringBuilder);
+		toJson(input, stringBuilder, knownObjects);
 		return stringBuilder.toString();
 	}
 
@@ -35,9 +39,13 @@ public class JsonRenderer extends AbstractRenderer {
 		}
 	}
 
-	private void toJson(final Object input, final StringBuilder stringBuilder) {
+	private void toJson(final Object input, final StringBuilder stringBuilder, final Set<Object> knownObjects) {
 		if (input == null) {
 			stringBuilder.append("null");
+			return;
+		}
+		if (knownObjects.contains(input)) {
+			toJson(ReflectionUtil.executeGet("id", input), stringBuilder, knownObjects);
 			return;
 		}
 		final Class<?> cls = input.getClass();
@@ -67,9 +75,12 @@ public class JsonRenderer extends AbstractRenderer {
 		}
 		stringBuilder.append("{");
 		final StringJoiner stringJoiner = new StringJoiner(",");
+		knownObjects.add(input);
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
-			stringJoiner.add(field.getName() + ":" + render(ReflectionUtil.executeGet(field, input)));
+			final Object fieldObject = ReflectionUtil.executeGet(field, input);
+			stringJoiner.add(field.getName() + ":" + render(fieldObject, knownObjects));
 		}
+		knownObjects.remove(input);
 		stringBuilder.append(stringJoiner.toString());
 		stringBuilder.append("}");
 

@@ -1,12 +1,16 @@
 package de.minee.hateoes.renderer;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import de.minee.datamodel.RecursiveObject;
 import de.minee.datamodel.ReferenceChain;
+import de.minee.datamodel.ReferenceList;
 import de.minee.datamodel.SimpleReference;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -57,12 +61,35 @@ public class JsonRendererTest {
 		assertTrue(output.contains(ID_2.toString()));
 	}
 
+	/**
+	 * A reference cycle shall not cause a StackOverflowException.
+	 */
 	@Test
 	public void testRenderCyclic() {
 		final Object o = createCyclicObject();
 		final String output = renderer.render(o);
 		assertNotNull(output);
 		assertTrue(output.contains(ID_3.toString()));
+	}
+
+	/**
+	 * This test is needed because the cycle avoidance skip to render objects if
+	 * they are already rendered. In the beginning it skipped to much.
+	 */
+	@Test
+	public void testRenderListWithIdenticalObjects() {
+		final ReferenceList object = new ReferenceList();
+		object.setId(ID_1);
+		final List<RecursiveObject> list = new ArrayList<>();
+		final RecursiveObject recursiveObject = new RecursiveObject();
+		recursiveObject.setId(ID_2);
+		list.add(recursiveObject);
+		list.add(recursiveObject);
+		object.setRecursiveObjects(list);
+
+		final String output = renderer.render(object);
+		// Assert 2 occurrences of ID_2
+		assertEquals(3, output.split(ID_2.toString()).length);
 	}
 
 	@Test
