@@ -13,6 +13,7 @@ import de.minee.datamodel.ReferenceList;
 import de.minee.datamodel.SimpleReference;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 
 import org.junit.Test;
 
@@ -90,4 +91,42 @@ public class PreparedUpdateTest extends AbstractTestDAO {
 		assertNull(selectedElement.getReferenceChain());
 		assertEquals(NAME_2, selectedElement.getName());
 	}
+
+	@Test
+	public void testUpdateList() throws SQLException {
+		final ReferenceList referenceList = new ReferenceList();
+		referenceList.setDescription(NAME_1);
+		final RecursiveObject recursiveObject = new RecursiveObject();
+		referenceList.setRecursiveObjects(Arrays.asList(recursiveObject));
+
+		insert(referenceList);
+
+		referenceList.setName(NAME_1);
+		referenceList.setDescription(null);
+		recursiveObject.setName(NAME_2);
+
+		update(referenceList);
+
+		final ReferenceList selectedElement = select(ReferenceList.class).byId(referenceList.getId());
+
+		assertNotNull(selectedElement);
+		assertEquals(NAME_1, selectedElement.getName());
+		assertNull(NAME_1, selectedElement.getDescription());
+		assertEquals(1, selectedElement.getRecursiveObjects().size());
+		assertEquals(NAME_2, selectedElement.getRecursiveObjects().get(0).getName());
+	}
+
+	@Test(expected = SQLException.class)
+	public void testUpdateListFailureInsert() throws SQLException {
+		final ReferenceList referenceList = new ReferenceList();
+		final RecursiveObject recursiveObject = new RecursiveObject();
+		referenceList.setRecursiveObjects(Arrays.asList(recursiveObject));
+
+		insert(referenceList);
+
+		referenceList.setRecursiveObjects(Arrays.asList(recursiveObject, new RecursiveObject()));
+
+		update(referenceList);
+	}
+
 }

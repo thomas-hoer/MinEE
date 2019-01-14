@@ -19,6 +19,7 @@ class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 
 	private static final Logger LOGGER = Logger.getLogger(PreparedMerge.class.getName());
 
+	private static final String MERGE_TEMPLATE = "MERGE INTO %s (%s) VALUES (%s)";
 	private final List<Field> fieldList = new ArrayList<>();
 	private final PreparedStatement preparedStatement;
 
@@ -33,13 +34,9 @@ class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 	 */
 	public PreparedMerge(final Class<S> cls, final Connection connection, final Cascade cascade) throws SQLException {
 		super(connection, cascade);
-		final StringBuilder query = new StringBuilder();
+
 		final StringJoiner fieldNames = new StringJoiner(",");
 		final StringJoiner values = new StringJoiner(",");
-
-		query.append("MERGE INTO ");
-		query.append(cls.getSimpleName());
-
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			fieldList.add(field);
 			if (List.class.isAssignableFrom(field.getType())) {
@@ -51,13 +48,8 @@ class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 			fieldNames.add(field.getName());
 			values.add("?");
 		}
-		query.append("(");
-		query.append(fieldNames.toString());
-		query.append(") VALUES (");
-		query.append(values.toString());
-		query.append(")");
 
-		final String mergeQuery = query.toString();
+		final String mergeQuery = String.format(MERGE_TEMPLATE, cls.getSimpleName(), fieldNames, values);
 		LOGGER.info(mergeQuery);
 		preparedStatement = connection.prepareStatement(mergeQuery);
 	}

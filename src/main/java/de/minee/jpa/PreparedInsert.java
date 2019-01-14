@@ -20,6 +20,7 @@ public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 
 	private static final Logger LOGGER = Logger.getLogger(PreparedInsert.class.getName());
 
+	private static final String INSERT_TEMPLATE = "INSERT INTO %s (%s) VALUES (%s)";
 	private final List<Field> fieldList = new ArrayList<>();
 	private final PreparedStatement preparedStatement;
 
@@ -34,13 +35,9 @@ public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 	 */
 	public PreparedInsert(final Class<T> cls, final Connection connection, final Cascade cascade) throws SQLException {
 		super(connection, cascade);
-		final StringBuilder query = new StringBuilder();
+
 		final StringJoiner fieldNames = new StringJoiner(",");
 		final StringJoiner values = new StringJoiner(",");
-
-		query.append("INSERT INTO ");
-		query.append(cls.getSimpleName());
-
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			fieldList.add(field);
 			if (List.class.isAssignableFrom(field.getType())) {
@@ -50,13 +47,8 @@ public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 			fieldNames.add(field.getName());
 			values.add("?");
 		}
-		query.append("(");
-		query.append(fieldNames.toString());
-		query.append(") VALUES (");
-		query.append(values.toString());
-		query.append(")");
 
-		final String insertQuery = query.toString();
+		final String insertQuery = String.format(INSERT_TEMPLATE, cls.getSimpleName(), fieldNames, values);
 		LOGGER.info(insertQuery);
 		preparedStatement = connection.prepareStatement(insertQuery);
 	}

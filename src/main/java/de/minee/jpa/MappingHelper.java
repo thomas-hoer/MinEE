@@ -99,15 +99,11 @@ final class MappingHelper {
 		if (List.class.isAssignableFrom(clazz)) {
 			return null;
 		}
-		try {
-			final UUID id = (UUID) ReflectionUtil.executeGet("id", object);
-			if (id == null) {
-				return NULL_UUID;
-			}
-			return id;
-		} catch (final IllegalArgumentException e) {
-			throw new MappingException("No Field id found in Class " + clazz.getName(), e);
+		final UUID id = (UUID) ReflectionUtil.executeGet("id", object);
+		if (id == null) {
+			return NULL_UUID;
 		}
+		return id;
 	}
 
 	public static UUID getId(final Object object) {

@@ -99,4 +99,17 @@ public class SelectStatementTest extends AbstractTestDAO {
 		assertNotNull(result);
 		assertEquals(3, result.size());
 	}
+
+	@Test(expected = SQLException.class)
+	public void testConditionNotSet() throws SQLException {
+		select(SimpleReference.class).where(SimpleReference::getName).is().execute();
+	}
+
+	@Test(expected = MappingException.class)
+	public void testCheckCondition() throws SQLException {
+		final WhereClause<String, SimpleReference> where = select(SimpleReference.class)
+				.where(SimpleReference::getName);
+		where.is();
+		where.is();
+	}
 }

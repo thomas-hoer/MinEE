@@ -21,7 +21,17 @@ public final class Assertions {
 	/**
 	 * Assert that a String is not null or empty.
 	 *
-	 * @param string
+	 * <pre>
+	 * Examples:
+	 * assertNotEmpty("foo")-> no Exception
+	 * assertNotEmpty("")   -> Exception
+	 * assertNotEmpty("\n") -> Exception
+	 * assertNotEmpty("\t") -> Exception
+	 * assertNotEmpty("  ") -> Exception
+	 * assertNotEmpty(null) -> Exception
+	 * </pre>
+	 *
+	 * @param string String to be checked.
 	 */
 	public static void assertNotEmpty(final String string) {
 		if (string == null || "".equals(string.trim())) {

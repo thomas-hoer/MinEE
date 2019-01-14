@@ -39,7 +39,7 @@ public final class ReflectionUtil {
 	 * Returns a list of all fields of the class and its parent classes. This
 	 * includes private and protected fields.
 	 *
-	 * @param cls Class that should explored
+	 * @param cls Class that should be explored
 	 * @return List of all fields
 	 */
 	public static List<Field> getAllFields(final Class<?> cls) {
@@ -57,10 +57,12 @@ public final class ReflectionUtil {
 	}
 
 	/**
+	 * Returns the Field with name fieldname of the class cls or its parent class.
+	 * This includes private and protected fields.
 	 *
-	 * @param cls
-	 * @param fieldname
-	 * @return
+	 * @param cls       Class that should be explored
+	 * @param fieldname Name of the Field
+	 * @return Field or null if field does not exist
 	 */
 	public static Field getDeclaredField(final Class<?> cls, final String fieldname) {
 		Assertions.assertNotNull(cls);
@@ -96,10 +98,12 @@ public final class ReflectionUtil {
 	}
 
 	/**
+	 * Performs a direct get from the field without calling a getter method.
+	 * base.getField();
 	 *
-	 * @param field
-	 * @param object
-	 * @return
+	 * @param field  Field of object
+	 * @param object Object where value shall be retrieved
+	 * @return Value of the field or null if field does not exist
 	 */
 	public static Object executeGet(final Field field, final Object object) {
 		Assertions.assertNotNull(field);

@@ -19,6 +19,7 @@ class PreparedUpdate<S> extends AbstractPreparedQuery<S> {
 
 	private static final Logger LOGGER = Logger.getLogger(PreparedUpdate.class.getName());
 
+	private static final String UPDATE_TEMPLATE = "UPDATE %s SET %s WHERE id = ?";
 	private final List<Field> fieldList = new ArrayList<>();
 	private final PreparedStatement preparedStatement;
 
@@ -33,11 +34,6 @@ class PreparedUpdate<S> extends AbstractPreparedQuery<S> {
 	 */
 	public PreparedUpdate(final Class<S> cls, final Connection connection, final Cascade cascade) throws SQLException {
 		super(connection, cascade);
-		final StringBuilder query = new StringBuilder();
-
-		query.append("UPDATE ");
-		query.append(cls.getSimpleName());
-		query.append(" SET ");
 		final StringJoiner stringJoiner = new StringJoiner(",");
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			fieldList.add(field);
@@ -49,10 +45,8 @@ class PreparedUpdate<S> extends AbstractPreparedQuery<S> {
 			}
 			stringJoiner.add(field.getName() + "=?");
 		}
-		query.append(stringJoiner.toString());
-		query.append(" WHERE id = ?");
 
-		final String updateQuery = query.toString();
+		final String updateQuery = String.format(UPDATE_TEMPLATE, cls.getSimpleName(), stringJoiner);
 		LOGGER.info(updateQuery);
 		preparedStatement = connection.prepareStatement(updateQuery);
 	}

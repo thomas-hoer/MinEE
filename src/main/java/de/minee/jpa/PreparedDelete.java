@@ -18,6 +18,7 @@ public class PreparedDelete<T> extends AbstractPreparedQuery<T> {
 
 	private static final Logger LOGGER = Logger.getLogger(PreparedDelete.class.getName());
 
+	private static final String DELETE_TEMPLATE = "DELETE FROM %s WHERE id = ?";
 	private final List<Field> fieldList = new ArrayList<>();
 	private final PreparedStatement preparedStatement;
 
@@ -36,11 +37,6 @@ public class PreparedDelete<T> extends AbstractPreparedQuery<T> {
 		if (!(Cascade.DELETE == cascade || Cascade.NONE == cascade)) {
 			throw new IllegalArgumentException("Only NONE and DELETE are allowed values for Cascade");
 		}
-		final StringBuilder query = new StringBuilder();
-
-		query.append("DELETE FROM ");
-		query.append(clazz.getSimpleName());
-		query.append(" WHERE id = ?");
 
 		for (final Field field : ReflectionUtil.getAllFields(clazz)) {
 			fieldList.add(field);
@@ -50,7 +46,7 @@ public class PreparedDelete<T> extends AbstractPreparedQuery<T> {
 			}
 		}
 
-		final String deleteQuery = query.toString();
+		final String deleteQuery = String.format(DELETE_TEMPLATE, clazz.getSimpleName());
 		LOGGER.info(deleteQuery);
 		preparedStatement = connection.prepareStatement(deleteQuery);
 	}

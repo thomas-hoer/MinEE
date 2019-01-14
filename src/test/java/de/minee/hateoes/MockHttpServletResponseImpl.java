@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 public class MockHttpServletResponseImpl implements HttpServletResponse {
 
 	private final StringWriter stringWriter = new StringWriter();
+	private int error;
 
 	@Override
 	public String getCharacterEncoding() {
@@ -130,12 +131,12 @@ public class MockHttpServletResponseImpl implements HttpServletResponse {
 
 	@Override
 	public void sendError(final int sc, final String msg) {
-		// Just a Mock method
+		error = sc;
 	}
 
 	@Override
 	public void sendError(final int sc) {
-		// Just a Mock method
+		error = sc;
 	}
 
 	@Override
@@ -207,5 +208,9 @@ public class MockHttpServletResponseImpl implements HttpServletResponse {
 
 	public String getWrittenOutput() {
 		return stringWriter.toString();
+	}
+
+	public int getError() {
+		return error;
 	}
 }

@@ -8,11 +8,4 @@ public class MappingException extends RuntimeException {
 		super(message);
 	}
 
-	public MappingException(final String message, final Throwable cause) {
-		super(message, cause);
-	}
-
-	public MappingException(final Throwable cause) {
-		super(cause);
-	}
 }

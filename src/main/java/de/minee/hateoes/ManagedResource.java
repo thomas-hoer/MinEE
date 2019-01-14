@@ -53,6 +53,7 @@ class ManagedResource<T> {
 			this.allowedOperations.add(Operation.POST);
 			this.allowedOperations.add(Operation.PUT);
 			this.allowedOperations.add(Operation.DELETE);
+			this.allowedOperations.remove(Operation.ALL);
 		}
 		this.type = type;
 

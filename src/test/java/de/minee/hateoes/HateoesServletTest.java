@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -61,7 +62,6 @@ public class HateoesServletTest {
 	@Test
 	public void testInitInMemResource() throws ServletException, IOException {
 		final HateoesServlet hateoesServlet = createInMemServlet();
-		hateoesServlet.init(); // should work fine
 
 		MockHttpServletRequestImpl request;
 		MockHttpServletResponseImpl response;
@@ -110,8 +110,54 @@ public class HateoesServletTest {
 		assertEquals(2, selectOutput.split("ReferenceList").length);
 	}
 
-	private static HateoesServlet createInMemServlet() {
-		return new HateoesServlet() {
+	@Test
+	public void testGetCreate() throws IOException, ServletException {
+		final HateoesServlet hateoesServlet = createInMemServlet();
+		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("rlists/create");
+		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		final String output = response.getWrittenOutput();
+		assertNotNull(output);
+		assertTrue(output.contains("id"));
+		assertTrue(output.contains("recursiveObjects"));
+		assertTrue(output.contains("user"));
+		assertTrue(output.contains("name"));
+		assertTrue(output.contains("description"));
+
+	}
+
+	@Test
+	public void testGetEdit() throws IOException, ServletException {
+		final HateoesServlet hateoesServlet = createInMemServlet();
+		MockHttpServletRequestImpl request;
+		MockHttpServletResponseImpl response;
+		request = new MockHttpServletRequestImpl("rlists/create", Operation.POST, "");
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		final UUID id = UUID.fromString(response.getWrittenOutput().split(":")[1]);
+
+		request = new MockHttpServletRequestImpl("rlist/" + id + "/edit");
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		final String output = response.getWrittenOutput();
+		assertNotNull(output);
+		assertTrue(output.contains(id.toString()));
+	}
+
+	@Test
+	public void testGetEditError() throws IOException, ServletException {
+		final HateoesServlet hateoesServlet = createInMemServlet();
+		MockHttpServletRequestImpl request;
+		MockHttpServletResponseImpl response;
+		request = new MockHttpServletRequestImpl("rlists/foo");
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+
+		assertEquals(HttpServletResponse.SC_NOT_FOUND, response.getError());
+	}
+
+	private static HateoesServlet createInMemServlet() throws ServletException {
+		final HateoesServlet servlet = new HateoesServlet() {
 			private static final long serialVersionUID = -6669308238856259151L;
 
 			@HateoesResource("rlists")
@@ -120,5 +166,7 @@ public class HateoesServletTest {
 			@HateoesResource("rlist/{id}/")
 			ReferenceList referenceList;
 		};
+		servlet.init();
+		return servlet;
 	}
 }

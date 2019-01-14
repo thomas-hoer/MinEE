@@ -1,5 +1,8 @@
 package de.minee.jpa;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import de.minee.datamodel.ArrayTypes;
 import de.minee.datamodel.EnumObject;
 import de.minee.datamodel.PrimitiveList;
@@ -32,6 +35,8 @@ public class AbstractDAOTest extends AbstractTestDAO {
 		updateTable(ReferenceChain.class);
 		updateTable(SimpleReference.class, true);
 		updateTable(ReferenceList.class);
+		dropTable(EnumObject.class);
+		createTable(EnumObject.class);
 		return 1;
 	}
 
@@ -216,18 +221,31 @@ public class AbstractDAOTest extends AbstractTestDAO {
 
 	@Test
 	public void testShallowInsertChild() throws SQLException {
-		final ReferenceChain user = new ReferenceChain();
-		user.setPicture(new SimpleReference());
+		final ReferenceChain referenceChain = new ReferenceChain();
+		referenceChain.setPicture(new SimpleReference());
 
-		Assert.assertNull(user.getId());
-		Assert.assertNull(user.getPicture().getId());
-		insertShallow(user);
-		Assert.assertNotNull(user.getId());
-		Assert.assertNull(user.getPicture().getId());
-		final ReferenceChain selectedUser = select(ReferenceChain.class).byId(user.getId());
+		Assert.assertNull(referenceChain.getId());
+		Assert.assertNull(referenceChain.getPicture().getId());
+		insertShallow(referenceChain);
+		Assert.assertNotNull(referenceChain.getId());
+		Assert.assertNull(referenceChain.getPicture().getId());
+		final ReferenceChain selectedUser = select(ReferenceChain.class).byId(referenceChain.getId());
 		Assert.assertNotNull(selectedUser);
 		Assert.assertNull(selectedUser.getPicture());
 
+	}
+
+	@Test
+	public void testSelectNull() throws SQLException {
+		final ReferenceChain referenceChain = new ReferenceChain();
+		referenceChain.setEmail("email");
+		insert(referenceChain);
+		final List<ReferenceChain> selectedResources = select(ReferenceChain.class).where(ReferenceChain::getName)
+				.isNull().execute();
+
+		assertEquals(1, selectedResources.size());
+		assertNull(selectedResources.get(0).getName());
+		assertEquals("email", selectedResources.get(0).getEmail());
 	}
 
 	@Test
@@ -304,5 +322,10 @@ public class AbstractDAOTest extends AbstractTestDAO {
 		Assert.assertNotNull(intArray);
 		Assert.assertEquals(6, intArray.length);
 		Assert.assertArrayEquals(new Integer[] { 1, 2, 10, 10, 11, 0 }, intArray);
+	}
+
+	@Test(expected = SQLException.class)
+	public void testDropTable() throws SQLException {
+		dropTable(SimpleReference.class);
 	}
 }

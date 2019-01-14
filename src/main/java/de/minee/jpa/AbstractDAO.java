@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public abstract class AbstractDAO {
@@ -43,11 +42,6 @@ public abstract class AbstractDAO {
 	private synchronized Connection createConnection() throws SQLException {
 		if (connections.containsKey(getConnectionString())) {
 			return connections.get(getConnectionString());
-		}
-		try {
-			Class.forName("org.h2.Driver");
-		} catch (final ClassNotFoundException e) {
-			LOGGER.log(Level.SEVERE, "Cannot load Driver for H2 Database", e);
 		}
 		final Connection connection = DriverManager.getConnection(getConnectionString(), getUserName(), getPassword());
 		checkVersion(connection);
@@ -90,16 +84,6 @@ public abstract class AbstractDAO {
 			preparedStatement.setString(2, "dbShemaVersion");
 			preparedStatement.execute();
 		}
-	}
-
-	protected Statement createStatement() throws SQLException {
-		final Connection connection = getConnection();
-		return connection.createStatement();
-	}
-
-	protected PreparedStatement createPreparedStatement(final String sql) throws SQLException {
-		final Connection connection = getConnection();
-		return connection.prepareStatement(sql);
 	}
 
 	protected void dropTable(final Class<?> cls) throws SQLException {
