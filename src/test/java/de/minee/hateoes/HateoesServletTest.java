@@ -43,7 +43,7 @@ public class HateoesServletTest {
 
 		final String output = response.getWrittenOutput();
 		assertNotNull(output);
-		assertTrue(output.contains("rlist/id"));
+		assertTrue(output.contains("rlist/{id}"));
 	}
 
 	@Test(expected = HateoesException.class)

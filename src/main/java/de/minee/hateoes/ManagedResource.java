@@ -1,5 +1,7 @@
 package de.minee.hateoes;
 
+import de.minee.hateoes.path.IPathPart;
+import de.minee.hateoes.path.PathPartFactory;
 import de.minee.hateoes.renderer.AbstractRenderer;
 import de.minee.hateoes.renderer.HtmlRenderer;
 import de.minee.jpa.AbstractDAO;
@@ -26,26 +28,16 @@ class ManagedResource<T> {
 
 	private static final Logger LOGGER = Logger.getLogger(ManagedResource.class.getName());
 
-	private final String[] path;
-	private final boolean[] varMap;
+	private final List<IPathPart> path = new ArrayList<>();
 	private final Set<Operation> allowedOperations;
 	private final Class<T> type;
 	private AbstractDAO dao;
 	private final AbstractRenderer renderer = new HtmlRenderer();
 
-	ManagedResource(final String path, final Operation[] allowedOperations, final Class<T> type) {
-		this.path = path.split("/");
-		this.varMap = new boolean[this.path.length];
-		final List<String> el = new ArrayList<>();
-		for (int i = 0; i < this.path.length; i++) {
-			final String pathPart = this.path[i];
-			if (pathPart.startsWith("{") && pathPart.endsWith("}")) {
-				this.path[i] = pathPart.substring(1, pathPart.length() - 1);
-				varMap[i] = true;
-				el.add(pathPart);
-			} else {
-				varMap[i] = false;
-			}
+	ManagedResource(final String fullPath, final Operation[] allowedOperations, final Class<T> type) {
+		final String[] paths = fullPath.split("/");
+		for (final String pathPart : paths) {
+			path.add(PathPartFactory.create(pathPart));
 		}
 		this.allowedOperations = new HashSet<>(Arrays.asList(allowedOperations));
 		if (this.allowedOperations.contains(Operation.ALL)) {
@@ -66,14 +58,15 @@ class ManagedResource<T> {
 	boolean isMatch(final String pathInfo) {
 		final String[] pathSplit = pathInfo.split("/");
 		boolean isMatch = false;
-		if (pathSplit.length == path.length || pathSplit.length == path.length + 1) {
-			for (int i = 0; i < path.length; i++) {
-				if (!varMap[i] && !path[i].equals(pathSplit[i])) {
+		int pathSize = path.size();
+		if (pathSplit.length == pathSize || pathSplit.length == pathSize + 1) {
+			for (int i = 0; i < pathSize; i++) {
+				if (!path.get(i).isMatch(pathSplit[i])) {
 					return false;
 				}
 			}
-			if (pathSplit.length == path.length + 1) {
-				final String action = pathSplit[path.length];
+			if (pathSplit.length == pathSize + 1) {
+				final String action = pathSplit[pathSize];
 				isMatch = "create".equals(action) || "edit".equals(action);
 			} else {
 				isMatch = true;
@@ -91,8 +84,8 @@ class ManagedResource<T> {
 		final String[] pathSplit = pathInfo.split("/");
 		final List<?> result;
 		try {
-			if (pathSplit.length == path.length + 1) {
-				final String action = pathSplit[path.length];
+			if (pathSplit.length == path.size() + 1) {
+				final String action = pathSplit[path.size()];
 				if ("create".equals(action)) {
 					serveCreate(req, resp);
 					return;
@@ -149,9 +142,9 @@ class ManagedResource<T> {
 	private List<T> getSelectedResource(final String[] pathSplit) throws SQLException {
 		final List<String> parameter = new ArrayList<>();
 		final StringJoiner stringJoiner = new StringJoiner(" AND ");
-		for (int i = 0; i < path.length; i++) {
-			if (varMap[i]) {
-				stringJoiner.add(path[i] + "=?");
+		for (int i = 0; i < path.size(); i++) {
+			if (path.get(i).isParameterType()) {
+				stringJoiner.add(path.get(i).getFieldName() + "=?");
 				parameter.add(pathSplit[i]);
 			}
 		}
@@ -249,7 +242,7 @@ class ManagedResource<T> {
 	@Override
 	public String toString() {
 		final StringJoiner joiner = new StringJoiner("/");
-		Arrays.stream(path).forEach(joiner::add);
+		path.stream().map(IPathPart::toString).forEach(joiner::add);
 		return joiner.toString();
 	}
 }
