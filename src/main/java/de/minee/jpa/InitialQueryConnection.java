@@ -22,6 +22,10 @@ public class InitialQueryConnection<T> extends AbstractAndOrConnection<T> {
 		return getStatement().query(manualQuery);
 	}
 
+	public <S> JoinClause<S, T> join(final Class<S> cls) {
+		return getStatement().join(cls);
+	}
+
 	@Override
 	protected String getConnectionString() {
 		return " ";

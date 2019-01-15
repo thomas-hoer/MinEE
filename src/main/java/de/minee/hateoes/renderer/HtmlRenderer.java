@@ -28,6 +28,7 @@ public class HtmlRenderer extends AbstractRenderer {
 
 	private static void toHtml(final Object input, final StringBuilder stringBuilder, final Set<Object> knownObjects) {
 		if (input == null) {
+			append(stringBuilder, "");
 			return;
 		}
 		if (knownObjects.contains(input)) {
@@ -53,10 +54,6 @@ public class HtmlRenderer extends AbstractRenderer {
 			knownObjects.remove(input);
 		}
 		stringBuilder.append(TAG_DIV_END);
-	}
-
-	private static boolean isDirectPrintable(final Class<?> cls) {
-		return String.class.isAssignableFrom(cls) || cls.isEnum();
 	}
 
 	private static void append(final StringBuilder stringBuilder, final Object content) {

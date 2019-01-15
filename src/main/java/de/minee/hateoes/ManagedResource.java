@@ -37,7 +37,7 @@ class ManagedResource<T> {
 	ManagedResource(final String fullPath, final Operation[] allowedOperations, final Class<T> type) {
 		final String[] paths = fullPath.split("/");
 		for (final String pathPart : paths) {
-			path.add(PathPartFactory.create(pathPart));
+			path.add(PathPartFactory.create(type, pathPart));
 		}
 		this.allowedOperations = new HashSet<>(Arrays.asList(allowedOperations));
 		if (this.allowedOperations.contains(Operation.ALL)) {
@@ -58,7 +58,7 @@ class ManagedResource<T> {
 	boolean isMatch(final String pathInfo) {
 		final String[] pathSplit = pathInfo.split("/");
 		boolean isMatch = false;
-		int pathSize = path.size();
+		final int pathSize = path.size();
 		if (pathSplit.length == pathSize || pathSplit.length == pathSize + 1) {
 			for (int i = 0; i < pathSize; i++) {
 				if (!path.get(i).isMatch(pathSplit[i])) {

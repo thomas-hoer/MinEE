@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
-import java.util.UUID;
 
 public class JsonRenderer extends AbstractRenderer {
 
@@ -45,15 +44,7 @@ public class JsonRenderer extends AbstractRenderer {
 			stringBuilder.append(']');
 			return;
 		}
-		if (String.class.isAssignableFrom(cls)) {
-			stringBuilder.append('"').append(input.toString()).append('"');
-			return;
-		}
-		if (UUID.class.isAssignableFrom(cls)) {
-			stringBuilder.append('"').append(input.toString()).append('"');
-			return;
-		}
-		if (cls.isEnum()) {
+		if (isDirectPrintable(cls)) {
 			stringBuilder.append('"').append(input.toString()).append('"');
 			return;
 		}

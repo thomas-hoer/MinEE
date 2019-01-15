@@ -27,25 +27,24 @@ public class WhereClause<S, T> {
 	/**
 	 *
 	 * @param whereField
-	 * @param selectStatement
+	 * @param statement
 	 * @throws SQLException
 	 */
-	public WhereClause(final Function<T, S> whereField, final AbstractStatement<T> selectStatement)
-			throws SQLException {
-		Assertions.assertNotNull(selectStatement);
+	public WhereClause(final Function<T, S> whereField, final AbstractStatement<T> statement) throws SQLException {
+		Assertions.assertNotNull(statement);
 		Assertions.assertNotNull(whereField);
 
-		this.selectStatement = selectStatement;
+		this.selectStatement = statement;
 
 		T proxy;
 		try {
-			proxy = ProxyFactory.getProxy(selectStatement.getType());
+			proxy = ProxyFactory.getProxy(statement.getType());
 		} catch (final ProxyException e) {
 			throw new SQLException(e);
 		}
 		whereField.apply(proxy);
 		final String proxyFieldName = proxy.toString();
-		final Class<T> type = selectStatement.getType();
+		final Class<T> type = statement.getType();
 		final Field field = ReflectionUtil.getDeclaredField(type, proxyFieldName);
 		if (field != null && List.class.isAssignableFrom(field.getType())) {
 			final String typeSimpleName = type.getSimpleName();

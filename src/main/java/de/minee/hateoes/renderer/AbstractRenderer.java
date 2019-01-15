@@ -7,10 +7,49 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public abstract class AbstractRenderer {
+
+	private static final Set<Class<?>> BASE_CLASSES = new HashSet<>();
+
+	static {
+		BASE_CLASSES.add(UUID.class);
+		BASE_CLASSES.add(String.class);
+		BASE_CLASSES.add(Boolean.class);
+		BASE_CLASSES.add(Byte.class);
+		BASE_CLASSES.add(Character.class);
+		BASE_CLASSES.add(Short.class);
+		BASE_CLASSES.add(Integer.class);
+		BASE_CLASSES.add(Long.class);
+		BASE_CLASSES.add(Float.class);
+		BASE_CLASSES.add(Double.class);
+	}
+
+	protected static boolean isDirectPrintable(final Class<?> cls) {
+		return cls.isPrimitive() || cls.isEnum() || isBaseClass(cls);
+	}
+
+	protected static boolean isBaseClass(final Class<?> cls) {
+		return BASE_CLASSES.contains(cls);
+	}
+
+	protected static void forEach(final Object arrayOrCollection, final Consumer<Object> predicate) {
+		if (arrayOrCollection instanceof Collection) {
+			for (final Object o : (Collection<?>) arrayOrCollection) {
+				predicate.accept(o);
+			}
+		} else {
+			for (int i = 0; i < Array.getLength(arrayOrCollection); i++) {
+				final Object o = Array.get(arrayOrCollection, i);
+				predicate.accept(o);
+			}
+		}
+	}
 
 	public abstract String render(Object input);
 
@@ -62,19 +101,6 @@ public abstract class AbstractRenderer {
 
 		public Object getValue() {
 			return value;
-		}
-	}
-
-	protected static void forEach(final Object arrayOrCollection, final Consumer<Object> predicate) {
-		if (arrayOrCollection instanceof Collection) {
-			for (final Object o : (Collection<?>) arrayOrCollection) {
-				predicate.accept(o);
-			}
-		} else {
-			for (int i = 0; i < Array.getLength(arrayOrCollection); i++) {
-				final Object o = Array.get(arrayOrCollection, i);
-				predicate.accept(o);
-			}
 		}
 	}
 

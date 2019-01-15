@@ -12,8 +12,4 @@ public class HateoesException extends RuntimeException {
 		super(message, cause);
 	}
 
-	public HateoesException(final Throwable cause) {
-		super(cause);
-	}
-
 }

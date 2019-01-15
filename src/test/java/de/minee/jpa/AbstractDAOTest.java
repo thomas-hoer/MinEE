@@ -56,7 +56,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	@Test
 	public void testEnum() throws SQLException {
 		final EnumObject pictureContent = new EnumObject();
-		pictureContent.setEnumeration(Enumeration.AES);
+		pictureContent.setEnumeration(Enumeration.ENUM_VALUE_1);
 
 		final UUID id = insert(pictureContent);
 
@@ -85,18 +85,18 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	@Test
 	public void testSelectEnum() throws SQLException {
 		final EnumObject pictureContent1 = new EnumObject();
-		pictureContent1.setEnumeration(Enumeration.AES);
+		pictureContent1.setEnumeration(Enumeration.ENUM_VALUE_1);
 		final EnumObject pictureContent2 = new EnumObject();
-		pictureContent2.setEnumeration(Enumeration.PLAIN);
+		pictureContent2.setEnumeration(Enumeration.ENUM_VALUE_2);
 		final EnumObject pictureContent3 = new EnumObject();
-		pictureContent3.setEnumeration(Enumeration.AES);
+		pictureContent3.setEnumeration(Enumeration.ENUM_VALUE_1);
 
 		insert(pictureContent1);
 		insert(pictureContent2);
 		insert(pictureContent3);
 
 		final List<EnumObject> selectedPictureContent1 = select(EnumObject.class).where(EnumObject::getEnumeration)
-				.is(Enumeration.AES).execute();
+				.is(Enumeration.ENUM_VALUE_1).execute();
 
 		Assert.assertNotNull(selectedPictureContent1);
 		Assert.assertEquals(2, selectedPictureContent1.size());

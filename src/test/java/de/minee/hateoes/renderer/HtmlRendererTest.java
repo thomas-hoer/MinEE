@@ -4,10 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import de.minee.datamodel.ArrayTypes;
+import de.minee.datamodel.EnumObject;
 import de.minee.datamodel.RecursiveObject;
 import de.minee.datamodel.ReferenceChain;
 import de.minee.datamodel.ReferenceList;
 import de.minee.datamodel.SimpleReference;
+import de.minee.datamodel.enumeration.Enumeration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +60,16 @@ public class HtmlRendererTest {
 		assertNotNull(output);
 		assertTrue(output.contains("RC-Name"));
 		assertTrue(output.contains("SR-Value"));
+	}
+
+	@Test
+	public void testRenderArrayNull() {
+		final ArrayTypes arrayTypes = new ArrayTypes();
+		arrayTypes.setIntArray(new Integer[] { 7, null, 41 });
+		final String output = renderer.render(arrayTypes);
+		assertTrue(output.contains("7"));
+		assertTrue(output.contains("<div></div>"));
+		assertTrue(output.contains("41"));
 	}
 
 	/**
@@ -114,6 +127,17 @@ public class HtmlRendererTest {
 		assertNotNull(output);
 		assertTrue(output.contains(ID_1.toString()));
 		assertTrue(output.contains(ID_2.toString()));
+	}
+
+	@Test
+	public void testEnum() {
+		final EnumObject enumObject = new EnumObject();
+		enumObject.setEnumeration(Enumeration.ENUM_VALUE_1);
+		final String output1 = renderer.render(enumObject);
+		assertTrue(output1.contains(Enumeration.ENUM_VALUE_1.name()));
+		enumObject.setEnumeration(Enumeration.ENUM_VALUE_2);
+		final String output2 = renderer.render(enumObject);
+		assertTrue(output2.contains(Enumeration.ENUM_VALUE_2.name()));
 	}
 
 	private static Object createExampleObject() {

@@ -1,6 +1,6 @@
 package de.minee.jpa;
 
-public class DAOImpl extends AbstractTestDAO {
+public class DAOTestImpl extends AbstractTestDAO {
 
 	@Override
 	protected int updateDatabaseSchema(final int oldDbSchemaVersion) {

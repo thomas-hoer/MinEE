@@ -7,7 +7,6 @@ import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 public class XmlRenderer extends AbstractRenderer {
 
@@ -47,8 +46,8 @@ public class XmlRenderer extends AbstractRenderer {
 			final Object fieldObject = ReflectionUtil.executeGet(field, input);
 			if (fieldObject == null) {
 				stringBuilder.append("<" + field.getName() + "/>");
-			} else if (cls.isArray() || List.class.isAssignableFrom(cls)) {
-				forEach(input, o -> {
+			} else if (field.getType().isArray() || List.class.isAssignableFrom(field.getType())) {
+				forEach(fieldObject, o -> {
 					stringBuilder.append("<" + field.getName() + ">");
 					toXml(o, stringBuilder, knownObjects);
 					stringBuilder.append("</" + field.getName() + ">");
@@ -60,11 +59,6 @@ public class XmlRenderer extends AbstractRenderer {
 			}
 		}
 		knownObjects.remove(input);
-	}
-
-	private static boolean isDirectPrintable(final Class<?> cls) {
-		return cls.isPrimitive() || String.class.isAssignableFrom(cls) || UUID.class.isAssignableFrom(cls)
-				|| cls.isEnum();
 	}
 
 	@Override

@@ -224,4 +224,8 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 		return this;
 	}
 
+	public <S> JoinClause<S, T> join(final Class<S> cls) {
+		return new JoinClause<>(this, cls, connection);
+	}
+
 }

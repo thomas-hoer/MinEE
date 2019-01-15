@@ -2,20 +2,19 @@ package de.minee.hateoes.path;
 
 public class JoinPathPart implements IPathPart {
 
-	public final String path;
+	private final String path;
+	private final Class<?> baseClass;
 
-	public JoinPathPart(final String path) {
-		this.path = path;
+	public JoinPathPart(final Class<?> baseClass, final String path) {
+		final String[] backwardReference = path.split("\\\\");
+		final String lastElement = backwardReference[backwardReference.length - 1];
+		this.path = lastElement;
+		this.baseClass = baseClass;
 	}
 
 	@Override
 	public boolean isMatch(final String path) {
 		return true;
-	}
-
-	@Override
-	public String toString() {
-		return path;
 	}
 
 	@Override
@@ -28,4 +27,8 @@ public class JoinPathPart implements IPathPart {
 		return path;
 	}
 
+	@Override
+	public String toString() {
+		return path;
+	}
 }

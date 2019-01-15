@@ -5,6 +5,7 @@ import java.io.StringReader;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -27,6 +28,7 @@ public class MockHttpServletRequestImpl implements HttpServletRequest {
 	private final String pathInfo;
 	private final String method;
 	private final String content;
+	private final Map<String, String> parameters = new HashMap<>();
 
 	public MockHttpServletRequestImpl() {
 		this(null);
@@ -40,6 +42,14 @@ public class MockHttpServletRequestImpl implements HttpServletRequest {
 		this.pathInfo = pathInfo;
 		this.method = operation.name();
 		this.content = content;
+	}
+
+	public void addParameter(final String key, final String value) {
+		this.parameters.put(key, value);
+	}
+
+	public void addParameters(final Map<String, String> parameters) {
+		this.parameters.putAll(parameters);
 	}
 
 	@Override
@@ -84,7 +94,7 @@ public class MockHttpServletRequestImpl implements HttpServletRequest {
 
 	@Override
 	public String getParameter(final String name) {
-		return null;
+		return parameters.get(name);
 	}
 
 	@Override

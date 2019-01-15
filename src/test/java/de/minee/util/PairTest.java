@@ -30,6 +30,9 @@ public class PairTest {
 		final Pair<String, BigDecimal> pair2 = new Pair<>(OBJECT_1, OBJECT_2);
 		assertTrue(pair1.equals(pair2));
 		assertEquals(pair1.hashCode(), pair2.hashCode());
+		assertTrue(pair1.equals(pair1));
+		assertFalse(pair1.equals(null));
+		assertFalse(pair1.equals(1));
 	}
 
 	@Test
@@ -63,6 +66,13 @@ public class PairTest {
 		assertEquals(992, pair1.hashCode());
 		assertEquals(992, pair2.hashCode());
 		assertFalse(pair1.equals(pair2));
+	}
+
+	@Test
+	public void testToString() {
+		final Pair<String, BigDecimal> pair = new Pair<>(OBJECT_1, OBJECT_2);
+		assertTrue(pair.toString().contains(OBJECT_1.toString()));
+		assertTrue(pair.toString().contains(OBJECT_2.toString()));
 	}
 
 	private static class KnownHashCode {

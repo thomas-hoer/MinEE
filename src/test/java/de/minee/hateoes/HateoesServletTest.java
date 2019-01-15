@@ -6,9 +6,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import de.minee.datamodel.ReferenceList;
-import de.minee.jpa.DAOImpl;
+import de.minee.jpa.DAOTestImpl;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.ServletException;
@@ -18,7 +20,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class HateoesServletTest {
-	private static HateoesServlet hateoesTestServlet = new HateoesServlet() {
+	private static HateoesServlet HATEOES_TEST_SERVLET = new HateoesServlet() {
 		private static final long serialVersionUID = -6669308238856259151L;
 
 		@HateoesResource("rlist/{id}")
@@ -26,20 +28,19 @@ public class HateoesServletTest {
 		ReferenceList referenceList;
 
 		@DataAccessObject
-		DAOImpl daoImpl;
+		DAOTestImpl daoImpl;
 	};
 
 	@BeforeClass
 	public static void initServlet() throws ServletException {
-		hateoesTestServlet.init();
-
+		HATEOES_TEST_SERVLET.init();
 	}
 
 	@Test
 	public void testRoot() throws IOException {
 		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl();
 		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
-		hateoesTestServlet.service(request, response);
+		HATEOES_TEST_SERVLET.service(request, response);
 
 		final String output = response.getWrittenOutput();
 		assertNotNull(output);
@@ -49,8 +50,8 @@ public class HateoesServletTest {
 	@Test(expected = HateoesException.class)
 	public void testInitPersistentWithoutDAO() throws ServletException {
 		final HateoesServlet hateoesServlet = new HateoesServlet() {
-			private static final long serialVersionUID = -6669308238856259151L;
 
+			private static final long serialVersionUID = -2342152424641422998L;
 			@HateoesResource("rlist/{id}/")
 			@Persistent
 			ReferenceList referenceList;
@@ -108,6 +109,14 @@ public class HateoesServletTest {
 		assertNotNull(selectOutput);
 		// One element found
 		assertEquals(2, selectOutput.split("ReferenceList").length);
+
+		request = new MockHttpServletRequestImpl("rlist/000");
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		final String selectOutputNoElement = response.getWrittenOutput();
+		assertNotNull(selectOutputNoElement);
+		// No element found
+		assertEquals(1, selectOutputNoElement.split("ReferenceList").length);
 	}
 
 	@Test
@@ -124,6 +133,45 @@ public class HateoesServletTest {
 		assertTrue(output.contains("name"));
 		assertTrue(output.contains("description"));
 
+	}
+
+	@Test
+	public void testPostCreate() throws ServletException, IOException {
+		final HateoesServlet hateoesServlet = createInMemServlet();
+		MockHttpServletRequestImpl request;
+		MockHttpServletResponseImpl response;
+
+		request = new MockHttpServletRequestImpl("rlists/create", Operation.POST, null);
+		final Map<String, String> parameters = new HashMap<>();
+		parameters.put("name", "Name!");
+		parameters.put("description", "Desc1");
+		request.addParameters(parameters);
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		final UUID id = UUID.fromString(response.getWrittenOutput().split(":")[1]);
+		assertNotNull(id);
+
+		request = new MockHttpServletRequestImpl("rlists");
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		final String output = response.getWrittenOutput();
+		assertNotNull(output);
+		assertTrue(output.contains("Name!"));
+		assertTrue(output.contains("Desc1"));
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testPostCreateTransformationException() throws ServletException, IOException {
+		final HateoesServlet hateoesServlet = createInMemServlet();
+		MockHttpServletRequestImpl request;
+		MockHttpServletResponseImpl response;
+
+		request = new MockHttpServletRequestImpl("rlists/create", Operation.POST, null);
+		final Map<String, String> parameters = new HashMap<>();
+		parameters.put("id", "ZZZ");
+		request.addParameters(parameters);
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
 	}
 
 	@Test
@@ -158,7 +206,8 @@ public class HateoesServletTest {
 
 	private static HateoesServlet createInMemServlet() throws ServletException {
 		final HateoesServlet servlet = new HateoesServlet() {
-			private static final long serialVersionUID = -6669308238856259151L;
+
+			private static final long serialVersionUID = -1207374138713223126L;
 
 			@HateoesResource("rlists")
 			ReferenceList referenceLists;
