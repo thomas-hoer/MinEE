@@ -8,12 +8,12 @@ import java.util.function.Function;
  * is, that AND binds stronger than OR. In particular this means that A OR B AND
  * C evaluates A OR (B AND C).
  */
-public abstract class AbstractAndOrConnection<T> {
+public abstract class AbstractAndOrConnection<T, U extends IStatement<T>> {
 
-	private final AbstractStatement<T> statement;
-	private WhereClause<?, T> whereClause;
+	private final U statement;
+	private WhereClause<?, T, U> whereClause;
 
-	public AbstractAndOrConnection(final AbstractStatement<T> statement) {
+	public AbstractAndOrConnection(final U statement) {
 		this.statement = statement;
 	}
 
@@ -24,18 +24,18 @@ public abstract class AbstractAndOrConnection<T> {
 	 * @return WhereClause to set the relation to the field
 	 * @throws SQLException SQLException in case of an error
 	 */
-	public <S> WhereClause<S, T> where(final Function<T, S> whereField) throws SQLException {
-		final WhereClause<S, T> where = new WhereClause<>(whereField, statement);
+	public <S> WhereClause<S, T, U> where(final Function<T, S> whereField) throws SQLException {
+		final WhereClause<S, T, U> where = new WhereClause<>(whereField, statement);
 		statement.add(this);
 		whereClause = where;
 		return where;
 	}
 
-	<S> WhereClause<S, T> getClause() {
-		return (WhereClause<S, T>) whereClause;
+	<S> WhereClause<S, T, U> getClause() {
+		return (WhereClause<S, T, U>) whereClause;
 	}
 
-	protected AbstractStatement<T> getStatement() {
+	protected U getStatement() {
 		return statement;
 	}
 

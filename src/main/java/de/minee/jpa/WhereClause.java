@@ -13,9 +13,9 @@ import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.function.Function;
 
-public class WhereClause<S, T> {
+public class WhereClause<S, T, U extends IStatement<T>> {
 
-	private final AbstractStatement<T> selectStatement;
+	private final U selectStatement;
 
 	private boolean conditionSet;
 	private boolean conditionForPrepare;
@@ -30,7 +30,7 @@ public class WhereClause<S, T> {
 	 * @param statement
 	 * @throws SQLException
 	 */
-	public WhereClause(final Function<T, S> whereField, final AbstractStatement<T> statement) throws SQLException {
+	public WhereClause(final Function<T, S> whereField, final U statement) throws SQLException {
 		Assertions.assertNotNull(statement);
 		Assertions.assertNotNull(whereField);
 
@@ -64,7 +64,7 @@ public class WhereClause<S, T> {
 	 *
 	 * @return
 	 */
-	public AbstractStatement<T> is() {
+	public U is() {
 		checkConditionSet();
 		conditionForPrepare = true;
 		setCondition(Operator.EQUALS);
@@ -76,7 +76,7 @@ public class WhereClause<S, T> {
 	 * @param isEqual
 	 * @return
 	 */
-	public AbstractStatement<T> is(final S isEqual) {
+	public U is(final S isEqual) {
 		checkConditionSet();
 		if (isEqual instanceof List) {
 			setJoinCondition((List<?>) isEqual);
@@ -91,7 +91,7 @@ public class WhereClause<S, T> {
 	 * @param inElements
 	 * @return
 	 */
-	public AbstractStatement<T> in(final S... inElements) {
+	public U in(final S... inElements) {
 		checkConditionSet();
 		setCondition(Operator.IN, inElements);
 		return selectStatement;
@@ -101,7 +101,7 @@ public class WhereClause<S, T> {
 	 *
 	 * @return
 	 */
-	public AbstractStatement<T> isNull() {
+	public U isNull() {
 		checkConditionSet();
 		setCondition(Operator.IS_NULL);
 		return selectStatement;

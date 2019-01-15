@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  *
  * @param <T> Class that corresponds to a database table
  */
-public abstract class AbstractStatement<T> extends AbstractQuery {
+public abstract class AbstractStatement<T> extends AbstractQuery implements IStatement<T> {
 
 	private static final String INSTANTIATION_ERROR_MESSAGE = "Cannot instanciate object of type ";
 
@@ -30,7 +30,7 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 
 	private final Class<T> clazz;
 	private final Connection connection;
-	private final List<AbstractAndOrConnection<T>> connections = new ArrayList<>();
+	private final List<AbstractAndOrConnection<T, ? extends IStatement<T>>> connections = new ArrayList<>();
 	private final List<Field> fieldList = new ArrayList<>();
 	private String additionalWhereClause;
 
@@ -50,15 +50,16 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 		}
 	}
 
-	void add(final AbstractAndOrConnection<T> connection) {
+	@Override
+	public <U extends IStatement<T>> void add(final AbstractAndOrConnection<T, U> connection) {
 		connections.add(connection);
 	}
 
-	public AbstractAndOrConnection<T> and() {
+	public AbstractAndOrConnection<T, AbstractStatement<T>> and() {
 		return new AndQueryConnection<>(this);
 	}
 
-	public AbstractAndOrConnection<T> or() {
+	public AbstractAndOrConnection<T, AbstractStatement<T>> or() {
 		return new OrQueryConnection<>(this);
 	}
 
@@ -69,6 +70,7 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 	 * @return Object with Id id or null if no entry can be found
 	 * @throws SQLException SQLException in case of an error
 	 */
+	@Override
 	public T byId(final UUID id) throws SQLException {
 		return byId(id, new HashMap<>());
 	}
@@ -145,6 +147,7 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 	 * @return A list of the found database entries
 	 * @throws SQLException SQLException in case of an error
 	 */
+	@Override
 	public List<T> execute() throws SQLException {
 		final String query = assembleQuery();
 		LOGGER.info(query);
@@ -167,8 +170,8 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 		query.append("SELECT * FROM ");
 		query.append(clazz.getSimpleName());
 		query.append(" ");
-		for (final AbstractAndOrConnection<T> queryConnection : connections) {
-			final WhereClause<?, ?> whereClause = queryConnection.getClause();
+		for (final AbstractAndOrConnection<T, ?> queryConnection : connections) {
+			final WhereClause<?, ?, ?> whereClause = queryConnection.getClause();
 			query.append(whereClause.getJoinClause());
 		}
 		if (!connections.isEmpty() || (additionalWhereClause != null)) {
@@ -178,8 +181,8 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 			query.append(additionalWhereClause);
 		}
 		//
-		for (final AbstractAndOrConnection<T> queryConnection : connections) {
-			final WhereClause<?, ?> whereClause = queryConnection.getClause();
+		for (final AbstractAndOrConnection<T, ?> queryConnection : connections) {
+			final WhereClause<?, ?, ?> whereClause = queryConnection.getClause();
 			query.append(queryConnection.getConnectionString());
 			query.append(whereClause.toString());
 		}
@@ -214,18 +217,16 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 		return connection;
 	}
 
-	protected Class<T> getType() {
+	@Override
+	public Class<T> getType() {
 		return clazz;
 	}
 
-	AbstractStatement<T> query(final String whereClause) {
+	@Override
+	public AbstractStatement<T> query(final String whereClause) {
 		Assertions.assertNotEmpty(whereClause);
 		additionalWhereClause = whereClause;
 		return this;
-	}
-
-	public <S> JoinClause<S, T> join(final Class<S> cls) {
-		return new JoinClause<>(this, cls, connection);
 	}
 
 }

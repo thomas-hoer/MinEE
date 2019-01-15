@@ -1,8 +1,8 @@
 package de.minee.jpa;
 
-public class AndQueryConnection<T> extends AbstractAndOrConnection<T> {
+public class AndQueryConnection<T, U extends IStatement<T>> extends AbstractAndOrConnection<T, U> {
 
-	public AndQueryConnection(final AbstractStatement<T> statement) {
+	public AndQueryConnection(final U statement) {
 		super(statement);
 	}
 

@@ -107,7 +107,7 @@ public class SelectStatementTest extends AbstractTestDAO {
 
 	@Test(expected = MappingException.class)
 	public void testCheckCondition() throws SQLException {
-		final WhereClause<String, SimpleReference> where = select(SimpleReference.class)
+		final WhereClause<String, SimpleReference, ?> where = select(SimpleReference.class)
 				.where(SimpleReference::getName);
 		where.is();
 		where.is();

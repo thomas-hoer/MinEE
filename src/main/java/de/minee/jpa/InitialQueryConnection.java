@@ -1,13 +1,17 @@
 package de.minee.jpa;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 
-public class InitialQueryConnection<T> extends AbstractAndOrConnection<T> {
+public class InitialQueryConnection<T, U extends IStatement<T>> extends AbstractAndOrConnection<T, U> {
 
-	public InitialQueryConnection(final AbstractStatement<T> statement) {
+	private final Connection connection;
+
+	public InitialQueryConnection(final U statement, final Connection connection) {
 		super(statement);
+		this.connection = connection;
 	}
 
 	public T byId(final UUID id) throws SQLException {
@@ -23,7 +27,7 @@ public class InitialQueryConnection<T> extends AbstractAndOrConnection<T> {
 	}
 
 	public <S> JoinClause<S, T> join(final Class<S> cls) {
-		return getStatement().join(cls);
+		return new JoinClause<>(this, cls, connection);
 	}
 
 	@Override

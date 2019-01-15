@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import de.minee.datamodel.EnumObject;
 import de.minee.datamodel.ReferenceList;
 import de.minee.datamodel.SimpleReference;
+import de.minee.jpa.AbstractStatement;
 import de.minee.jpa.DAOTestImpl;
 import de.minee.jpa.InitialQueryConnection;
 
@@ -42,7 +43,8 @@ public class ManagedResourceTest {
 				EnumObject.class);
 		resource.setDao(new DAOTestImpl() {
 			@Override
-			public <T> InitialQueryConnection<T> select(final Class<T> clazz) throws SQLException {
+			public <T> InitialQueryConnection<T, AbstractStatement<T>> select(final Class<T> clazz)
+					throws SQLException {
 				throw new SQLException();
 			}
 		});

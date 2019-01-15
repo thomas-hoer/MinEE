@@ -264,9 +264,9 @@ public abstract class AbstractDAO {
 	 * @return Fluent style based query builder
 	 * @throws SQLException SQLException in case of an error
 	 */
-	public <T> InitialQueryConnection<T> select(final Class<T> clazz) throws SQLException {
+	public <T> InitialQueryConnection<T, AbstractStatement<T>> select(final Class<T> clazz) throws SQLException {
 		final AbstractStatement<T> statement = SelectStatement.select(clazz, getConnection());
-		return new InitialQueryConnection<>(statement);
+		return new InitialQueryConnection<>(statement, getConnection());
 	}
 
 	public <T> UUID insertShallow(final T objectToInsert) throws SQLException {
