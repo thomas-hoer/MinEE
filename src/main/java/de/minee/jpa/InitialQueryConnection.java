@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 
-public class InitialQueryConnection<T, U extends IStatement<T>> extends AbstractAndOrConnection<T, U> {
+public class InitialQueryConnection<T, U extends AbstractStatement<T>> extends AbstractAndOrConnection<T, U> {
 
 	private final Connection connection;
 
@@ -27,7 +27,9 @@ public class InitialQueryConnection<T, U extends IStatement<T>> extends Abstract
 	}
 
 	public <S> JoinClause<S, T> join(final Class<S> cls) {
-		return new JoinClause<>(this, cls, connection);
+		final JoinClause<S, T> joinClause = new JoinClause<>(this, cls, connection);
+		getStatement().add(joinClause);
+		return joinClause;
 	}
 
 	@Override

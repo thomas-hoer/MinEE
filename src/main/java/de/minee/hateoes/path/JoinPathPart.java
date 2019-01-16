@@ -3,7 +3,8 @@ package de.minee.hateoes.path;
 public class JoinPathPart implements IPathPart {
 
 	private final String path;
-	private final Class<?> baseClass;
+	@SuppressWarnings("unused")
+	private final Class<?> baseClass;// will be used for join
 
 	public JoinPathPart(final Class<?> baseClass, final String path) {
 		final String[] backwardReference = path.split("\\\\");

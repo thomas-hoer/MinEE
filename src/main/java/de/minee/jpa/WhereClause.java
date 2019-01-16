@@ -13,7 +13,7 @@ import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.function.Function;
 
-public class WhereClause<S, T, U extends IStatement<T>> {
+public class WhereClause<S, T, U extends AbstractStatement<T>> {
 
 	private final U selectStatement;
 
@@ -36,15 +36,15 @@ public class WhereClause<S, T, U extends IStatement<T>> {
 
 		this.selectStatement = statement;
 
+		final Class<T> type = statement.getType();
 		T proxy;
 		try {
-			proxy = ProxyFactory.getProxy(statement.getType());
+			proxy = ProxyFactory.getProxy(type);
 		} catch (final ProxyException e) {
 			throw new SQLException(e);
 		}
 		whereField.apply(proxy);
 		final String proxyFieldName = proxy.toString();
-		final Class<T> type = statement.getType();
 		final Field field = ReflectionUtil.getDeclaredField(type, proxyFieldName);
 		if (field != null && List.class.isAssignableFrom(field.getType())) {
 			final String typeSimpleName = type.getSimpleName();
@@ -56,7 +56,7 @@ public class WhereClause<S, T, U extends IStatement<T>> {
 			fieldName = joinTable + "." + paramType.getSimpleName();
 		} else {
 			joinClause = "";
-			fieldName = proxyFieldName;
+			fieldName = type.getSimpleName() + "." + proxyFieldName;
 		}
 	}
 

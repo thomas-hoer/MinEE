@@ -3,11 +3,12 @@ package de.minee.jpa;
 import de.minee.util.ProxyFactory;
 import de.minee.util.ProxyFactory.ProxyException;
 
-import java.lang.reflect.Field;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 /**
@@ -18,13 +19,13 @@ import java.util.function.Function;
  */
 public class JoinClause<S, T> extends AbstractStatement<S> {
 
-	private final InitialQueryConnection<T, ?> originalStatement;
+	private final InitialQueryConnection<T, ?> queryConnection;
 	private String proxyFieldName;
 
-	public JoinClause(final InitialQueryConnection<T, ?> abstractStatement, final Class<S> cls,
+	public JoinClause(final InitialQueryConnection<T, ?> queryConnectio, final Class<S> cls,
 			final Connection connection) {
 		super(cls, connection);
-		this.originalStatement = abstractStatement;
+		this.queryConnection = queryConnectio;
 	}
 
 	public InitialQueryConnection<S, JoinClause<S, T>> on(final Function<S, T> whereField) throws SQLException {
@@ -39,22 +40,46 @@ public class JoinClause<S, T> extends AbstractStatement<S> {
 		return new InitialQueryConnection<>(this, getConnection());
 	}
 
-	@Override
-	void handleList(final S obj, final Field field, final Map<Object, Object> handledObjects)
-			throws SQLException, IllegalAccessException {
-		// TODO Auto-generated method stub
-
+	@SuppressWarnings("unchecked")
+	public <U extends AbstractStatement<T>> InitialQueryConnection<T, U> end() {
+		return (InitialQueryConnection<T, U>) queryConnection;
 	}
 
 	@Override
-	void handleFieldColumn(final Field field, final ResultSet rs, final S obj, final Map<Object, Object> handledObjects)
-			throws SQLException, IllegalAccessException {
-		// TODO Auto-generated method stub
+	public String toString() {
+		final StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append("JOIN ");
+		stringBuilder.append(getType().getSimpleName());
+		stringBuilder.append(" ON ");
+		stringBuilder.append(getType().getSimpleName());
+		stringBuilder.append(".");
+		stringBuilder.append(proxyFieldName);
+		stringBuilder.append(" = ");
+		stringBuilder.append(queryConnection.getStatement().getType().getSimpleName());
+		stringBuilder.append(".id ");
 
+		final String additionalConditions = assembleQuery();
+		if (!"".equals(additionalConditions)) {
+			stringBuilder.append("AND ").append(additionalConditions).append(" ");
+		}
+		return stringBuilder.toString();
 	}
 
-	public InitialQueryConnection<T, ?> end() {
-		return originalStatement;
+	@Override
+	public List<S> execute() {
+		throw new IllegalStateException(
+				"Not able to execute a unfinished Join clause. Please add .end() before .execute() in order to complete the Statement");
 	}
 
+	@Override
+	public List<S> execute(final Collection<?> args) {
+		throw new IllegalStateException(
+				"Not able to execute a unfinished Join clause. Please add .end() before .execute() in order to complete the Statement");
+	}
+
+	@Override
+	protected S byId(final UUID id, final Map<Object, Object> handledObjects) {
+		throw new IllegalStateException(
+				"Not able to execute a unfinished Join clause. Please add .end() before .byId() in order to complete the Statement");
+	}
 }

@@ -8,7 +8,7 @@ import java.util.function.Function;
  * is, that AND binds stronger than OR. In particular this means that A OR B AND
  * C evaluates A OR (B AND C).
  */
-public abstract class AbstractAndOrConnection<T, U extends IStatement<T>> {
+public abstract class AbstractAndOrConnection<T, U extends AbstractStatement<T>> {
 
 	private final U statement;
 	private WhereClause<?, T, U> whereClause;
@@ -40,4 +40,9 @@ public abstract class AbstractAndOrConnection<T, U extends IStatement<T>> {
 	}
 
 	protected abstract String getConnectionString();
+
+	@Override
+	public String toString() {
+		return getConnectionString() + " " + whereClause;
+	}
 }

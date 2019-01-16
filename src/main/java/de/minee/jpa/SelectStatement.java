@@ -5,25 +5,150 @@ import de.minee.util.ReflectionUtil;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 public class SelectStatement<T> extends AbstractStatement<T> {
 
-	public SelectStatement(final Class<T> clazz, final Connection connection) {
-		super(clazz, connection);
+	private static final Logger LOGGER = Logger.getLogger(SelectStatement.class.getName());
+	private static final String INSTANTIATION_ERROR_MESSAGE = "Cannot instanciate object of type ";
+
+	private final List<Field> fieldList = new ArrayList<>();
+
+	public SelectStatement(final Class<T> cls, final Connection connection) {
+		super(cls, connection);
+		for (final Field field : ReflectionUtil.getAllFields(cls)) {
+			fieldList.add(field);
+		}
 	}
 
 	protected static <S> AbstractStatement<S> select(final Class<S> clazz, final Connection connection) {
 		return new SelectStatement<>(clazz, connection);
 	}
 
+	/**
+	 * Executes a prepared statement by handing over the query arguments.
+	 *
+	 * @param args Arguments for the prepared statement
+	 * @return A list of the found database entries
+	 * @throws SQLException SQLException in case of an error
+	 */
 	@Override
+	public List<T> execute(final Collection<?> args) throws SQLException {
+		final String query = assembleFullSelectQuery();
+		LOGGER.info(query);
+
+		final List<T> resultList = new ArrayList<>();
+		ResultSet resultSet = null;
+		try (PreparedStatement preparedStatement = getConnection().prepareStatement(query)) {
+			int i = 1;
+			final Map<Object, Object> handledObjects = new HashMap<>();
+			for (final Object arg : args) {
+				preparedStatement.setObject(i++, arg);
+			}
+			resultSet = preparedStatement.executeQuery();
+			while (resultSet.next()) {
+				final T obj = getType().newInstance();
+				resultList.add(mapResultSet(resultSet, obj, handledObjects));
+			}
+		} catch (final InstantiationException | IllegalAccessException e) {
+			throw new SQLException(INSTANTIATION_ERROR_MESSAGE + getType().getName(), e);
+		} finally {
+			if (resultSet != null) {
+				resultSet.close();
+			}
+		}
+		return resultList;
+	}
+
+	private T mapResultSet(final ResultSet rs, final T instance, final Map<Object, Object> handledObjects)
+			throws SQLException {
+		for (final Field field : fieldList) {
+			if (List.class.isAssignableFrom(field.getType())) {
+				handleList(instance, field, handledObjects);
+				continue;
+			}
+			handleFieldColumn(field, rs, instance, handledObjects);
+		}
+		return instance;
+	}
+
+	@Override
+	protected T byId(final UUID id, final Map<Object, Object> handledObjects) throws SQLException {
+		if (handledObjects.containsKey(id)) {
+			return (T) handledObjects.get(id);
+		}
+		final StringBuilder query = new StringBuilder();
+		query.append("SELECT * FROM ");
+		query.append(getType().getSimpleName());
+		query.append(" WHERE id = '");
+		query.append(id.toString());
+		query.append("'");
+		final String selectQuery = query.toString();
+		LOGGER.info(selectQuery);
+
+		try (Statement statement = getConnection().createStatement();
+				ResultSet rs = statement.executeQuery(selectQuery)) {
+			final T obj = getType().newInstance();
+			handledObjects.put(id, obj);
+			return rs.next() ? mapResultSet(rs, obj, handledObjects) : null;
+		} catch (final InstantiationException | IllegalAccessException e) {
+			throw new SQLException(INSTANTIATION_ERROR_MESSAGE + getType().getName(), e);
+		}
+	}
+
+	/**
+	 * Executes the Query.
+	 *
+	 * @return A list of the found database entries
+	 * @throws SQLException SQLException in case of an error
+	 */
+	@Override
+	public List<T> execute() throws SQLException {
+		final String query = assembleFullSelectQuery();
+		LOGGER.info(query);
+		final List<T> resultList = new ArrayList<>();
+		try (final Statement statement = getConnection().createStatement();
+				final ResultSet rs = statement.executeQuery(query)) {
+			final Map<Object, Object> handledObjects = new HashMap<>();
+			while (rs.next()) {
+				final T obj = getType().newInstance();
+				resultList.add(mapResultSet(rs, obj, handledObjects));
+			}
+		} catch (final InstantiationException | IllegalAccessException e) {
+			throw new SQLException(INSTANTIATION_ERROR_MESSAGE + getType().getName(), e);
+		}
+		return resultList;
+	}
+
+	void handleList(final T obj, final Field field, final Map<Object, Object> handledObjects) throws SQLException {
+		final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
+		final Class<?> type = (Class<?>) mapToType.getActualTypeArguments()[0];
+		final boolean supportedType = MappingHelper.isSupportedType(type);
+		final List<Object> list = new ArrayList<>();
+		final String query = "SELECT " + type.getSimpleName() + " FROM Mapping_" + getType().getSimpleName() + "_"
+				+ field.getName();
+		executeQuery(query, resultSet -> {
+			if (supportedType) {
+				list.add(resultSet.getObject(1));
+			} else {
+				final Object o = select(type, getConnection()).byId((UUID) resultSet.getObject(1), handledObjects);
+				list.add(o);
+			}
+		});
+		ReflectionUtil.executeSet(field, obj, list);
+	}
+
 	void handleFieldColumn(final Field field, final ResultSet rs, final T obj, final Map<Object, Object> handledObjects)
 			throws SQLException {
 		final Object value = rs.getObject(field.getName());
@@ -50,22 +175,4 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 		}
 	}
 
-	@Override
-	void handleList(final T obj, final Field field, final Map<Object, Object> handledObjects) throws SQLException {
-		final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
-		final Class<?> type = (Class<?>) mapToType.getActualTypeArguments()[0];
-		final boolean supportedType = MappingHelper.isSupportedType(type);
-		final List<Object> list = new ArrayList<>();
-		final String query = "SELECT " + type.getSimpleName() + " FROM Mapping_" + getType().getSimpleName() + "_"
-				+ field.getName();
-		executeQuery(query, resultSet -> {
-			if (supportedType) {
-				list.add(resultSet.getObject(1));
-			} else {
-				final Object o = select(type, getConnection()).byId((UUID) resultSet.getObject(1), handledObjects);
-				list.add(o);
-			}
-		});
-		ReflectionUtil.executeSet(field, obj, list);
-	}
 }
