@@ -13,6 +13,7 @@ import de.minee.jpa.InitialQueryConnection;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -50,6 +51,24 @@ public class ManagedResourceTest {
 		});
 		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("root");
 		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
+		resource.serve(request, response);
+		assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getError());
+	}
+
+	@Test(expected = HateoesException.class)
+	public void testServeCreateException() throws IOException {
+		final ManagedResource<SimpleReference> resource = new ManagedResource<>("root",
+				new Operation[] { Operation.ALL }, SimpleReference.class);
+		resource.setDao(new DAOTestImpl() {
+			@Override
+			public <T> InitialQueryConnection<T, AbstractStatement<T>> select(final Class<T> clazz)
+					throws SQLException {
+				throw new SQLException();
+			}
+		});
+		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("root/create", Operation.POST, "");
+		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
+		request.addParameter("referenceChain", UUID.randomUUID().toString());
 		resource.serve(request, response);
 		assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getError());
 	}

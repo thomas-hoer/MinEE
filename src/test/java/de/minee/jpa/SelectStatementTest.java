@@ -3,11 +3,14 @@ package de.minee.jpa;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import de.minee.datamodel.RecursiveObject;
+import de.minee.datamodel.ReferenceList;
 import de.minee.datamodel.SimpleReference;
 
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -24,6 +27,8 @@ public class SelectStatementTest extends AbstractTestDAO {
 	@Override
 	protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
 		createTable(SimpleReference.class);
+		createTable(RecursiveObject.class);
+		createTable(ReferenceList.class);
 		return 1;
 	}
 
@@ -98,6 +103,22 @@ public class SelectStatementTest extends AbstractTestDAO {
 
 		assertNotNull(result);
 		assertEquals(3, result.size());
+	}
+
+	@Test
+	public void testSelectInList() throws SQLException {
+		final RecursiveObject recursiveObject1 = new RecursiveObject();
+		recursiveObject1.setId(UUID.randomUUID());
+		final RecursiveObject recursiveObject2 = new RecursiveObject();
+		recursiveObject2.setId(UUID.randomUUID());
+		final ReferenceList referenceList = new ReferenceList();
+		referenceList.setRecursiveObjects(Arrays.asList(recursiveObject2));
+		insert(referenceList);
+		final List<ReferenceList> result = select(ReferenceList.class).where(ReferenceList::getRecursiveObjects)
+				.is(Arrays.asList(recursiveObject1, recursiveObject2)).execute();
+
+		assertNotNull(result);
+		assertEquals(1, result.size());
 	}
 
 	@Test(expected = SQLException.class)

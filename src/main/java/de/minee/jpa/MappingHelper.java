@@ -75,6 +75,10 @@ final class MappingHelper {
 			return "ENUM" + stringJoiner.toString();
 		}
 		final Field childId = ReflectionUtil.getDeclaredField(clazz, "id");
+		if (childId == null) {
+			throw new MappingException(
+					"Not supported field type: " + clazz.getSimpleName() + " in Class " + field.getDeclaringClass());
+		}
 		return childId.getType().getSimpleName();
 	}
 

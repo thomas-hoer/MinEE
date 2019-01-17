@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 public abstract class AbstractDAO {
 
 	private static final Logger LOGGER = Logger.getLogger(AbstractDAO.class.getName());
-	private final Map<String, Connection> connections = new HashMap<>();
+	private static final Map<String, Connection> connections = new HashMap<>();
 	private Connection localConnection;
 	private Statement statementForSchemaUpdate;
 
@@ -40,12 +40,13 @@ public abstract class AbstractDAO {
 	protected abstract int updateDatabaseSchema(int oldDbSchemaVersion) throws SQLException;
 
 	private synchronized Connection createConnection() throws SQLException {
-		if (connections.containsKey(getConnectionString())) {
-			return connections.get(getConnectionString());
+		final String connectionString = getConnectionString();
+		if (connections.containsKey(connectionString) && !"jdbc:h2:mem:".equals(connectionString)) {
+			return connections.get(connectionString);
 		}
-		final Connection connection = DriverManager.getConnection(getConnectionString(), getUserName(), getPassword());
+		final Connection connection = DriverManager.getConnection(connectionString, getUserName(), getPassword());
 		checkVersion(connection);
-		connections.put(getConnectionString(), connection);
+		connections.put(connectionString, connection);
 		return connection;
 	}
 

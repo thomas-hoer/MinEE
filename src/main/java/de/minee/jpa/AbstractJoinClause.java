@@ -1,15 +1,10 @@
 package de.minee.jpa;
 
-import de.minee.util.ProxyFactory;
-import de.minee.util.ProxyFactory.ProxyException;
-
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
 
 /**
  * Joins the class S to T for additional where conditions.
@@ -17,27 +12,19 @@ import java.util.function.Function;
  * @param <S> The class that should be joined
  * @param <T> The base class of the From clause
  */
-public class JoinClause<S, T> extends AbstractStatement<S> {
+abstract class AbstractJoinClause<S, T> extends AbstractStatement<S> {
 
-	private final InitialQueryConnection<T, ?> queryConnection;
-	private String proxyFieldName;
+	private final InitialQueryConnection<T, ? extends AbstractStatement<T>> queryConnection;
 
-	public JoinClause(final InitialQueryConnection<T, ?> queryConnectio, final Class<S> cls,
-			final Connection connection) {
+	AbstractJoinClause(final InitialQueryConnection<T, ? extends AbstractStatement<T>> queryConnection,
+			final Class<S> cls, final Connection connection) {
 		super(cls, connection);
-		this.queryConnection = queryConnectio;
+		this.queryConnection = queryConnection;
 	}
 
-	public InitialQueryConnection<S, JoinClause<S, T>> on(final Function<S, T> whereField) throws SQLException {
-		S proxy;
-		try {
-			proxy = ProxyFactory.getProxy(getType());
-		} catch (final ProxyException e) {
-			throw new SQLException(e);
-		}
-		whereField.apply(proxy);
-		proxyFieldName = proxy.toString();
-		return new InitialQueryConnection<>(this, getConnection());
+	@SuppressWarnings("unchecked")
+	protected <U extends AbstractStatement<T>> InitialQueryConnection<T, U> getQueryConnection() {
+		return (InitialQueryConnection<T, U>) queryConnection;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -46,19 +33,9 @@ public class JoinClause<S, T> extends AbstractStatement<S> {
 	}
 
 	@Override
-	public String toString() {
+	protected String assembleQuery() {
 		final StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("JOIN ");
-		stringBuilder.append(getType().getSimpleName());
-		stringBuilder.append(" ON ");
-		stringBuilder.append(getType().getSimpleName());
-		stringBuilder.append(".");
-		stringBuilder.append(proxyFieldName);
-		stringBuilder.append(" = ");
-		stringBuilder.append(queryConnection.getStatement().getType().getSimpleName());
-		stringBuilder.append(".id ");
-
-		final String additionalConditions = assembleQuery();
+		final String additionalConditions = super.assembleQuery();
 		if (!"".equals(additionalConditions)) {
 			stringBuilder.append("AND ").append(additionalConditions).append(" ");
 		}

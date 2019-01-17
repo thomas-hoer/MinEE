@@ -80,6 +80,33 @@ public class JoinClauseTest extends AbstractTestDAO {
 		assertEquals(1, selectedElements.size());
 	}
 
+	@Test
+	public void testForwardJoinMatching() throws SQLException {
+		final SimpleReference simpleReference1 = new SimpleReference();
+		simpleReference1.setName("sr");
+
+		final SimpleReference simpleReference2 = new SimpleReference();
+		simpleReference2.setName("sr2");
+		final ReferenceChain referenceChain2 = new ReferenceChain();
+		referenceChain2.setName("abc");
+		simpleReference2.setReferenceChain(referenceChain2);
+
+		final SimpleReference simpleReference3 = new SimpleReference();
+		simpleReference3.setName("sr");
+		final ReferenceChain referenceChain3 = new ReferenceChain();
+		referenceChain3.setName("abcd");
+		simpleReference3.setReferenceChain(referenceChain3);
+
+		insert(simpleReference1);
+		insert(simpleReference2);
+		insert(simpleReference3);
+
+		final List<SimpleReference> selectedElements1 = select(SimpleReference.class)
+				.join(SimpleReference::getReferenceChain).where(ReferenceChain::getName).is("abc").end().execute();
+		assertEquals(1, selectedElements1.size());
+
+	}
+
 	@Test(expected = IllegalStateException.class)
 	public void testUnfinishedQuery() throws SQLException {
 		select(SimpleReference.class).join(ReferenceChain.class).execute();

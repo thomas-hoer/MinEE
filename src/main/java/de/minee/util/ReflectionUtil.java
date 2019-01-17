@@ -1,6 +1,7 @@
 package de.minee.util;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -66,13 +67,33 @@ public final class ReflectionUtil {
 	 */
 	public static Field getDeclaredField(final Class<?> cls, final String fieldname) {
 		Assertions.assertNotNull(cls);
-		Assertions.assertNotNull(fieldname);
+		Assertions.assertNotEmpty(fieldname);
 		if (Object.class.equals(cls) || cls.isEnum() || cls.isInterface()) {
 			return null;
 		}
 		return Arrays.asList(cls.getDeclaredFields()).stream()
 				.filter(field -> fieldname.equalsIgnoreCase(field.getName())).findFirst()
 				.orElseGet(() -> getDeclaredField(cls.getSuperclass(), fieldname));
+	}
+
+	/**
+	 * Returns the Method with name method of the class cls or its parent class. It
+	 * only works for methods without arguments. This method only operates on public
+	 * instance methods. Private and Protected methods are excluded.
+	 *
+	 * @param cls        Class that should be explored
+	 * @param methodname Name of the Method
+	 * @return Method or null if method does not exists
+	 */
+	public static Method getMethod(final Class<?> cls, final String methodname) {
+		Assertions.assertNotNull(cls);
+		Assertions.assertNotEmpty(methodname);
+		if (Object.class.equals(cls) || cls.isEnum() || cls.isInterface()) {
+			return null;
+		}
+		return Arrays.asList(cls.getMethods()).stream().filter(
+				method -> method.getParameterTypes().length == 0 && methodname.equalsIgnoreCase(method.getName()))
+				.findFirst().orElseGet(() -> getMethod(cls.getSuperclass(), methodname));
 	}
 
 	/**

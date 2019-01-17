@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNull;
 
 import de.minee.datamodel.ArrayTypes;
 import de.minee.datamodel.EnumObject;
+import de.minee.datamodel.NotSupportedType;
 import de.minee.datamodel.PrimitiveList;
 import de.minee.datamodel.RecursiveObject;
 import de.minee.datamodel.enumeration.Enumeration;
@@ -324,8 +325,27 @@ public class AbstractDAOTest extends AbstractTestDAO {
 		Assert.assertArrayEquals(new Integer[] { 1, 2, 10, 10, 11, 0 }, intArray);
 	}
 
+	@Test(expected = MappingException.class)
+	public void testUnsupportedType() throws SQLException {
+		final AbstractDAO dao = new AbstractTestDAO() {
+
+			@Override
+			protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
+				createTable(NotSupportedType.class);
+				return 0;
+			}
+
+		};
+		dao.select(NotSupportedType.class).execute();
+	}
+
 	@Test(expected = SQLException.class)
 	public void testDropTable() throws SQLException {
 		dropTable(SimpleReference.class);
+	}
+
+	@Test(expected = SQLException.class)
+	public void testUpdateTable() throws SQLException {
+		updateTable(SimpleReference.class);
 	}
 }

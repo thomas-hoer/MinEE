@@ -21,7 +21,7 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 	private final Class<T> clazz;
 	private final Connection connection;
 	private final List<AbstractAndOrConnection<T, ? extends AbstractStatement<T>>> connections = new ArrayList<>();
-	private final List<JoinClause<?, T>> joins = new ArrayList<>();
+	private final List<AbstractJoinClause<?, T>> joins = new ArrayList<>();
 	private String additionalWhereClause;
 
 	/**
@@ -41,7 +41,7 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 		connections.add(connection);
 	}
 
-	public <S> void add(final JoinClause<S, T> joinClause) {
+	public <S> void add(final AbstractJoinClause<S, T> joinClause) {
 		joins.add(joinClause);
 	}
 
@@ -81,8 +81,8 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 		query.append("SELECT * FROM ");
 		query.append(clazz.getSimpleName());
 		query.append(" ");
-		for (final JoinClause<?, T> join : joins) {
-			query.append(join);
+		for (final AbstractJoinClause<?, T> join : joins) {
+			query.append(join.assembleQuery());
 		}
 		for (final AbstractAndOrConnection<T, ?> queryConnection : connections) {
 			final WhereClause<?, ?, ?> whereClause = queryConnection.getClause();
