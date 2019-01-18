@@ -1,6 +1,11 @@
 package de.minee.hateoes.path;
 
-public interface IPathPart {
+import de.minee.jpa.AbstractStatement;
+import de.minee.jpa.InitialQueryConnection;
+
+import java.sql.SQLException;
+
+public interface IPathPart<T> {
 
 	/**
 	 * Returns true if the pathPart is a valid parameter for this Resource.
@@ -11,16 +16,14 @@ public interface IPathPart {
 	boolean isMatch(String pathPart);
 
 	/**
-	 * If isParameterType() returns true it must implement getFieldName()
+	 * If isParameterType() returns true it must implement appendQuery().
 	 *
 	 * @return true if the Resource depends on this input
 	 */
 	boolean isParameterType();
 
 	/**
-	 * Returns the field name for the corresponding database table.
-	 * 
-	 * @return
+	 * Extends the query.
 	 */
-	String getFieldName();
+	void appendQuery(InitialQueryConnection<T, AbstractStatement<T>> query) throws SQLException;
 }

@@ -1,6 +1,7 @@
 package de.minee.hateoes.path;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import de.minee.datamodel.ReferenceChain;
 import de.minee.datamodel.SimpleReference;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -32,11 +34,11 @@ public class JoinPathPartTest {
 		@HateoesResource("sRef")
 		SimpleReference simpleReference;
 
-		@HateoesResource("rChain/{id}/sRef/{simpleReference.id}")
+		@HateoesResource("sRef/{simpleReference.id}/rChain/{id}")
 		ReferenceChain forwardReference;
 
-		@HateoesResource("sRef/{SimpleReference.id\\referenceChain}")
-		SimpleReference backwardReference;
+		// @HateoesResource("sRef/{SimpleReference.id\\referenceChain}")
+		// SimpleReference backwardReference;
 
 	};
 
@@ -65,11 +67,14 @@ public class JoinPathPartTest {
 		request.addParameters(parameters);
 		response = new MockHttpServletResponseImpl();
 		HATEOES_TEST_SERVLET.service(request, response);
-		// assertEquals(HttpServletResponse.SC_OK, response.getError());
+		assertEquals(HttpServletResponse.SC_OK, response.getError());
 
-		request = new MockHttpServletRequestImpl("rChain/" + rChainId + "/sRef/" + sRefId);
+		request = new MockHttpServletRequestImpl("sRef/" + sRefId + "/rChain/" + rChainId);
 		response = new MockHttpServletResponseImpl();
 		HATEOES_TEST_SERVLET.service(request, response);
-		assertEquals("", response.getWrittenOutput());
+		final String output = response.getWrittenOutput();
+		assertTrue(output.contains("SimpleReference"));
+		assertTrue(output.contains("ReferenceChain"));
+		assertTrue(output.contains("Name?"));
 	}
 }

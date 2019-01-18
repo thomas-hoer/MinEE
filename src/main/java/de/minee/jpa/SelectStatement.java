@@ -56,6 +56,7 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 			for (final Object arg : args) {
 				preparedStatement.setObject(i++, arg);
 			}
+			LOGGER.info(preparedStatement::toString);
 			resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				final T obj = getType().newInstance();
@@ -71,16 +72,28 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 		return resultList;
 	}
 
-	private T mapResultSet(final ResultSet rs, final T instance, final Map<Object, Object> handledObjects)
-			throws SQLException {
-		for (final Field field : fieldList) {
-			if (List.class.isAssignableFrom(field.getType())) {
-				handleList(instance, field, handledObjects);
-				continue;
+	/**
+	 * Executes the Query.
+	 *
+	 * @return A list of the found database entries
+	 * @throws SQLException SQLException in case of an error
+	 */
+	@Override
+	public List<T> execute() throws SQLException {
+		final String query = assembleFullSelectQuery();
+		LOGGER.info(query);
+		final List<T> resultList = new ArrayList<>();
+		try (final Statement statement = getConnection().createStatement();
+				final ResultSet rs = statement.executeQuery(query)) {
+			final Map<Object, Object> handledObjects = new HashMap<>();
+			while (rs.next()) {
+				final T obj = getType().newInstance();
+				resultList.add(mapResultSet(rs, obj, handledObjects));
 			}
-			handleFieldColumn(field, rs, instance, handledObjects);
+		} catch (final InstantiationException | IllegalAccessException e) {
+			throw new SQLException(INSTANTIATION_ERROR_MESSAGE + getType().getName(), e);
 		}
-		return instance;
+		return resultList;
 	}
 
 	@Override
@@ -107,28 +120,16 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 		}
 	}
 
-	/**
-	 * Executes the Query.
-	 *
-	 * @return A list of the found database entries
-	 * @throws SQLException SQLException in case of an error
-	 */
-	@Override
-	public List<T> execute() throws SQLException {
-		final String query = assembleFullSelectQuery();
-		LOGGER.info(query);
-		final List<T> resultList = new ArrayList<>();
-		try (final Statement statement = getConnection().createStatement();
-				final ResultSet rs = statement.executeQuery(query)) {
-			final Map<Object, Object> handledObjects = new HashMap<>();
-			while (rs.next()) {
-				final T obj = getType().newInstance();
-				resultList.add(mapResultSet(rs, obj, handledObjects));
+	private T mapResultSet(final ResultSet rs, final T instance, final Map<Object, Object> handledObjects)
+			throws SQLException {
+		for (final Field field : fieldList) {
+			if (List.class.isAssignableFrom(field.getType())) {
+				handleList(instance, field, handledObjects);
+				continue;
 			}
-		} catch (final InstantiationException | IllegalAccessException e) {
-			throw new SQLException(INSTANTIATION_ERROR_MESSAGE + getType().getName(), e);
+			handleFieldColumn(field, rs, instance, handledObjects);
 		}
-		return resultList;
+		return instance;
 	}
 
 	void handleList(final T obj, final Field field, final Map<Object, Object> handledObjects) throws SQLException {

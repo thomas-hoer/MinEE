@@ -306,4 +306,14 @@ public abstract class AbstractDAO {
 	public <T> void delete(final T objectToDelete) throws SQLException {
 		PreparedDelete.delete(objectToDelete, getConnection(), Cascade.DELETE);
 	}
+
+	/**
+	 * Deletes a Object. Referenced Objects will not be deleted.
+	 *
+	 * @param objectToDelete Object that shall be deleted from Database
+	 * @throws SQLException SQLException in case of an error
+	 */
+	public <T> void deleteShallow(final T objectToDelete) throws SQLException {
+		PreparedDelete.delete(objectToDelete, getConnection(), Cascade.NONE);
+	}
 }

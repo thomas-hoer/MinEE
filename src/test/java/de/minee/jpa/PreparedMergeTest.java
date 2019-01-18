@@ -1,5 +1,8 @@
 package de.minee.jpa;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 import de.minee.datamodel.ArrayTypes;
 import de.minee.datamodel.EnumObject;
 import de.minee.datamodel.PrimitiveList;
@@ -10,9 +13,9 @@ import de.minee.datamodel.SimpleReference;
 
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 public class PreparedMergeTest extends AbstractTestDAO {
@@ -53,17 +56,38 @@ public class PreparedMergeTest extends AbstractTestDAO {
 		final UUID id = gallery.getId();
 		final ReferenceList selectedGallery1 = select(ReferenceList.class).byId(id);
 
-		Assert.assertEquals(3, selectedGallery1.getRecursiveObjects().size());
+		assertEquals(3, selectedGallery1.getRecursiveObjects().size());
 		final Object[] categoryNames = selectedGallery1.getRecursiveObjects().stream().map(RecursiveObject::getName)
 				.sorted().toArray();
-		Assert.assertArrayEquals(new String[] { "Name1-1", "Name2", "Name3" }, categoryNames);
+		assertArrayEquals(new String[] { "Name1-1", "Name2", "Name3" }, categoryNames);
 
 		// Prepare 2nd merge
 		gallery.setRecursiveObjects(Arrays.asList(category2));
 		merge(gallery);
 		final ReferenceList selectedGallery2 = select(ReferenceList.class).byId(id);
-		Assert.assertEquals(1, selectedGallery2.getRecursiveObjects().size());
-		Assert.assertEquals(category2.getId(), selectedGallery2.getRecursiveObjects().get(0).getId());
+		assertEquals(1, selectedGallery2.getRecursiveObjects().size());
+		assertEquals(category2.getId(), selectedGallery2.getRecursiveObjects().get(0).getId());
 
+	}
+
+	@Test
+	public void testMergeForInsert() throws SQLException {
+		final ReferenceList referenceList = new ReferenceList();
+		merge(referenceList);
+
+		final List<ReferenceList> selectedElements = select(ReferenceList.class).execute();
+		assertEquals(1, selectedElements.size());
+	}
+
+	@Test
+	public void testMergeInsertList() throws SQLException {
+		final ReferenceList referenceList = new ReferenceList();
+		final RecursiveObject recursiveObject1 = new RecursiveObject();
+		final RecursiveObject recursiveObject2 = new RecursiveObject();
+		referenceList.setRecursiveObjects(Arrays.asList(recursiveObject1, recursiveObject2));
+		merge(referenceList);
+
+		final List<RecursiveObject> selectedElements = select(RecursiveObject.class).execute();
+		assertEquals(2, selectedElements.size());
 	}
 }

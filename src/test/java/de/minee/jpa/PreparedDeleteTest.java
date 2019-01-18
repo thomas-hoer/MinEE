@@ -54,6 +54,59 @@ public class PreparedDeleteTest extends AbstractTestDAO {
 	}
 
 	@Test
+	public void testDeleteShallow() throws SQLException {
+		final SimpleReference simpleReference = new SimpleReference();
+		final ReferenceChain referenceChain = new ReferenceChain();
+		simpleReference.setReferenceChain(referenceChain);
+
+		insert(simpleReference);
+
+		final SimpleReference selectedElement = select(SimpleReference.class).byId(simpleReference.getId());
+
+		deleteShallow(selectedElement);
+
+		final SimpleReference deletedElement = select(SimpleReference.class).byId(simpleReference.getId());
+		final ReferenceChain selectedReference = select(ReferenceChain.class).byId(referenceChain.getId());
+		Assert.assertNotNull(selectedElement);
+		Assert.assertNull(deletedElement);
+		Assert.assertNotNull(selectedReference);
+	}
+
+	@Test
+	public void testDeleteCascade() throws SQLException {
+		final SimpleReference simpleReference = new SimpleReference();
+		final ReferenceChain referenceChain = new ReferenceChain();
+		simpleReference.setReferenceChain(referenceChain);
+
+		insert(simpleReference);
+
+		final SimpleReference selectedElement = select(SimpleReference.class).byId(simpleReference.getId());
+
+		delete(selectedElement);
+
+		final SimpleReference deletedElement = select(SimpleReference.class).byId(simpleReference.getId());
+		final ReferenceChain selectedReference = select(ReferenceChain.class).byId(referenceChain.getId());
+		Assert.assertNotNull(selectedElement);
+		Assert.assertNull(deletedElement);
+		Assert.assertNull(selectedReference);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testNotAllowedCascadeInsert() throws SQLException {
+		new PreparedDelete<>(SimpleReference.class, getConnection(), Cascade.INSERT);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testNotAllowedCascadeMerge() throws SQLException {
+		new PreparedDelete<>(SimpleReference.class, getConnection(), Cascade.MERGE);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testNotAllowedCascadeUpdate() throws SQLException {
+		new PreparedDelete<>(SimpleReference.class, getConnection(), Cascade.UPDATE);
+	}
+
+	@Test
 	public void testDeletePrimitiveList() throws SQLException {
 		final PrimitiveList primitiveList = new PrimitiveList();
 		primitiveList.setIntList(Arrays.asList(1, 2, 3));

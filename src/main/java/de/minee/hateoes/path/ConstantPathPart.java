@@ -1,8 +1,24 @@
 package de.minee.hateoes.path;
 
+import de.minee.jpa.AbstractStatement;
+import de.minee.jpa.InitialQueryConnection;
 import de.minee.util.Assertions;
 
-public class ConstantPathPart implements IPathPart {
+/**
+ * Represents the constant parts of a Rest resource path.
+ *
+ * <p>
+ * The 'type' component of the following example will be handled by
+ * ConstantPathPart.
+ *
+ * <pre>
+ * &#64;HateoesResource("/type/{id}")
+ * MyType myType;
+ * </pre>
+ * </p>
+ *
+ */
+public final class ConstantPathPart<T> implements IPathPart<T> {
 
 	private final String path;
 
@@ -11,6 +27,9 @@ public class ConstantPathPart implements IPathPart {
 		this.path = path;
 	}
 
+	/**
+	 * The path part is only a match if the path is exactly the same.
+	 */
 	@Override
 	public boolean isMatch(final String path) {
 		return this.path.equals(path);
@@ -24,16 +43,13 @@ public class ConstantPathPart implements IPathPart {
 		return false;
 	}
 
-	/**
-	 * The result of isParameterType is false so there is no need to implement this.
-	 */
-	@Override
-	public String getFieldName() {
-		return null;
-	}
-
 	@Override
 	public String toString() {
 		return path;
+	}
+
+	@Override
+	public void appendQuery(final InitialQueryConnection<T, AbstractStatement<T>> query) {
+		// Do nothing
 	}
 }

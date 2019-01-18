@@ -142,11 +142,11 @@ public class HateoesServletTest {
 		MockHttpServletResponseImpl response;
 
 		request = new MockHttpServletRequestImpl("rlists/create", Operation.POST, null);
+		response = new MockHttpServletResponseImpl();
 		final Map<String, String> parameters = new HashMap<>();
 		parameters.put("name", "Name!");
 		parameters.put("description", "Desc1");
 		request.addParameters(parameters);
-		response = new MockHttpServletResponseImpl();
 		hateoesServlet.service(request, response);
 		final UUID id = UUID.fromString(response.getWrittenOutput().split(":")[1]);
 		assertNotNull(id);
@@ -163,14 +163,13 @@ public class HateoesServletTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testPostCreateTransformationException() throws ServletException, IOException {
 		final HateoesServlet hateoesServlet = createInMemServlet();
-		MockHttpServletRequestImpl request;
-		MockHttpServletResponseImpl response;
+		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("rlists/create", Operation.POST,
+				null);
+		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
 
-		request = new MockHttpServletRequestImpl("rlists/create", Operation.POST, null);
 		final Map<String, String> parameters = new HashMap<>();
 		parameters.put("id", "ZZZ");
 		request.addParameters(parameters);
-		response = new MockHttpServletResponseImpl();
 		hateoesServlet.service(request, response);
 	}
 

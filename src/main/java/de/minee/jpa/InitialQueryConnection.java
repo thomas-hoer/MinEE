@@ -7,6 +7,7 @@ import de.minee.util.ReflectionUtil;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
@@ -28,6 +29,10 @@ public class InitialQueryConnection<T, U extends AbstractStatement<T>> extends A
 		return getStatement().execute();
 	}
 
+	public List<T> execute(final Collection<?> args) throws SQLException {
+		return getStatement().execute(args);
+	}
+
 	public AbstractStatement<T> query(final String manualQuery) {
 		return getStatement().query(manualQuery);
 	}
@@ -38,7 +43,8 @@ public class InitialQueryConnection<T, U extends AbstractStatement<T>> extends A
 		return joinClause;
 	}
 
-	public <S> InitialQueryConnection<S, AbstractJoinClause<S, T>> join(final Function<T, S> whereField) throws SQLException {
+	public <S> InitialQueryConnection<S, AbstractJoinClause<S, T>> join(final Function<T, S> whereField)
+			throws SQLException {
 
 		final Class<T> cls = getStatement().getType();
 		T proxy;
@@ -51,7 +57,8 @@ public class InitialQueryConnection<T, U extends AbstractStatement<T>> extends A
 		final String proxyFieldName = proxy.toString();
 		final Method getter = ReflectionUtil.getMethod(cls, "get" + proxyFieldName);
 		final Class<S> destClass = (Class<S>) getter.getReturnType();
-		final AbstractJoinClause<S, T> joinClause = new ForwardJoinClause<>(this, destClass, proxyFieldName, connection);
+		final AbstractJoinClause<S, T> joinClause = new ForwardJoinClause<>(this, destClass, proxyFieldName,
+				connection);
 		final InitialQueryConnection<S, AbstractJoinClause<S, T>> initialQueryConnection = new InitialQueryConnection<>(
 				joinClause, connection);
 		getStatement().add(joinClause);

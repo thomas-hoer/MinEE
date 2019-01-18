@@ -1,6 +1,6 @@
 package de.minee.hateoes.path;
 
-public abstract class AbstractVariablePathPart implements IPathPart {
+public abstract class AbstractVariablePathPart<T> implements IPathPart<T> {
 
 	private final String path;
 
@@ -16,10 +16,6 @@ public abstract class AbstractVariablePathPart implements IPathPart {
 	@Override
 	public boolean isParameterType() {
 		return true;
-	}
-
-	protected String getPath() {
-		return path;
 	}
 
 	@Override

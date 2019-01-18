@@ -1,6 +1,7 @@
 package de.minee.util;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -141,5 +142,14 @@ public final class ReflectionUtil {
 	public static Object executeGet(final String string, final Object object) {
 		final Field field = getDeclaredField(object.getClass(), string);
 		return field != null ? executeGet(field, object) : null;
+	}
+
+	public static Object invoke(final Method method, final Object object, final Object... args) {
+		try {
+			return method.invoke(object, args);
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			LOGGER.log(Level.WARNING, "", e);
+			return null;
+		}
 	}
 }

@@ -5,6 +5,8 @@ import de.minee.hateoes.path.PathPartFactory;
 import de.minee.hateoes.renderer.AbstractRenderer;
 import de.minee.hateoes.renderer.HtmlRenderer;
 import de.minee.jpa.AbstractDAO;
+import de.minee.jpa.AbstractStatement;
+import de.minee.jpa.InitialQueryConnection;
 import de.minee.util.ReflectionUtil;
 
 import java.io.IOException;
@@ -141,17 +143,17 @@ class ManagedResource<T> {
 
 	private List<T> getSelectedResource(final String[] pathSplit) throws SQLException {
 		final List<String> parameter = new ArrayList<>();
-		final StringJoiner stringJoiner = new StringJoiner(" AND ");
+		final InitialQueryConnection<T, AbstractStatement<T>> select = dao.select(type);
 		for (int i = 0; i < path.size(); i++) {
 			if (path.get(i).isParameterType()) {
-				stringJoiner.add(path.get(i).getFieldName() + "=?");
+				path.get(i).appendQuery(select);
 				parameter.add(pathSplit[i]);
 			}
 		}
 		if (parameter.isEmpty()) {
-			return dao.select(type).execute();
+			return select.execute();
 		}
-		return dao.select(type).query(stringJoiner.toString()).execute(parameter);
+		return select.execute(parameter);
 	}
 
 	private Object fromString(final Class<?> type, final String parameter) {
