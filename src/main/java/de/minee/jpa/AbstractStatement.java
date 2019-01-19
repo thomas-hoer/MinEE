@@ -78,7 +78,7 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 
 	protected String assembleFullSelectQuery() {
 		final StringBuilder query = new StringBuilder();
-		query.append("SELECT * FROM ");
+		query.append("SELECT " + clazz.getSimpleName() + ".* FROM ");
 		query.append(clazz.getSimpleName());
 		query.append(" ");
 		for (final AbstractJoinClause<?, T> join : joins) {

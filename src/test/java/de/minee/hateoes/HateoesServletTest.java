@@ -192,6 +192,65 @@ public class HateoesServletTest {
 	}
 
 	@Test
+	public void testPostEdit() throws IOException, ServletException {
+		final HateoesServlet hateoesServlet = createInMemServlet();
+		MockHttpServletRequestImpl request;
+		MockHttpServletResponseImpl response;
+		request = new MockHttpServletRequestImpl("rlists/create", Operation.POST, "");
+		request.addParameter("name", "old name");
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		final UUID id = UUID.fromString(response.getWrittenOutput().split(":")[1]);
+
+		request = new MockHttpServletRequestImpl("rlist/" + id + "/edit", Operation.POST, "");
+		request.addParameter("id", id.toString());
+		request.addParameter("name", "new name");
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		final String editOutput = response.getWrittenOutput();
+		assertTrue(editOutput.contains("1 Element(s) updated"));
+		assertEquals(200, response.getError());
+
+		request = new MockHttpServletRequestImpl("rlist/" + id);
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		final String output = response.getWrittenOutput();
+		assertTrue(output.contains("new name"));
+	}
+
+	@Test
+	public void testGetEditConflict() throws IOException, ServletException {
+		final HateoesServlet hateoesServlet = createInMemServlet();
+		MockHttpServletRequestImpl request;
+		MockHttpServletResponseImpl response;
+		request = new MockHttpServletRequestImpl("rlists/create", Operation.POST, "");
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		request = new MockHttpServletRequestImpl("rlists/create", Operation.POST, "");
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+
+		request = new MockHttpServletRequestImpl("rlists/edit");
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		response.getWrittenOutput();
+		assertEquals(HttpServletResponse.SC_CONFLICT, response.getError());
+	}
+
+	@Test
+	public void testGetEditNotFound() throws IOException, ServletException {
+		final HateoesServlet hateoesServlet = createInMemServlet();
+		MockHttpServletRequestImpl request;
+		MockHttpServletResponseImpl response;
+
+		request = new MockHttpServletRequestImpl("rlist/" + UUID.randomUUID() + "/edit");
+		response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		response.getWrittenOutput();
+		assertEquals(HttpServletResponse.SC_NOT_FOUND, response.getError());
+	}
+
+	@Test
 	public void testGetEditError() throws IOException, ServletException {
 		final HateoesServlet hateoesServlet = createInMemServlet();
 		MockHttpServletRequestImpl request;

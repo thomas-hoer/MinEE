@@ -125,7 +125,7 @@ class ManagedResource<T> {
 			throws SQLException, IOException {
 		final String method = req.getMethod();
 		final List<T> result = getSelectedResource(pathSplit);
-		if (result == null) {
+		if (result.isEmpty()) {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 		} else if (result.size() != 1) {
 			resp.sendError(HttpServletResponse.SC_CONFLICT);
@@ -230,7 +230,7 @@ class ManagedResource<T> {
 	private void doPostEdit(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
 		assembleRequestObject(req, resp, instance -> {
 			final int updatedElements = dao.update(instance);
-			return "Success\n" + updatedElements + " Elements updated";
+			return "Success\n" + updatedElements + " Element(s) updated";
 		});
 	}
 

@@ -102,7 +102,7 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 			return (T) handledObjects.get(id);
 		}
 		final StringBuilder query = new StringBuilder();
-		query.append("SELECT * FROM ");
+		query.append("SELECT " + getType().getSimpleName() + ".* FROM ");
 		query.append(getType().getSimpleName());
 		query.append(" WHERE id = '");
 		query.append(id.toString());
