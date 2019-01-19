@@ -3,6 +3,7 @@ package de.minee.hateoes;
 import de.minee.cdi.CdiAwareHttpServlet;
 import de.minee.cdi.CdiUtil;
 import de.minee.hateoes.renderer.AbstractRenderer;
+import de.minee.hateoes.renderer.HtmlRenderer;
 import de.minee.hateoes.renderer.JsonRenderer;
 import de.minee.jpa.AbstractDAO;
 import de.minee.util.ReflectionUtil;
@@ -12,8 +13,10 @@ import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -26,7 +29,7 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 	private static final long serialVersionUID = -5213801706760630081L;
 	private static final Logger LOGGER = Logger.getLogger(HateoesServlet.class.getName());
 
-	private final List<ManagedResource<?>> managedResources = new ArrayList<>();
+	private final HateoesContext context = new HateoesContext();
 
 	@Override
 	public void init() throws ServletException {
@@ -42,6 +45,9 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 		final Set<Class<?>> inMemTypes = new HashSet<>();
 
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
+			context.addType(field.getType());
+		}
+		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			final ManagedResource<?> managedResource = checkHateoesResourceAnnotation(field);
 			daoNeeded |= checkPersistentAnnotation(needsPersistentDao, inMemTypes, field, managedResource);
 			persistentDao = checkDataAccessObjectAnnotation(persistentDao, field);
@@ -52,8 +58,10 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 		}
 
 		final AbstractDAO inMemDao = new InMemDAO(inMemTypes);
+		final AbstractRenderer renderer = new HtmlRenderer();
 
-		for (final ManagedResource<?> managedResource : managedResources) {
+		for (final ManagedResource<?> managedResource : context.getManagedResources()) {
+			managedResource.setRenderer(renderer);
 			if (needsPersistentDao.contains(managedResource)) {
 				managedResource.setDao(persistentDao);
 			} else {
@@ -68,8 +76,9 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 		final HateoesResource annotation = field.getAnnotation(HateoesResource.class);
 		if (annotation != null) {
 			final Class<?> resourceType = field.getType();
-			managedResource = new ManagedResource<>(annotation.value(), annotation.allowedOperations(), resourceType);
-			managedResources.add(managedResource);
+			managedResource = new ManagedResource<>(context, annotation.value(), annotation.allowedOperations(),
+					resourceType);
+			context.addResource(managedResource);
 		}
 		return managedResource;
 	}
@@ -109,7 +118,7 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 			return;
 		}
 		final String method = req.getMethod();
-		for (final ManagedResource<?> managedResource : managedResources) {
+		for (final ManagedResource<?> managedResource : context.getManagedResources()) {
 			if (managedResource.isMatch(pathInfo) && managedResource.isMethodAllowed(method)) {
 				managedResource.serve(req, resp);
 				return;
@@ -122,7 +131,8 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 	private void handleRoot(final HttpServletResponse resp) throws IOException {
 		final AbstractRenderer renderer = new JsonRenderer();
 		try (final PrintWriter writer = resp.getWriter()) {
-			final Object[] availableResources = managedResources.stream().map(ManagedResource::toString).toArray();
+			final Object[] availableResources = context.getManagedResources().stream().map(ManagedResource::toString)
+					.toArray();
 			writer.write(renderer.render(availableResources));
 		}
 	}
@@ -156,5 +166,28 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 			}
 			return 1;
 		}
+	}
+
+	public static class HateoesContext {
+
+		private final List<ManagedResource<?>> managedResources = new ArrayList<>();
+		private final Map<String, Class<?>> knownTypes = new HashMap<>();
+
+		public Class<?> getTypeByName(final String typeName) {
+			return knownTypes.get(typeName);
+		}
+
+		private void addResource(final ManagedResource<?> managedResource) {
+			managedResources.add(managedResource);
+		}
+
+		private List<ManagedResource<?>> getManagedResources() {
+			return managedResources;
+		}
+
+		private void addType(final Class<?> type) {
+			knownTypes.put(type.getSimpleName(), type);
+		}
+
 	}
 }

@@ -1,9 +1,9 @@
 package de.minee.hateoes;
 
+import de.minee.hateoes.HateoesServlet.HateoesContext;
 import de.minee.hateoes.path.IPathPart;
 import de.minee.hateoes.path.PathPartFactory;
 import de.minee.hateoes.renderer.AbstractRenderer;
-import de.minee.hateoes.renderer.HtmlRenderer;
 import de.minee.jpa.AbstractDAO;
 import de.minee.jpa.AbstractStatement;
 import de.minee.jpa.InitialQueryConnection;
@@ -30,16 +30,18 @@ class ManagedResource<T> {
 
 	private static final Logger LOGGER = Logger.getLogger(ManagedResource.class.getName());
 
+	@SuppressWarnings("rawtypes")
 	private final List<IPathPart> path = new ArrayList<>();
 	private final Set<Operation> allowedOperations;
 	private final Class<T> type;
 	private AbstractDAO dao;
-	private final AbstractRenderer renderer = new HtmlRenderer();
+	private AbstractRenderer renderer;
 
-	ManagedResource(final String fullPath, final Operation[] allowedOperations, final Class<T> type) {
+	ManagedResource(final HateoesContext context, final String fullPath, final Operation[] allowedOperations,
+			final Class<T> type) {
 		final String[] paths = fullPath.split("/");
 		for (final String pathPart : paths) {
-			path.add(PathPartFactory.create(type, pathPart));
+			path.add(PathPartFactory.create(context, type, pathPart));
 		}
 		this.allowedOperations = new HashSet<>(Arrays.asList(allowedOperations));
 		if (this.allowedOperations.contains(Operation.ALL)) {
@@ -51,6 +53,10 @@ class ManagedResource<T> {
 		}
 		this.type = type;
 
+	}
+
+	public void setRenderer(final AbstractRenderer renderer) {
+		this.renderer = renderer;
 	}
 
 	public void setDao(final AbstractDAO dao) {

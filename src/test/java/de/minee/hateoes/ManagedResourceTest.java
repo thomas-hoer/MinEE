@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import de.minee.datamodel.EnumObject;
 import de.minee.datamodel.ReferenceList;
 import de.minee.datamodel.SimpleReference;
+import de.minee.hateoes.renderer.HtmlRenderer;
 import de.minee.jpa.AbstractStatement;
 import de.minee.jpa.DAOTestImpl;
 import de.minee.jpa.InitialQueryConnection;
@@ -22,12 +23,13 @@ import org.junit.Test;
 
 public class ManagedResourceTest {
 
-	private static final ManagedResource<SimpleReference> RESOURCE = new ManagedResource<>("root",
+	private static final ManagedResource<SimpleReference> RESOURCE = new ManagedResource<>(null, "root",
 			new Operation[] { Operation.ALL }, SimpleReference.class);
 
 	@BeforeClass
 	public static void prepare() {
 		RESOURCE.setDao(new DAOTestImpl());
+		RESOURCE.setRenderer(new HtmlRenderer());
 	}
 
 	@Test
@@ -40,8 +42,9 @@ public class ManagedResourceTest {
 
 	@Test
 	public void testServeConnectionLost() throws IOException {
-		final ManagedResource<EnumObject> resource = new ManagedResource<>("root", new Operation[] { Operation.ALL },
-				EnumObject.class);
+		final ManagedResource<EnumObject> resource = new ManagedResource<>(null, "root",
+				new Operation[] { Operation.ALL }, EnumObject.class);
+		resource.setRenderer(new HtmlRenderer());
 		resource.setDao(new DAOTestImpl() {
 			@Override
 			public <T> InitialQueryConnection<T, AbstractStatement<T>> select(final Class<T> clazz)
@@ -57,8 +60,9 @@ public class ManagedResourceTest {
 
 	@Test(expected = HateoesException.class)
 	public void testServeCreateException() throws IOException {
-		final ManagedResource<SimpleReference> resource = new ManagedResource<>("root",
+		final ManagedResource<SimpleReference> resource = new ManagedResource<>(null, "root",
 				new Operation[] { Operation.ALL }, SimpleReference.class);
+		resource.setRenderer(new HtmlRenderer());
 		resource.setDao(new DAOTestImpl() {
 			@Override
 			public <T> InitialQueryConnection<T, AbstractStatement<T>> select(final Class<T> clazz)
@@ -84,8 +88,8 @@ public class ManagedResourceTest {
 
 	@Test
 	public void testMethodAllowedGet() {
-		final ManagedResource<EnumObject> resource = new ManagedResource<>("root", new Operation[] { Operation.GET },
-				EnumObject.class);
+		final ManagedResource<EnumObject> resource = new ManagedResource<>(null, "root",
+				new Operation[] { Operation.GET }, EnumObject.class);
 		assertTrue(resource.isMethodAllowed(Operation.GET.name()));
 		assertFalse(resource.isMethodAllowed(Operation.POST.name()));
 		assertFalse(resource.isMethodAllowed(Operation.PUT.name()));
@@ -94,7 +98,7 @@ public class ManagedResourceTest {
 
 	@Test
 	public void testMethodAllowedPostDelete() {
-		final ManagedResource<ReferenceList> resource = new ManagedResource<>("root",
+		final ManagedResource<ReferenceList> resource = new ManagedResource<>(null, "root",
 				new Operation[] { Operation.POST, Operation.DELETE }, ReferenceList.class);
 		assertFalse(resource.isMethodAllowed(Operation.GET.name()));
 		assertTrue(resource.isMethodAllowed(Operation.POST.name()));
