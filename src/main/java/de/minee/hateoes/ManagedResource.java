@@ -3,6 +3,7 @@ package de.minee.hateoes;
 import de.minee.hateoes.HateoesServlet.HateoesContext;
 import de.minee.hateoes.path.IPathPart;
 import de.minee.hateoes.path.PathPartFactory;
+import de.minee.hateoes.path.SimplePathPart;
 import de.minee.hateoes.renderer.AbstractRenderer;
 import de.minee.jpa.AbstractDAO;
 import de.minee.jpa.AbstractStatement;
@@ -26,6 +27,7 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+//TODO: Inject Renderer by annotation
 class ManagedResource<T> {
 
 	private static final Logger LOGGER = Logger.getLogger(ManagedResource.class.getName());
@@ -147,19 +149,27 @@ class ManagedResource<T> {
 		}
 	}
 
+	@SuppressWarnings("rawtypes")
 	private List<T> getSelectedResource(final String[] pathSplit) throws SQLException {
-		final List<String> parameter = new ArrayList<>();
+		final List<String> parameterForJoin = new ArrayList<>();
+		final List<String> parameterForWhere = new ArrayList<>();
 		final InitialQueryConnection<T, AbstractStatement<T>> select = dao.select(type);
 		for (int i = 0; i < path.size(); i++) {
-			if (path.get(i).isParameterType()) {
-				path.get(i).appendQuery(select);
-				parameter.add(pathSplit[i]);
+			final IPathPart pathPart = path.get(i);
+			if (pathPart.isParameterType()) {
+				pathPart.appendQuery(select);
+				if (pathPart instanceof SimplePathPart) {
+					parameterForWhere.add(pathSplit[i]);
+				} else {
+					parameterForJoin.add(pathSplit[i]);
+				}
 			}
 		}
-		if (parameter.isEmpty()) {
+		parameterForJoin.addAll(parameterForWhere);
+		if (parameterForJoin.isEmpty()) {
 			return select.execute();
 		}
-		return select.execute(parameter);
+		return select.execute(parameterForJoin);
 	}
 
 	private Object fromString(final Class<?> type, final String parameter) {

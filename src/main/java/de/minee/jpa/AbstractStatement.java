@@ -76,6 +76,11 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 	 */
 	protected abstract T byId(final UUID id, final Map<Object, Object> handledObjects) throws SQLException;
 
+	/**
+	 * Creates a fully assembled and executable Select Query.
+	 * 
+	 * @return Select Query
+	 */
 	protected String assembleFullSelectQuery() {
 		final StringBuilder query = new StringBuilder();
 		query.append("SELECT " + clazz.getSimpleName() + ".* FROM ");
@@ -95,6 +100,12 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 		return query.toString();
 	}
 
+	/**
+	 * Assembles the restriction part of the the query. This can be for example the
+	 * part of where excluding the 'WHERE' keyword
+	 * 
+	 * @return The 'WHERE' part of the statement
+	 */
 	protected String assembleQuery() {
 		final StringBuilder query = new StringBuilder();
 		if (additionalWhereClause != null) {
