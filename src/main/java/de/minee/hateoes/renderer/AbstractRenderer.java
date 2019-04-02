@@ -51,6 +51,7 @@ public abstract class AbstractRenderer {
 		}
 	}
 
+	// TODO: Use InputStream and HateoesContext
 	public abstract String render(Object input);
 
 	public abstract String forCreate(Class<?> type);

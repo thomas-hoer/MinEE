@@ -31,8 +31,8 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 	 * @param connection Database connection
 	 */
 	public AbstractStatement(final Class<T> cls, final Connection connection) {
-		Assertions.assertNotNull(cls);
-		Assertions.assertNotNull(connection);
+		Assertions.assertNotNull(cls, "The type of a table cannot be null. Please pass over a valid Table-Class");
+		Assertions.assertNotNull(connection, "Database connection cannot be null");
 		this.clazz = cls;
 		this.connection = connection;
 	}
@@ -78,7 +78,7 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 
 	/**
 	 * Creates a fully assembled and executable Select Query.
-	 * 
+	 *
 	 * @return Select Query
 	 */
 	protected String assembleFullSelectQuery() {
@@ -103,7 +103,7 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 	/**
 	 * Assembles the restriction part of the the query. This can be for example the
 	 * part of where excluding the 'WHERE' keyword
-	 * 
+	 *
 	 * @return The 'WHERE' part of the statement
 	 */
 	protected String assembleQuery() {
@@ -124,12 +124,27 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 		return connection;
 	}
 
+	/**
+	 * Returns the table class for this statement.
+	 *
+	 * @return Table Class for the Statement, ensured to be not Null
+	 */
 	public Class<T> getType() {
 		return clazz;
 	}
 
+	/**
+	 * Adds a plain SQL Where string to the Query. Example:
+	 * 
+	 * <pre>
+	 * select(Foo.class).query("id = 1").execute()
+	 * </pre>
+	 *
+	 * @param whereClause Plain SQL Where part.
+	 * @return this for further processing.
+	 */
 	public AbstractStatement<T> query(final String whereClause) {
-		Assertions.assertNotEmpty(whereClause);
+		Assertions.assertNotEmpty(whereClause, "");
 		additionalWhereClause = whereClause;
 		return this;
 	}

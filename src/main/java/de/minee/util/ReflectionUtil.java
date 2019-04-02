@@ -67,8 +67,8 @@ public final class ReflectionUtil {
 	 * @return Field or null if field does not exist
 	 */
 	public static Field getDeclaredField(final Class<?> cls, final String fieldname) {
-		Assertions.assertNotNull(cls);
-		Assertions.assertNotEmpty(fieldname);
+		Assertions.assertNotNull(cls, "Class should not be null");
+		Assertions.assertNotEmpty(fieldname, "The fieldname cannot be null or empty String");
 		if (Object.class.equals(cls) || cls.isEnum() || cls.isInterface()) {
 			return null;
 		}
@@ -87,8 +87,8 @@ public final class ReflectionUtil {
 	 * @return Method or null if method does not exists
 	 */
 	public static Method getMethod(final Class<?> cls, final String methodname) {
-		Assertions.assertNotNull(cls);
-		Assertions.assertNotEmpty(methodname);
+		Assertions.assertNotNull(cls, "Class should not be null");
+		Assertions.assertNotEmpty(methodname, "The methodname cannot be null or empty String");
 		if (Object.class.equals(cls) || cls.isEnum() || cls.isInterface()) {
 			return null;
 		}

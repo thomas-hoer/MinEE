@@ -25,10 +25,12 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 	private final String joinClause;
 
 	/**
+	 * General Class for holding the "Where" information of any SQL Statement
 	 *
-	 * @param whereField
-	 * @param statement
-	 * @throws SQLException
+	 * @param whereField Getter to the Field that is selected
+	 * @param statement  Statement on which the Where clause is attached to
+	 * @throws SQLException In case no Proxy Object can be created for the Table
+	 *                      Class
 	 */
 	public WhereClause(final Function<T, S> whereField, final U statement) throws SQLException {
 		Assertions.assertNotNull(statement);
@@ -41,7 +43,7 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 		try {
 			proxy = ProxyFactory.getProxy(type);
 		} catch (final ProxyException e) {
-			throw new SQLException(e);
+			throw new SQLException("Can not create Proxy Object for Type " + type.getSimpleName(), e);
 		}
 		whereField.apply(proxy);
 		final String proxyFieldName = proxy.toString();

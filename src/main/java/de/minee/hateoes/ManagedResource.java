@@ -39,6 +39,18 @@ class ManagedResource<T> {
 	private AbstractDAO dao;
 	private AbstractRenderer renderer;
 
+	/**
+	 * Creates a new fully managed resource for a REST interface. It can handle GET
+	 * for retrieving, PUT and POST for creating and updating resources as well es
+	 * DELETE for deleting existing resources.
+	 *
+	 * @param context           Context containing information of other resources
+	 *                          managed by the servlet
+	 * @param fullPath          full path of the resource based on the servlet root
+	 * @param allowedOperations http methods that are allowed to handle
+	 * @param type              The type of which objects will be handled by this
+	 *                          resource path
+	 */
 	ManagedResource(final HateoesContext context, final String fullPath, final Operation[] allowedOperations,
 			final Class<T> type) {
 		final String[] paths = fullPath.split("/");
@@ -65,6 +77,12 @@ class ManagedResource<T> {
 		this.dao = dao;
 	}
 
+	/**
+	 * Checks weather this resource can be served with this ManagedResource or not.
+	 *
+	 * @param pathInfo The path that is requestes form the end user.
+	 * @return true if the resource can be served. false otherwise.
+	 */
 	boolean isMatch(final String pathInfo) {
 		final String[] pathSplit = pathInfo.split("/");
 		boolean isMatch = false;
@@ -85,6 +103,12 @@ class ManagedResource<T> {
 		return isMatch;
 	}
 
+	/**
+	 * Checks if the requested http method is supported by the Resource.
+	 *
+	 * @param method Requested http method
+	 * @return true if the resource can be served. false otherwise.
+	 */
 	boolean isMethodAllowed(final String method) {
 		return allowedOperations.contains(Operation.valueOf(method));
 	}
