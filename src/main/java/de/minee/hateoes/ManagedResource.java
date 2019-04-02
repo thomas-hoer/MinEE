@@ -1,13 +1,9 @@
 package de.minee.hateoes;
 
 import de.minee.hateoes.HateoesServlet.HateoesContext;
-import de.minee.hateoes.path.IPathPart;
-import de.minee.hateoes.path.PathPartFactory;
-import de.minee.hateoes.path.SimplePathPart;
+import de.minee.hateoes.path.Path;
 import de.minee.hateoes.renderer.AbstractRenderer;
 import de.minee.jpa.AbstractDAO;
-import de.minee.jpa.AbstractStatement;
-import de.minee.jpa.InitialQueryConnection;
 import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
 
@@ -15,12 +11,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
@@ -32,7 +26,7 @@ class ManagedResource<T> {
 	private static final Logger LOGGER = Logger.getLogger(ManagedResource.class);
 
 	@SuppressWarnings("rawtypes")
-	private final List<IPathPart> path = new ArrayList<>();
+	private final Path<T> path;
 	private final Set<Operation> allowedOperations;
 	private final Class<T> type;
 	private AbstractDAO dao;
@@ -52,10 +46,7 @@ class ManagedResource<T> {
 	 */
 	ManagedResource(final HateoesContext context, final String fullPath, final Operation[] allowedOperations,
 			final Class<T> type) {
-		final String[] paths = fullPath.split("/");
-		for (final String pathPart : paths) {
-			path.add(PathPartFactory.create(context, type, pathPart));
-		}
+		path = new Path<>(context, fullPath, type);
 		this.allowedOperations = new HashSet<>(Arrays.asList(allowedOperations));
 		if (this.allowedOperations.contains(Operation.ALL)) {
 			this.allowedOperations.add(Operation.GET);
@@ -83,23 +74,7 @@ class ManagedResource<T> {
 	 * @return true if the resource can be served. false otherwise.
 	 */
 	boolean isMatch(final String pathInfo) {
-		final String[] pathSplit = pathInfo.split("/");
-		boolean isMatch = false;
-		final int pathSize = path.size();
-		if (pathSplit.length == pathSize || pathSplit.length == pathSize + 1) {
-			for (int i = 0; i < pathSize; i++) {
-				if (!path.get(i).isMatch(pathSplit[i])) {
-					return false;
-				}
-			}
-			if (pathSplit.length == pathSize + 1) {
-				final String action = pathSplit[pathSize];
-				isMatch = "create".equals(action) || "edit".equals(action);
-			} else {
-				isMatch = true;
-			}
-		}
-		return isMatch;
+		return path.isMatch(pathInfo);
 	}
 
 	/**
@@ -173,25 +148,7 @@ class ManagedResource<T> {
 	}
 
 	private List<T> getSelectedResource(final String[] pathSplit) throws SQLException {
-		final List<String> parameterForJoin = new ArrayList<>();
-		final List<String> parameterForWhere = new ArrayList<>();
-		final InitialQueryConnection<T, AbstractStatement<T>> select = dao.select(type);
-		for (int i = 0; i < path.size(); i++) {
-			final IPathPart<T> pathPart = path.get(i);
-			if (pathPart.isParameterType()) {
-				pathPart.appendQuery(select);
-				if (pathPart instanceof SimplePathPart) {
-					parameterForWhere.add(pathSplit[i]);
-				} else {
-					parameterForJoin.add(pathSplit[i]);
-				}
-			}
-		}
-		parameterForJoin.addAll(parameterForWhere);
-		if (parameterForJoin.isEmpty()) {
-			return select.execute();
-		}
-		return select.execute(parameterForJoin);
+		return path.executeSelect(pathSplit, dao.select(type));
 	}
 
 	private Object fromString(final Class<?> fieldType, final String parameter) {
@@ -281,8 +238,6 @@ class ManagedResource<T> {
 
 	@Override
 	public String toString() {
-		final StringJoiner joiner = new StringJoiner("/");
-		path.stream().map(IPathPart::toString).forEach(joiner::add);
-		return joiner.toString();
+		return path.toString();
 	}
 }
