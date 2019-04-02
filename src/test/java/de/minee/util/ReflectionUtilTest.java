@@ -5,8 +5,10 @@ import de.minee.datamodel.RecursiveObject;
 import de.minee.datamodel.RecursiveObjectDerivation;
 import de.minee.datamodel.ReferenceChain;
 import de.minee.datamodel.SimpleReference;
+import de.minee.jpa.Cascade;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -185,6 +187,25 @@ public class ReflectionUtilTest {
 		Assert.assertEquals(object.getValue(), values.get("value"));
 		Assert.assertEquals(object.getContent(), values.get("content"));
 		Assert.assertEquals(object.getReferenceChain(), values.get("referenceChain"));
+	}
+
+	@Test
+	public void testGetAllFieldsObject() {
+		final List<Field> fields = ReflectionUtil.getAllFields(Object.class);
+		Assert.assertTrue(fields.isEmpty());
+	}
+
+	@Test
+	public void testGetAllFieldsDataObject() {
+		final List<Field> fields = ReflectionUtil.getAllFields(SimpleReference.class);
+		Assert.assertEquals(5, fields.size());
+	}
+
+	@Test
+	public void testGetAllFieldsEnum() {
+		final List<Field> fields = ReflectionUtil.getAllFields(Cascade.class);
+		// Each enum value + array VALUES
+		Assert.assertEquals(6, fields.size());
 	}
 
 	@Test

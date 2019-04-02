@@ -4,7 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import de.minee.datamodel.ArrayTypes;
+import de.minee.datamodel.DateType;
 import de.minee.datamodel.EnumObject;
+import de.minee.datamodel.NonDefaultConstructor;
 import de.minee.datamodel.NotSupportedType;
 import de.minee.datamodel.PrimitiveList;
 import de.minee.datamodel.RecursiveObject;
@@ -16,6 +18,7 @@ import de.minee.datamodel.update.SimpleReference;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +36,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 		createTable(EnumObject.class);
 		createTable(PrimitiveList.class);
 		createTable(ArrayTypes.class);
+		createTable(NonDefaultConstructor.class);
 		updateTable(ReferenceChain.class);
 		updateTable(SimpleReference.class, true);
 		updateTable(ReferenceList.class);
@@ -347,5 +351,25 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	@Test(expected = SQLException.class)
 	public void testUpdateTable() throws SQLException {
 		updateTable(SimpleReference.class);
+	}
+
+	@Test(expected = SQLException.class)
+	public void testUnsuportedType() throws SQLException {
+		select(NotSupportedType.class).execute();
+	}
+
+	@Test(expected = SQLException.class)
+	public void testDateType() throws SQLException {
+		final DateType object = new DateType();
+		object.setDate(new Date());
+		insert(object);
+		select(DateType.class).execute();
+	}
+
+	@Test(expected = SQLException.class)
+	public void testSelectWithNotSupportedDatatype() throws SQLException {
+		final NonDefaultConstructor object = new NonDefaultConstructor(UUID.randomUUID());
+		insert(object);
+		select(NonDefaultConstructor.class).execute();
 	}
 }

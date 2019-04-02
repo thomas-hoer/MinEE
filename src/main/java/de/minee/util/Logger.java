@@ -28,20 +28,12 @@ public final class Logger {
 		javaUtilLogger.info(msgSupplier);
 	}
 
-	public void info(final String message, final Throwable throwable) {
-		javaUtilLogger.log(Level.INFO, message, throwable);
-	}
-
 	public void warn(final String message) {
 		javaUtilLogger.log(Level.WARNING, message);
 	}
 
 	public void warn(final String message, final Throwable throwable) {
 		javaUtilLogger.log(Level.WARNING, message, throwable);
-	}
-
-	public void error(final String message) {
-		javaUtilLogger.log(Level.SEVERE, message);
 	}
 
 	public void error(final String message, final Throwable throwable) {

@@ -52,8 +52,8 @@ public class PairTest {
 
 	@Test
 	public void testPairNotEquals2() {
-		final Pair<String, BigDecimal> pair1 = new Pair<>(OBJECT_1, null);
-		final Pair<String, BigDecimal> pair2 = new Pair<>(OBJECT_1, OBJECT_2);
+		final Pair<KnownHashCode, BigDecimal> pair1 = new Pair<>(OBJECT_4, null);
+		final Pair<KnownHashCode, BigDecimal> pair2 = new Pair<>(OBJECT_4, OBJECT_2);
 		assertFalse(pair1.equals(pair2));
 	}
 
@@ -67,6 +67,13 @@ public class PairTest {
 	@Test
 	public void testPairNotEquals4() {
 		final Pair<String, KnownHashCode> pair1 = new Pair<>(OBJECT_1, OBJECT_4);
+		final Pair<String, KnownHashCode> pair2 = new Pair<>(OBJECT_1, OBJECT_5);
+		assertFalse(pair1.equals(pair2));
+	}
+
+	@Test
+	public void testPairNotEquals5() {
+		final Pair<String, KnownHashCode> pair1 = new Pair<>(null, OBJECT_5);
 		final Pair<String, KnownHashCode> pair2 = new Pair<>(OBJECT_1, OBJECT_5);
 		assertFalse(pair1.equals(pair2));
 	}
