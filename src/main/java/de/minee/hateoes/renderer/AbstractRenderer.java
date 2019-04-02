@@ -1,6 +1,5 @@
 package de.minee.hateoes.renderer;
 
-import de.minee.util.Assertions;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Array;
@@ -67,7 +66,6 @@ public abstract class AbstractRenderer {
 	 *         If the value is null it returns an empty String ("").
 	 */
 	protected String toString(final Entry entry) {
-		Assertions.assertNotNull(entry);
 		final Object fieldObject = entry.getValue();
 		if (fieldObject == null) {
 			return "";

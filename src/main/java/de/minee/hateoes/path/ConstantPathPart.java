@@ -23,7 +23,7 @@ public final class ConstantPathPart<T> implements IPathPart<T> {
 	private final String path;
 
 	public ConstantPathPart(final String path) {
-		Assertions.assertNotNull(path);
+		Assertions.assertNotNull(path, "Path should not be null");
 		this.path = path;
 	}
 

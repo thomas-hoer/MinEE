@@ -63,7 +63,7 @@ public class XmlRenderer extends AbstractRenderer {
 
 	@Override
 	public String forCreate(final Class<?> type) {
-		Assertions.assertNotNull(type);
+		Assertions.assertNotNull(type, "Object type cannot be null");
 		final Set<Class<?>> knownTypes = new HashSet<>();
 		final StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append("<" + type.getSimpleName() + ">");

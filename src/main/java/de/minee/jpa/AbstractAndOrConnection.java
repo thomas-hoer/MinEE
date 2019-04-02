@@ -1,5 +1,7 @@
 package de.minee.jpa;
 
+import de.minee.util.Assertions;
+
 import java.sql.SQLException;
 import java.util.function.Function;
 
@@ -14,6 +16,7 @@ public abstract class AbstractAndOrConnection<T, U extends AbstractStatement<T>>
 	private WhereClause<?, T, U> whereClause;
 
 	public AbstractAndOrConnection(final U statement) {
+		Assertions.assertNotNull(statement, "Statement should not be null");
 		this.statement = statement;
 	}
 

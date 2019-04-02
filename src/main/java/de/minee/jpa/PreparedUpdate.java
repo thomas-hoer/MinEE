@@ -52,7 +52,7 @@ class PreparedUpdate<S> extends AbstractPreparedQuery<S> {
 	}
 
 	private int execute(final S objectToUpdate) throws SQLException {
-		Assertions.assertNotNull(objectToUpdate);
+		Assertions.assertNotNull(objectToUpdate, "Instance for update should not be null");
 		int i = 1;
 		UUID objectId = null;
 		for (final Field field : fieldList) {

@@ -58,9 +58,9 @@ public class PreparedDelete<T> extends AbstractPreparedQuery<T> {
 	 * @throws SQLException SQLException in case of an error
 	 */
 	public void execute(final T objectToDelete) throws SQLException {
-		Assertions.assertNotNull(objectToDelete);
+		Assertions.assertNotNull(objectToDelete, "Instance for delete should not be null");
 		final UUID objectId = MappingHelper.getId(objectToDelete);
-		Assertions.assertNotNull(objectId);
+		Assertions.assertNotNull(objectId, "Object " + objectToDelete + " does not contain an id field");
 
 		for (final Field field : fieldList) {
 			final Object fieldElementToDelete = ReflectionUtil.executeGet(field, objectToDelete);

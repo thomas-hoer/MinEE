@@ -28,8 +28,8 @@ public abstract class AbstractPreparedQuery<T> extends AbstractQuery {
 	protected final Map<Field, PreparedStatement> mappingDeleteAll = new HashMap<>();
 
 	protected AbstractPreparedQuery(final Connection connection, final Cascade cascade) {
-		Assertions.assertNotNull(connection);
-		Assertions.assertNotNull(cascade);
+		Assertions.assertNotNull(connection, "Database connection cannot be null");
+		Assertions.assertNotNull(cascade, "Cascade cannot be null");
 		this.connection = connection;
 		this.cascade = cascade;
 	}

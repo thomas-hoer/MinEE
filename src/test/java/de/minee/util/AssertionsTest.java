@@ -10,13 +10,13 @@ public class AssertionsTest {
 	@Test
 	public void testAssertNotNullPositive() {
 		final Object object = new Object();
-		Assertions.assertNotNull(object);
+		Assertions.assertNotNull(object, MSG);
 		Assert.assertNotNull(object);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testAssertNotNullWithNull() {
-		Assertions.assertNotNull(null);
+		Assertions.assertNotNull(null, MSG);
 
 	}
 

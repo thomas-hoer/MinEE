@@ -63,7 +63,7 @@ public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 	 * @throws SQLException SQLException in case of an error
 	 */
 	private UUID execute(final T objectToInsert, final Set<Object> handledObjects) throws SQLException {
-		Assertions.assertNotNull(objectToInsert);
+		Assertions.assertNotNull(objectToInsert, "Instance for insert should not be null");
 		if (handledObjects.contains(objectToInsert)) {
 			return MappingHelper.getId(objectToInsert);
 		}

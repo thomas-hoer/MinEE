@@ -1,5 +1,6 @@
 package de.minee.jpa;
 
+import de.minee.util.Assertions;
 import de.minee.util.ProxyFactory;
 import de.minee.util.ProxyFactory.ProxyException;
 import de.minee.util.ReflectionUtil;
@@ -18,6 +19,7 @@ public class InitialQueryConnection<T, U extends AbstractStatement<T>> extends A
 
 	public InitialQueryConnection(final U statement, final Connection connection) {
 		super(statement);
+		Assertions.assertNotNull(connection, "Database connection cannot be null");
 		this.connection = connection;
 	}
 

@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 public final class ReflectionUtil {
 
+	private static final String ASSERTION_CLASS_SHOULD_NOT_BE_NULL = "Class should not be null";
 	private static final Logger LOGGER = Logger.getLogger(ReflectionUtil.class);
 
 	private ReflectionUtil() {
@@ -25,7 +26,7 @@ public final class ReflectionUtil {
 	 * @return Key Value Map of all field maps
 	 */
 	public static Map<String, Object> getAll(final Object source) {
-		Assertions.assertNotNull(source);
+		Assertions.assertNotNull(source, "Can not get fields of null");
 		final Map<String, Object> result = new HashMap<>();
 		final Class<?> cls = source.getClass();
 		for (final Field field : getAllFields(cls)) {
@@ -43,7 +44,7 @@ public final class ReflectionUtil {
 	 * @return List of all fields
 	 */
 	public static List<Field> getAllFields(final Class<?> cls) {
-		Assertions.assertNotNull(cls);
+		Assertions.assertNotNull(cls, ASSERTION_CLASS_SHOULD_NOT_BE_NULL);
 
 		final Field[] declaredFields = cls.getDeclaredFields();
 		// The filter is needed such that the code behave the same with and without the
@@ -65,7 +66,7 @@ public final class ReflectionUtil {
 	 * @return Field or null if field does not exist
 	 */
 	public static Field getDeclaredField(final Class<?> cls, final String fieldname) {
-		Assertions.assertNotNull(cls, "Class should not be null");
+		Assertions.assertNotNull(cls, ASSERTION_CLASS_SHOULD_NOT_BE_NULL);
 		Assertions.assertNotEmpty(fieldname, "The fieldname cannot be null or empty String");
 		if (Object.class.equals(cls) || cls.isEnum() || cls.isInterface()) {
 			return null;
@@ -85,7 +86,7 @@ public final class ReflectionUtil {
 	 * @return Method or null if method does not exists
 	 */
 	public static Method getMethod(final Class<?> cls, final String methodname) {
-		Assertions.assertNotNull(cls, "Class should not be null");
+		Assertions.assertNotNull(cls, ASSERTION_CLASS_SHOULD_NOT_BE_NULL);
 		Assertions.assertNotEmpty(methodname, "The methodname cannot be null or empty String");
 		if (Object.class.equals(cls) || cls.isEnum() || cls.isInterface()) {
 			return null;
@@ -99,17 +100,17 @@ public final class ReflectionUtil {
 	 * Performs a direct setting into the field without calling a setter method.
 	 * base.setField(forSet);
 	 *
-	 * @param field  Field of base
-	 * @param base   Object which field should be injected
-	 * @param forSet Object to be injected into base
+	 * @param field    Field of base
+	 * @param instance Object which field should be injected
+	 * @param forSet   Object to be injected into base
 	 * @return true if set was successful, false otherwise
 	 */
-	public static boolean executeSet(final Field field, final Object base, final Object forSet) {
-		Assertions.assertNotNull(field);
-		Assertions.assertNotNull(base);
+	public static boolean executeSet(final Field field, final Object instance, final Object forSet) {
+		Assertions.assertNotNull(field, "Field should not be null");
+		Assertions.assertNotNull(instance, "The instance should not be null");
 		field.setAccessible(true);
 		try {
-			field.set(base, forSet);
+			field.set(instance, forSet);
 			return true;
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			LOGGER.warn(e.getMessage(), e);
@@ -121,16 +122,16 @@ public final class ReflectionUtil {
 	 * Performs a direct get from the field without calling a getter method.
 	 * base.getField();
 	 *
-	 * @param field  Field of object
-	 * @param object Object where value shall be retrieved
+	 * @param field    Field of object
+	 * @param instance Object where value shall be retrieved
 	 * @return Value of the field or null if field does not exist
 	 */
-	public static Object executeGet(final Field field, final Object object) {
-		Assertions.assertNotNull(field);
-		Assertions.assertNotNull(object);
+	public static Object executeGet(final Field field, final Object instance) {
+		Assertions.assertNotNull(field, "Field should not be null");
+		Assertions.assertNotNull(instance, "The instance should not be null");
 		field.setAccessible(true);
 		try {
-			return field.get(object);
+			return field.get(instance);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			LOGGER.warn(e.getMessage(), e);
 			return null;

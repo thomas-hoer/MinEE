@@ -32,7 +32,7 @@ public final class CdiUtil {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T getInstance(final Class<T> cls) {
-		Assertions.assertNotNull(cls);
+		Assertions.assertNotNull(cls, "Class should not be null");
 		try {
 			if (!map.containsKey(cls)) {
 				final Object instance = cls.newInstance();

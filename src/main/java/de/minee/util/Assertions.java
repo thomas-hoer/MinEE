@@ -10,25 +10,12 @@ public final class Assertions {
 	 * Ensures that a specific object o is not null. Throws an
 	 * IllegalArgumentException if the object is null.
 	 *
-	 * @param object Object for check that is not null
-	 */
-	@Deprecated
-	public static void assertNotNull(final Object object) {
-		if (object == null) {
-			throw new IllegalArgumentException();
-		}
-	}
-
-	/**
-	 * Ensures that a specific object o is not null. Throws an
-	 * IllegalArgumentException if the object is null.
-	 *
 	 * @param object       Object for check that is not null
 	 * @param errorMessage Message attached to the exception.
 	 */
-	public static void assertNotNull(final Object object, final String message) {
+	public static void assertNotNull(final Object object, final String errorMessage) {
 		if (object == null) {
-			throw new IllegalArgumentException(message);
+			throw new IllegalArgumentException(errorMessage);
 		}
 	}
 

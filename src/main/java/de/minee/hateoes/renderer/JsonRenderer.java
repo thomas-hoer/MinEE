@@ -62,10 +62,10 @@ public class JsonRenderer extends AbstractRenderer {
 	}
 
 	@Override
-	public String forCreate(final Class<?> type) {
-		Assertions.assertNotNull(type);
+	public String forCreate(final Class<?> cls) {
+		Assertions.assertNotNull(cls, "Class should not be null");
 		final Set<Class<?>> knownTypes = new HashSet<>();
-		return generateTypeDescription(type, knownTypes);
+		return generateTypeDescription(cls, knownTypes);
 	}
 
 	private static String generateTypeDescription(final Class<?> type, final Set<Class<?>> knownTypes) {

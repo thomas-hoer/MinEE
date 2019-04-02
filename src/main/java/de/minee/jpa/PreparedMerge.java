@@ -55,7 +55,7 @@ class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 	}
 
 	private UUID execute(final S objectToMerge) throws SQLException {
-		Assertions.assertNotNull(objectToMerge);
+		Assertions.assertNotNull(objectToMerge, "Instance for merge should not be null");
 		int i = 1;
 		UUID objectId = null;
 		for (final Field field : fieldList) {

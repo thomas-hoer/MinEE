@@ -25,7 +25,7 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 	private final String joinClause;
 
 	/**
-	 * General Class for holding the "Where" information of any SQL Statement
+	 * General Class for holding the "Where" information of any SQL Statement.
 	 *
 	 * @param whereField Getter to the Field that is selected
 	 * @param statement  Statement on which the Where clause is attached to
@@ -33,8 +33,8 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 	 *                      Class
 	 */
 	public WhereClause(final Function<T, S> whereField, final U statement) throws SQLException {
-		Assertions.assertNotNull(statement);
-		Assertions.assertNotNull(whereField);
+		Assertions.assertNotNull(statement, "Statement should not be null");
+		Assertions.assertNotNull(whereField, "Where field should not be null");
 
 		this.selectStatement = statement;
 
@@ -157,7 +157,7 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 		stringBuilder.append("(");
 		final StringJoiner stringJoiner = new StringJoiner(",");
 		for (final S conditionElement : conditions) {
-			Assertions.assertNotNull(conditionElement);
+			Assertions.assertNotNull(conditionElement, "One or more condition in the conditionset is null");
 			if (conditionElement.getClass().isPrimitive()) {
 				stringJoiner.add(conditionElement.toString());
 			} else {
