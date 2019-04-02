@@ -1,6 +1,11 @@
 package de.minee.hateoes.path;
 
-public abstract class AbstractVariablePathPart<T> implements IPathPart<T> {
+import de.minee.jpa.AbstractStatement;
+import de.minee.jpa.InitialQueryConnection;
+
+import java.sql.SQLException;
+
+public abstract class AbstractVariablePathPart<T> implements IPathPart {
 
 	private final String path;
 
@@ -13,10 +18,10 @@ public abstract class AbstractVariablePathPart<T> implements IPathPart<T> {
 		return true;
 	}
 
-	@Override
-	public boolean isParameterType() {
-		return true;
-	}
+	/**
+	 * Extends the query.
+	 */
+	abstract void appendQuery(InitialQueryConnection<T, AbstractStatement<T>> query) throws SQLException;
 
 	@Override
 	public String toString() {

@@ -11,7 +11,7 @@ import java.util.StringJoiner;
 
 public class Path<T> {
 
-	private final List<IPathPart<T>> pathParts = new ArrayList<>();
+	private final List<IPathPart> pathParts = new ArrayList<>();
 
 	public Path(final HateoesContext context, final String fullPath, final Class<T> type) {
 		final String[] paths = fullPath.split("/");
@@ -49,9 +49,9 @@ public class Path<T> {
 		final List<String> parameterForJoin = new ArrayList<>();
 		final List<String> parameterForWhere = new ArrayList<>();
 		for (int i = 0; i < pathParts.size(); i++) {
-			final IPathPart<T> pathPart = pathParts.get(i);
-			if (pathPart.isParameterType()) {
-				pathPart.appendQuery(select);
+			final IPathPart pathPart = pathParts.get(i);
+			if (pathPart instanceof AbstractVariablePathPart) {
+				((AbstractVariablePathPart<T>) pathPart).appendQuery(select);
 				if (pathPart instanceof SimplePathPart) {
 					parameterForWhere.add(pathSplit[i]);
 				} else {

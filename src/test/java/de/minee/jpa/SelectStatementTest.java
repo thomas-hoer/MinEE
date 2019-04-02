@@ -3,6 +3,7 @@ package de.minee.jpa;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import de.minee.datamodel.NonDefaultConstructor;
 import de.minee.datamodel.RecursiveObject;
 import de.minee.datamodel.ReferenceList;
 import de.minee.datamodel.SimpleReference;
@@ -132,5 +133,41 @@ public class SelectStatementTest extends AbstractTestDAO {
 				.where(SimpleReference::getName);
 		where.is();
 		where.is();
+	}
+
+	@Test
+	public void testToString() throws SQLException {
+		final AbstractStatement<SimpleReference> statement = select(SimpleReference.class)
+				.where(SimpleReference::getName).is(NAME_1).and().where(SimpleReference::getValue).is();
+
+		assertEquals(
+				"SELECT SimpleReference.* FROM SimpleReference WHERE  SimpleReference.Name = 'XX' AND SimpleReference.Value = ?",
+				statement.toString());
+	}
+
+	@Test(expected = SQLException.class)
+	public void testNotSupportedJoin() throws SQLException {
+		select(TestClass.class).join(TestClass::getRef);
+	}
+
+	private class TestClass {
+		private UUID id;
+		private NonDefaultConstructor ref;
+
+		public UUID getId() {
+			return id;
+		}
+
+		public void setId(final UUID id) {
+			this.id = id;
+		}
+
+		public NonDefaultConstructor getRef() {
+			return ref;
+		}
+
+		public void setRef(final NonDefaultConstructor ref) {
+			this.ref = ref;
+		}
 	}
 }

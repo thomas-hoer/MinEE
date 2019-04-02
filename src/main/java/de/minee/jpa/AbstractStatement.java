@@ -135,7 +135,7 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 
 	/**
 	 * Adds a plain SQL Where string to the Query. Example:
-	 * 
+	 *
 	 * <pre>
 	 * select(Foo.class).query("id = 1").execute()
 	 * </pre>
@@ -153,4 +153,8 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 
 	public abstract List<T> execute(Collection<?> args) throws SQLException;
 
+	@Override
+	public String toString() {
+		return assembleFullSelectQuery();
+	}
 }

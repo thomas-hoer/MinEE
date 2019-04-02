@@ -25,6 +25,12 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 
 	private final List<Field> fieldList = new ArrayList<>();
 
+	/**
+	 * Creates a new Select Statement for table cls
+	 * 
+	 * @param cls        Class representing a database table
+	 * @param connection Database connection
+	 */
 	public SelectStatement(final Class<T> cls, final Connection connection) {
 		super(cls, connection);
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {

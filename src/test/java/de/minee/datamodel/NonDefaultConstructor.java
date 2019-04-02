@@ -9,4 +9,8 @@ public class NonDefaultConstructor {
 	public NonDefaultConstructor(final UUID id) {
 		this.id = id;
 	}
+
+	public UUID getId() {
+		return id;
+	}
 }

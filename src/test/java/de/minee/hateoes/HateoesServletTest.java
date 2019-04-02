@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
@@ -133,6 +134,25 @@ public class HateoesServletTest {
 		assertTrue(output.contains("name"));
 		assertTrue(output.contains("description"));
 
+	}
+
+	@Test
+	public void testGetCreateNonExistent() throws IOException, ServletException {
+		final HateoesServlet hateoesServlet = createInMemServlet(null);
+		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("rlists/create");
+		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		assertEquals(404, response.getError());
+	}
+
+	@Test
+	public void testGetCreateNullResource() throws IOException, ServletException {
+		final HateoesServlet hateoesServlet = createInMemServlet(null);
+		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl(null);
+		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request, response);
+		assertEquals(200, response.getError());
+		assertEquals("[]", response.getWrittenOutput());
 	}
 
 	@Test
@@ -274,6 +294,12 @@ public class HateoesServletTest {
 			ReferenceList referenceList;
 		};
 		servlet.init();
+		return servlet;
+	}
+
+	private static HateoesServlet createInMemServlet(final ServletConfig config) throws ServletException {
+		final HateoesServlet servlet = new HateoesServlet();
+		servlet.init(config);
 		return servlet;
 	}
 }

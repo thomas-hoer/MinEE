@@ -139,6 +139,25 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
+	public void testListWithNullElement() throws SQLException {
+		final List<RecursiveObject> recursiveObjects = new ArrayList<>();
+		final RecursiveObject recursiveObject = new RecursiveObject();
+		recursiveObject.setId(UUID.randomUUID());
+
+		recursiveObjects.add(recursiveObject);
+		recursiveObjects.add(null);
+		final ReferenceList referenceList = new ReferenceList();
+		referenceList.setRecursiveObjects(recursiveObjects);
+
+		insert(referenceList);
+		final ReferenceList selectedReferenceList = select(ReferenceList.class).byId(referenceList.getId());
+
+		Assert.assertNotNull(selectedReferenceList);
+		Assert.assertEquals(referenceList.getId(), selectedReferenceList.getId());
+		Assert.assertEquals(1, selectedReferenceList.getRecursiveObjects().size());
+	}
+
+	@Test
 	public void testUpdatedLists() throws SQLException {
 
 		final RecursiveObject category = new RecursiveObject();

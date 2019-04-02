@@ -1,7 +1,5 @@
 package de.minee.hateoes.path;
 
-import de.minee.jpa.AbstractStatement;
-import de.minee.jpa.InitialQueryConnection;
 import de.minee.util.Assertions;
 
 /**
@@ -18,7 +16,7 @@ import de.minee.util.Assertions;
  * </p>
  *
  */
-public final class ConstantPathPart<T> implements IPathPart<T> {
+public final class ConstantPathPart implements IPathPart {
 
 	private final String path;
 
@@ -35,21 +33,9 @@ public final class ConstantPathPart<T> implements IPathPart<T> {
 		return this.path.equals(path);
 	}
 
-	/**
-	 * Only for addressing the resource, but not a parameter.
-	 */
-	@Override
-	public boolean isParameterType() {
-		return false;
-	}
-
 	@Override
 	public String toString() {
 		return path;
 	}
 
-	@Override
-	public void appendQuery(final InitialQueryConnection<T, AbstractStatement<T>> query) {
-		// Do nothing
-	}
 }
