@@ -1,5 +1,6 @@
 package de.minee.jpa;
 
+import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
@@ -16,11 +17,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 public class SelectStatement<T> extends AbstractStatement<T> {
 
-	private static final Logger LOGGER = Logger.getLogger(SelectStatement.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(SelectStatement.class);
 	private static final String INSTANTIATION_ERROR_MESSAGE = "Cannot instanciate object of type ";
 
 	private final List<Field> fieldList = new ArrayList<>();

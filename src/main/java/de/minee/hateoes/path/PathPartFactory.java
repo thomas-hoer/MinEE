@@ -19,7 +19,7 @@ public final class PathPartFactory {
 			}
 			return new SimplePathPart<>(baseClass, elPathPart);
 		}
-		return new ConstantPathPart(pathPart);
+		return new ConstantPathPart<>(pathPart);
 	}
 
 }

@@ -1,6 +1,7 @@
 package de.minee.jpa;
 
 import de.minee.util.Assertions;
+import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
@@ -13,11 +14,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 
-	private static final Logger LOGGER = Logger.getLogger(PreparedMerge.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(PreparedMerge.class);
 
 	private static final String MERGE_TEMPLATE = "MERGE INTO %s (%s) VALUES (%s)";
 	private final List<Field> fieldList = new ArrayList<>();

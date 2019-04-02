@@ -1,6 +1,7 @@
 package de.minee.jpa;
 
 import de.minee.util.Assertions;
+import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
@@ -13,11 +14,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 public abstract class AbstractPreparedQuery<T> extends AbstractQuery {
 
-	private static final Logger LOGGER = Logger.getLogger(AbstractPreparedQuery.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(AbstractPreparedQuery.class);
 
 	protected final Cascade cascade;
 	protected final Connection connection;

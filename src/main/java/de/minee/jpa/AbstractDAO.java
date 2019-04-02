@@ -1,6 +1,7 @@
 package de.minee.jpa;
 
 import de.minee.env.Environment;
+import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
@@ -16,11 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 public abstract class AbstractDAO {
 
-	private static final Logger LOGGER = Logger.getLogger(AbstractDAO.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(AbstractDAO.class);
 	private static final Map<String, Connection> connections = new HashMap<>();
 	private Connection localConnection;
 	private Statement statementForSchemaUpdate;
@@ -164,7 +164,7 @@ public abstract class AbstractDAO {
 			if (allowDeletion) {
 				alterTableDropField(cls, entry);
 			} else {
-				LOGGER.warning("Warning: Field " + entry.getKey() + " of class " + cls.getSimpleName() + " is unused");
+				LOGGER.warn("Warning: Field " + entry.getKey() + " of class " + cls.getSimpleName() + " is unused");
 			}
 		}
 

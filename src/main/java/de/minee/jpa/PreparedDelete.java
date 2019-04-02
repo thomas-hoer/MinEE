@@ -1,6 +1,7 @@
 package de.minee.jpa;
 
 import de.minee.util.Assertions;
+import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
@@ -12,11 +13,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 public class PreparedDelete<T> extends AbstractPreparedQuery<T> {
 
-	private static final Logger LOGGER = Logger.getLogger(PreparedDelete.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(PreparedDelete.class);
 
 	private static final String DELETE_TEMPLATE = "DELETE FROM %s WHERE id = ?";
 	private final List<Field> fieldList = new ArrayList<>();

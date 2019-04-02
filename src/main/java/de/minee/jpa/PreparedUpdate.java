@@ -1,6 +1,7 @@
 package de.minee.jpa;
 
 import de.minee.util.Assertions;
+import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
@@ -13,11 +14,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 class PreparedUpdate<S> extends AbstractPreparedQuery<S> {
 
-	private static final Logger LOGGER = Logger.getLogger(PreparedUpdate.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(PreparedUpdate.class);
 
 	private static final String UPDATE_TEMPLATE = "UPDATE %s SET %s WHERE id = ?";
 	private final List<Field> fieldList = new ArrayList<>();

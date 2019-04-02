@@ -6,6 +6,7 @@ import de.minee.hateoes.renderer.AbstractRenderer;
 import de.minee.hateoes.renderer.HtmlRenderer;
 import de.minee.hateoes.renderer.JsonRenderer;
 import de.minee.jpa.AbstractDAO;
+import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
 
 import java.io.IOException;
@@ -18,7 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 public class HateoesServlet extends CdiAwareHttpServlet {
 
 	private static final long serialVersionUID = -5213801706760630081L;
-	private static final Logger LOGGER = Logger.getLogger(HateoesServlet.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(HateoesServlet.class);
 
 	private final HateoesContext context = new HateoesContext();
 

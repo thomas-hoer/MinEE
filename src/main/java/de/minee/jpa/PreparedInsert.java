@@ -1,6 +1,7 @@
 package de.minee.jpa;
 
 import de.minee.util.Assertions;
+import de.minee.util.Logger;
 import de.minee.util.Pair;
 import de.minee.util.ReflectionUtil;
 
@@ -14,11 +15,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 
-	private static final Logger LOGGER = Logger.getLogger(PreparedInsert.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(PreparedInsert.class);
 
 	private static final String INSERT_TEMPLATE = "INSERT INTO %s (%s) VALUES (%s)";
 	private final List<Field> fieldList = new ArrayList<>();

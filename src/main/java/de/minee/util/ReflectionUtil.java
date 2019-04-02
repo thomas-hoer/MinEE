@@ -7,13 +7,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public final class ReflectionUtil {
 
-	private static final Logger LOGGER = Logger.getLogger(ReflectionUtil.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(ReflectionUtil.class);
 
 	private ReflectionUtil() {
 		// Static Class don't need an instance.
@@ -114,7 +112,7 @@ public final class ReflectionUtil {
 			field.set(base, forSet);
 			return true;
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			LOGGER.log(Level.WARNING, e.getMessage(), e);
+			LOGGER.warn(e.getMessage(), e);
 		}
 		return false;
 	}
@@ -134,7 +132,7 @@ public final class ReflectionUtil {
 		try {
 			return field.get(object);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			LOGGER.log(Level.WARNING, "", e);
+			LOGGER.warn(e.getMessage(), e);
 			return null;
 		}
 	}
@@ -148,7 +146,7 @@ public final class ReflectionUtil {
 		try {
 			return method.invoke(object, args);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			LOGGER.log(Level.WARNING, "", e);
+			LOGGER.warn(e.getMessage(), e);
 			return null;
 		}
 	}

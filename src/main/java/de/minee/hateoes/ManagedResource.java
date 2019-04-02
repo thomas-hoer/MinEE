@@ -8,6 +8,7 @@ import de.minee.hateoes.renderer.AbstractRenderer;
 import de.minee.jpa.AbstractDAO;
 import de.minee.jpa.AbstractStatement;
 import de.minee.jpa.InitialQueryConnection;
+import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
 
 import java.io.IOException;
@@ -21,8 +22,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,7 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 //TODO: Inject Renderer by annotation
 class ManagedResource<T> {
 
-	private static final Logger LOGGER = Logger.getLogger(ManagedResource.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(ManagedResource.class);
 
 	@SuppressWarnings("rawtypes")
 	private final List<IPathPart> path = new ArrayList<>();
@@ -132,7 +131,7 @@ class ManagedResource<T> {
 			}
 			result = getSelectedResource(pathSplit);
 		} catch (final SQLException e) {
-			LOGGER.log(Level.SEVERE, "Cannot access database or database entities", e);
+			LOGGER.error("Cannot access database or database entities", e);
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
@@ -173,13 +172,12 @@ class ManagedResource<T> {
 		}
 	}
 
-	@SuppressWarnings("rawtypes")
 	private List<T> getSelectedResource(final String[] pathSplit) throws SQLException {
 		final List<String> parameterForJoin = new ArrayList<>();
 		final List<String> parameterForWhere = new ArrayList<>();
 		final InitialQueryConnection<T, AbstractStatement<T>> select = dao.select(type);
 		for (int i = 0; i < path.size(); i++) {
-			final IPathPart pathPart = path.get(i);
+			final IPathPart<T> pathPart = path.get(i);
 			if (pathPart.isParameterType()) {
 				pathPart.appendQuery(select);
 				if (pathPart instanceof SimplePathPart) {
@@ -196,37 +194,37 @@ class ManagedResource<T> {
 		return select.execute(parameterForJoin);
 	}
 
-	private Object fromString(final Class<?> type, final String parameter) {
+	private Object fromString(final Class<?> fieldType, final String parameter) {
 		if (parameter == null) {
 			return null;
 		}
-		if (int.class.equals(type) || Integer.class.equals(type)) {
+		if (int.class.equals(fieldType) || Integer.class.equals(fieldType)) {
 			return Integer.valueOf(parameter);
 		}
-		if (String.class.equals(type)) {
+		if (String.class.equals(fieldType)) {
 			return parameter;
 		}
-		if (UUID.class.equals(type)) {
+		if (UUID.class.equals(fieldType)) {
 			return "".equals(parameter) ? null : UUID.fromString(parameter);
 		}
 
-		final Field refId = ReflectionUtil.getDeclaredField(type, "id");
+		final Field refId = ReflectionUtil.getDeclaredField(fieldType, "id");
 		if (refId != null) {
 			if ("".equals(parameter)) {
 				return null;
 			}
 			final UUID uuid = UUID.fromString(parameter);
 			try {
-				final Object result = dao.select(type).byId(uuid);
+				final Object result = dao.select(fieldType).byId(uuid);
 				if (result == null) {
-					throw new HateoesException(type.getSimpleName() + " with Id " + parameter + " not found");
+					throw new HateoesException(fieldType.getSimpleName() + " with Id " + parameter + " not found");
 				}
 				return result;
 			} catch (final SQLException e) {
-				throw new HateoesException("Cannot translate String to type " + type.getSimpleName(), e);
+				throw new HateoesException("Cannot translate String to type " + fieldType.getSimpleName(), e);
 			}
 		}
-		throw new HateoesException("Not able to map String to type " + type.getSimpleName());
+		throw new HateoesException("Not able to map String to type " + fieldType.getSimpleName());
 	}
 
 	private interface ManagedResourceConsumer {
