@@ -1,10 +1,10 @@
-package de.minee.datamodel;
+package de.minee.datamodel.invalid;
 
 import java.util.UUID;
 
 public class NonDefaultConstructor {
 
-	private final UUID id;
+	private UUID id;
 
 	public NonDefaultConstructor(final UUID id) {
 		this.id = id;
@@ -12,5 +12,9 @@ public class NonDefaultConstructor {
 
 	public UUID getId() {
 		return id;
+	}
+
+	public void setId(final UUID id) {
+		this.id = id;
 	}
 }

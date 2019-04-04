@@ -8,6 +8,7 @@ import de.minee.datamodel.SimpleReference;
 import de.minee.jpa.Cascade;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -221,5 +222,58 @@ public class ReflectionUtilTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testGetAllNull() {
 		ReflectionUtil.getAll(null);
+	}
+
+	@Test
+	public void testGetMethodGetter() {
+		final Method method = ReflectionUtil.getMethod(SimpleReference.class, "getId");
+		Assert.assertNotNull(method);
+		Assert.assertEquals(SimpleReference.class, method.getDeclaringClass());
+	}
+
+	@Test
+	public void testGetMethodSetter() {
+		final Method method = ReflectionUtil.getMethod(SimpleReference.class, "setId");
+		Assert.assertNull(method);
+	}
+
+	@Test
+	public void testGetMethodGetClass() {
+		final Method method = ReflectionUtil.getMethod(SimpleReference.class, "getClass");
+		Assert.assertNotNull(method);
+		Assert.assertEquals(Object.class, method.getDeclaringClass());
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testGetMethodEmptyString() {
+		final Method method = ReflectionUtil.getMethod(SimpleReference.class, "");
+	}
+
+	@Test
+	public void testGetMethodEnum() throws NoSuchMethodException, SecurityException {
+		final Method enumMethod = Cascade.class.getMethod("name");
+		final Method method = ReflectionUtil.getMethod(Cascade.class, "name");
+		Assert.assertNull(method);
+		Assert.assertNotNull(enumMethod);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testGetMethodNullClass() {
+		final Method method = ReflectionUtil.getMethod(null, "getId");
+	}
+
+	public void testGetMethodObject() {
+		final Method method = ReflectionUtil.getMethod(Object.class, "getClass");
+		Assert.assertNull(method);
+	}
+
+	public void testGetMethodInterface() {
+		final Method method = ReflectionUtil.getMethod(List.class, "size");
+		Assert.assertNull(method);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testGetMethodNullMethod() {
+		final Method method = ReflectionUtil.getMethod(SimpleReference.class, null);
 	}
 }

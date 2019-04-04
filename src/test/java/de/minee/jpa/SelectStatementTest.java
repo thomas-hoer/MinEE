@@ -3,10 +3,10 @@ package de.minee.jpa;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import de.minee.datamodel.NonDefaultConstructor;
 import de.minee.datamodel.RecursiveObject;
 import de.minee.datamodel.ReferenceList;
 import de.minee.datamodel.SimpleReference;
+import de.minee.datamodel.invalid.NonDefaultConstructor;
 
 import java.sql.SQLException;
 import java.util.Arrays;
