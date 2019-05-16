@@ -40,4 +40,10 @@ public final class Assertions {
 			throw new IllegalArgumentException(errorMessage);
 		}
 	}
+
+	public static void assertFalse(boolean bool, String errorMessage) {
+		if (bool) {
+			throw new IllegalStateException(errorMessage);
+		}
+	}
 }

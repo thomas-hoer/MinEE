@@ -25,7 +25,6 @@ class ManagedResource<T> {
 
 	private static final Logger LOGGER = Logger.getLogger(ManagedResource.class);
 
-	@SuppressWarnings("rawtypes")
 	private final Path<T> path;
 	private final Set<Operation> allowedOperations;
 	private final Class<T> type;

@@ -2,5 +2,5 @@ package de.minee.hateoes.parser;
 
 public interface Parser {
 
-	Object parse();
+	<T> T parse(String payload, Class<T> type) throws ParserException;
 }
