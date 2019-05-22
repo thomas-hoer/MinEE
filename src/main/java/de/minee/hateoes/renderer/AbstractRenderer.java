@@ -103,4 +103,6 @@ public abstract class AbstractRenderer {
 		}
 	}
 
+	public abstract String getContentType();
+
 }

@@ -1,17 +1,21 @@
 package de.minee.hateoes.parser;
 
 /**
- * 
+ *
  */
 public class ParserException extends Exception {
 
-	public ParserException(String msg) {
+	private static final long serialVersionUID = 5678460520945773458L;
+
+	public ParserException(final String msg) {
 		super(msg);
 	}
-	public ParserException(String msg,Throwable cause) {
-		super(msg,cause);
+
+	public ParserException(final String msg, final Throwable cause) {
+		super(msg, cause);
 	}
-	public ParserException(Throwable cause) {
+
+	public ParserException(final Throwable cause) {
 		super(cause);
 	}
 }

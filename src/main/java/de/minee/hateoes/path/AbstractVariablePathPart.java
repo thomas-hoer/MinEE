@@ -7,10 +7,10 @@ import java.sql.SQLException;
 
 public abstract class AbstractVariablePathPart<T> implements IPathPart {
 
-	private final String path;
+	private final String variablePath;
 
 	public AbstractVariablePathPart(final String path) {
-		this.path = path;
+		this.variablePath = path;
 	}
 
 	@Override
@@ -25,7 +25,7 @@ public abstract class AbstractVariablePathPart<T> implements IPathPart {
 
 	@Override
 	public String toString() {
-		return String.format("{%s}", path);
+		return String.format("{%s}", variablePath);
 	}
 
 }

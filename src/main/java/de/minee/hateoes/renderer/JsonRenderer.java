@@ -97,4 +97,9 @@ public class JsonRenderer extends AbstractRenderer {
 		return render(object);
 	}
 
+	@Override
+	public String getContentType() {
+		return "application/json";
+	}
+
 }

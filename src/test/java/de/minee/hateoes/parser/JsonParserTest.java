@@ -1,11 +1,11 @@
 package de.minee.hateoes.parser;
 
+import de.minee.datamodel.SimpleReference;
+
 import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
-
-import de.minee.datamodel.SimpleReference;
 
 public class JsonParserTest {
 
@@ -32,11 +32,21 @@ public class JsonParserTest {
 
 	@Test
 	public void testParseSimpleReference3() throws ParserException {
-		final SimpleReference instance = parser.parse("{name:\"123\", id:\"cd8ea07c-2274-485f-882d-f5093071f764\"}",
-				SimpleReference.class);
+		final SimpleReference instance = parser
+				.parse("{name:\"123\", id:\"cd8ea07c-2274-485f-882d-f5093071f764\",value:abc}", SimpleReference.class);
 		Assert.assertNotNull(instance);
 		Assert.assertEquals("123", instance.getName());
+		Assert.assertEquals("abc", instance.getValue());
 		Assert.assertEquals(UUID.fromString("cd8ea07c-2274-485f-882d-f5093071f764"), instance.getId());
+	}
+
+	@Test
+	public void testParseNullValue() throws ParserException {
+		final SimpleReference instance = parser.parse("{name:null}", SimpleReference.class);
+		Assert.assertNotNull(instance);
+		Assert.assertNull(instance.getName());
+		Assert.assertNull(instance.getId());
+		Assert.assertNull(instance.getValue());
 	}
 
 	@Test

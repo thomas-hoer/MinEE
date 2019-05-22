@@ -29,7 +29,7 @@ public class ManagedResourceTest {
 	@BeforeClass
 	public static void prepare() {
 		RESOURCE.setDao(new DAOTestImpl());
-		RESOURCE.setRenderer(new HtmlRenderer());
+		RESOURCE.addRenderer(new HtmlRenderer());
 	}
 
 	@Test
@@ -44,7 +44,7 @@ public class ManagedResourceTest {
 	public void testServeConnectionLost() throws IOException {
 		final ManagedResource<EnumObject> resource = new ManagedResource<>(null, "root",
 				new Operation[] { Operation.ALL }, EnumObject.class);
-		resource.setRenderer(new HtmlRenderer());
+		resource.addRenderer(new HtmlRenderer());
 		resource.setDao(new DAOTestImpl() {
 			@Override
 			public <T> InitialQueryConnection<T, AbstractStatement<T>> select(final Class<T> clazz)
@@ -62,7 +62,7 @@ public class ManagedResourceTest {
 	public void testServeCreateException() throws IOException {
 		final ManagedResource<SimpleReference> resource = new ManagedResource<>(null, "root",
 				new Operation[] { Operation.ALL }, SimpleReference.class);
-		resource.setRenderer(new HtmlRenderer());
+		resource.addRenderer(new HtmlRenderer());
 		resource.setDao(new DAOTestImpl() {
 			@Override
 			public <T> InitialQueryConnection<T, AbstractStatement<T>> select(final Class<T> clazz)

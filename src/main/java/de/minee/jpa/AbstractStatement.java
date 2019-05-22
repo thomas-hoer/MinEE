@@ -37,8 +37,8 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 		this.connection = connection;
 	}
 
-	public <U extends AbstractStatement<T>> void add(final AbstractAndOrConnection<T, U> connection) {
-		connections.add(connection);
+	public <U extends AbstractStatement<T>> void add(final AbstractAndOrConnection<T, U> andOrConnection) {
+		connections.add(andOrConnection);
 	}
 
 	public <S> void add(final AbstractJoinClause<S, T> joinClause) {

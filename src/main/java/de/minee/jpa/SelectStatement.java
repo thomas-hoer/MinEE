@@ -27,7 +27,7 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 
 	/**
 	 * Creates a new Select Statement for table cls
-	 * 
+	 *
 	 * @param cls        Class representing a database table
 	 * @param connection Database connection
 	 */
@@ -102,6 +102,7 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 		return resultList;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected T byId(final UUID id, final Map<Object, Object> handledObjects) throws SQLException {
 		if (handledObjects.containsKey(id)) {

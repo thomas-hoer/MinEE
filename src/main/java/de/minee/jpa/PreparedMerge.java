@@ -40,9 +40,9 @@ class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			fieldList.add(field);
 			if (List.class.isAssignableFrom(field.getType())) {
-				prepareInsert(connection, field);
-				prepareDelete(connection, field);
-				prepareSelect(connection, field);
+				prepareInsert(field);
+				prepareDelete(field);
+				prepareSelect(field);
 				continue;
 			}
 			fieldNames.add(field.getName());

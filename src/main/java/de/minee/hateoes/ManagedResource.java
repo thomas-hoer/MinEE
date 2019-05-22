@@ -1,6 +1,8 @@
 package de.minee.hateoes;
 
 import de.minee.hateoes.HateoesServlet.HateoesContext;
+import de.minee.hateoes.parser.Parser;
+import de.minee.hateoes.parser.ParserException;
 import de.minee.hateoes.path.Path;
 import de.minee.hateoes.renderer.AbstractRenderer;
 import de.minee.jpa.AbstractDAO;
@@ -11,11 +13,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,7 +33,8 @@ class ManagedResource<T> {
 	private final Set<Operation> allowedOperations;
 	private final Class<T> type;
 	private AbstractDAO dao;
-	private AbstractRenderer renderer;
+	private final List<AbstractRenderer> registeredRenderer = new ArrayList<>();
+	private final List<Parser> registeredParser = new ArrayList<>();
 
 	/**
 	 * Creates a new fully managed resource for a REST interface. It can handle GET
@@ -58,8 +63,12 @@ class ManagedResource<T> {
 
 	}
 
-	public void setRenderer(final AbstractRenderer renderer) {
-		this.renderer = renderer;
+	public void addRenderer(final AbstractRenderer renderer) {
+		registeredRenderer.add(renderer);
+	}
+
+	public void addParser(final Parser parser) {
+		registeredParser.add(parser);
 	}
 
 	public void setDao(final AbstractDAO dao) {
@@ -110,6 +119,8 @@ class ManagedResource<T> {
 			return;
 		}
 		try (final PrintWriter writer = resp.getWriter()) {
+			final AbstractRenderer renderer = registeredRenderer.get(0);
+			resp.setContentType(renderer.getContentType());
 			if (result.isEmpty()) {
 				writer.write(renderer.render(null));
 			} else if (result.size() == 1) {
@@ -190,13 +201,34 @@ class ManagedResource<T> {
 	private void assembleRequestObject(final HttpServletRequest req, final HttpServletResponse resp,
 			final ManagedResourceConsumer consumer) throws IOException {
 		try {
-			final Object instance = type.newInstance();
-			for (final Field field : ReflectionUtil.getAllFields(type)) {
-				final Object fieldValue = fromString(field.getType(), req.getParameter(field.getName()));
-				if (fieldValue != null) {
-					ReflectionUtil.executeSet(field, instance, fieldValue);
+			Parser bestFitParser = null;
+			for (final Parser parser : registeredParser) {
+				if (parser.accept(req.getContentType())) {
+					bestFitParser = parser;
 				}
-				LOGGER.info(() -> field.getName() + ": " + req.getParameter(field.getName()));
+			}
+			if (bestFitParser == null && registeredParser.size() == 1) {
+				bestFitParser = registeredParser.get(0);
+			}
+			Object instance = null;
+			if (bestFitParser != null) {
+				final String input = req.getReader().lines().collect(Collectors.joining());
+				try {
+					instance = bestFitParser.parse(input, type);
+				} catch (final ParserException e) {
+					resp.getWriter().write(e.getMessage());
+					LOGGER.warn("Cannot parse user Input", e);
+					return;
+				}
+			} else {
+				instance = type.newInstance();
+				for (final Field field : ReflectionUtil.getAllFields(type)) {
+					final Object fieldValue = fromString(field.getType(), req.getParameter(field.getName()));
+					if (fieldValue != null) {
+						ReflectionUtil.executeSet(field, instance, fieldValue);
+					}
+					LOGGER.info(() -> field.getName() + ": " + req.getParameter(field.getName()));
+				}
 			}
 			resp.getWriter().write(consumer.accept(instance));
 		} catch (final RuntimeException e) {
@@ -224,6 +256,8 @@ class ManagedResource<T> {
 
 	private void doGetCreate(final HttpServletResponse resp) throws IOException {
 		try (final PrintWriter writer = resp.getWriter()) {
+			final AbstractRenderer renderer = registeredRenderer.get(0);
+			resp.setContentType(renderer.getContentType());
 			writer.write(renderer.forCreate(type));
 		}
 	}
@@ -231,6 +265,8 @@ class ManagedResource<T> {
 	private void doGetEdit(final T object, final HttpServletResponse resp) throws IOException {
 		assert (object != null);
 		try (final PrintWriter writer = resp.getWriter()) {
+			final AbstractRenderer renderer = registeredRenderer.get(0);
+			resp.setContentType(renderer.getContentType());
 			writer.write(renderer.forEdit(object));
 		}
 	}

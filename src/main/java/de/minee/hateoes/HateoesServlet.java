@@ -61,7 +61,7 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 		final AbstractRenderer renderer = new HtmlRenderer();
 
 		for (final ManagedResource<?> managedResource : context.getManagedResources()) {
-			managedResource.setRenderer(renderer);
+			managedResource.addRenderer(renderer);
 			if (needsPersistentDao.contains(managedResource)) {
 				managedResource.setDao(persistentDao);
 			} else {
@@ -125,12 +125,12 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 			}
 		}
 		resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-
 	}
 
-	private void handleRoot(final HttpServletResponse resp) throws IOException {
+	private void handleRoot(final HttpServletResponse response) throws IOException {
 		final AbstractRenderer renderer = new JsonRenderer();
-		try (final PrintWriter writer = resp.getWriter()) {
+		response.setContentType(renderer.getContentType());
+		try (final PrintWriter writer = response.getWriter()) {
 			final Object[] availableResources = context.getManagedResources().stream().map(ManagedResource::toString)
 					.toArray();
 			writer.write(renderer.render(availableResources));

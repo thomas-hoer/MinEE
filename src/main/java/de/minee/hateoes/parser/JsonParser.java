@@ -1,25 +1,36 @@
 package de.minee.hateoes.parser;
 
+import de.minee.util.Assertions;
+import de.minee.util.ReflectionUtil;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import de.minee.util.Assertions;
-import de.minee.util.ReflectionUtil;
-
 public class JsonParser implements Parser {
+
+	private static final Object JSON_CONTENT_TYPE = "application/json";
 
 	@Override
 	public <T> T parse(final String payload, final Class<T> type) throws ParserException {
-		final Tokenizer tokenizer = new Tokenizer(payload);
-		final T result = parse(tokenizer, type);
-		Assertions.assertFalse(tokenizer.hasNext(), "Root node is closed but there is still payload left to parse");
-		return result;
+		final JsonTokenizer tokenizer = new JsonTokenizer(payload);
+		try {
+			final T result = parse(tokenizer, type);
+			Assertions.assertFalse(tokenizer.hasNext(), "Root node is closed but there is still payload left to parse");
+			return result;
+		} catch (final RuntimeException cause) {
+			throw new ParserException(cause);
+		}
 	}
 
-	private <T> T parse(final Tokenizer tokenizer, final Class<T> type) throws ParserException {
+	@SuppressWarnings("unchecked")
+	private static <T> T parse(final JsonTokenizer tokenizer, final Class<T> type) throws ParserException {
+		if ("null".equals(tokenizer.lookup())) {
+			tokenizer.next();
+			return null;
+		}
 		if (String.class.isAssignableFrom(type)) {
 			return (T) parseString(tokenizer);
 		} else if (UUID.class.isAssignableFrom(type)) {
@@ -30,7 +41,7 @@ public class JsonParser implements Parser {
 		return parseClass(tokenizer, type);
 	}
 
-	private String parseString(final Tokenizer tokenizer) throws ParserException {
+	private static String parseString(final JsonTokenizer tokenizer) {
 		final String token = tokenizer.next();
 		final String paranthesisToken;
 		if (token.charAt(0) == '"' && token.charAt(token.length() - 1) == '"') {
@@ -41,43 +52,33 @@ public class JsonParser implements Parser {
 		return paranthesisToken.replace("\\\\", "\\").replace("\\\"", "\"");
 	}
 
-	private <T> T[] parseArray(final Tokenizer tokenizer, final Class<T> type) throws ParserException {
+	@SuppressWarnings("unchecked")
+	private static <T> T[] parseArray(final JsonTokenizer tokenizer, final Class<T> type) throws ParserException {
 		final List<T> list = new ArrayList<>();
 		tokenizer.expect("[");
-		while (tokenizer.hasNext()) {
-			if ("]".equals(tokenizer.lookup())) {
-				break;
+		if (!"]".equals(tokenizer.lookup())) {
+			while (tokenizer.hasNext()) {
+				list.add(parse(tokenizer, type));
+				if (",".equals(tokenizer.lookup())) {
+					tokenizer.next();
+				} else {
+					break;
+				}
 			}
-			list.add(parse(tokenizer, type));
-			if (",".equals(tokenizer.lookup())) {
-				tokenizer.next();
-				continue;
-			}
-			break;
 		}
+
 		tokenizer.expect("]");
 		return list.toArray((T[]) Array.newInstance(type, 0));
 	}
 
-	private <T> T parseClass(final Tokenizer tokenizer, final Class<T> type) throws ParserException {
+	private static <T> T parseClass(final JsonTokenizer tokenizer, final Class<T> type) throws ParserException {
 		try {
 			final T instance = type.newInstance();
 			tokenizer.expect("{");
 			while (tokenizer.hasNext()) {
-				if ("}".equals(tokenizer.lookup())) {
+				if (!parseProperty(tokenizer, type, instance)) {
 					break;
 				}
-				final String propertyName = tokenizer.next();
-				tokenizer.expect(":");
-				final Field propertyField = ReflectionUtil.getDeclaredField(type, propertyName);
-				Assertions.assertNotNull(propertyField,
-						"Class " + type + " does not contain a field named " + propertyName);
-				ReflectionUtil.executeSet(propertyField, instance, parse(tokenizer, propertyField.getType()));
-				if (",".equals(tokenizer.lookup())) {
-					tokenizer.next();
-					continue;
-				}
-				break;
 			}
 			tokenizer.expect("}");
 
@@ -87,93 +88,27 @@ public class JsonParser implements Parser {
 		}
 	}
 
-	private class Tokenizer {
-		private final String payload;
-		private final int length;
-		private int index = 0;
-		private String lookup;
-
-		Tokenizer(final String payload) {
-			this.payload = payload.trim();
-			this.length = this.payload.length();
+	private static <T> boolean parseProperty(final JsonTokenizer tokenizer, final Class<T> type, final Object instance)
+			throws ParserException {
+		if ("}".equals(tokenizer.lookup())) {
+			return false;
 		}
-
-		boolean hasNext() {
-			return index < length;
+		final String propertyName = tokenizer.next();
+		tokenizer.expect(":");
+		final Field propertyField = ReflectionUtil.getDeclaredField(type, propertyName);
+		Assertions.assertNotNull(propertyField, "Class " + type + " does not contain a field named " + propertyName);
+		ReflectionUtil.executeSet(propertyField, instance, parse(tokenizer, propertyField.getType()));
+		if (",".equals(tokenizer.lookup())) {
+			tokenizer.next();
+		} else {
+			return false;
 		}
-
-		String next() {
-			lookup();
-			final String result = lookup;
-			lookup = null;
-			return result;
-		}
-
-		void expect(final String expected) throws ParserException {
-			if (!expected.equals(lookup())) {
-				throw new ParserException("'" + expected + "' expected but " + lookup + " found at pos " + index);
-			}
-			next();
-		}
-
-		String lookup() {
-			if (lookup != null) {
-				return lookup;
-			}
-			if (!hasNext()) {
-				return null;
-			}
-			char c = payload.charAt(index);
-			while (Character.isWhitespace(c)) {
-				c = payload.charAt(++index);
-			}
-			switch (c) {
-			case '{':
-			case '}':
-			case '[':
-			case ']':
-			case ':':
-			case ',':
-				index++;
-				lookup = String.valueOf(c);
-				break;
-			case '"':
-				parseString();
-				break;
-			default:
-				parseConstant();
-			}
-
-			return lookup;
-		}
-
-		private void parseConstant() {
-			final int startIndex = index;
-			while (true) {
-				final char charAtI = payload.charAt(++index);
-				if (!allowedLiteral(charAtI) || index + 1 == length) {
-					lookup = payload.substring(startIndex, index);
-					break;
-				}
-			}
-		}
-
-		private void parseString() {
-			final int startIndex = index;
-			while (true) {
-				final char charAtI = payload.charAt(++index);
-				if (charAtI == '"' || index + 1 == length) {
-					lookup = payload.substring(startIndex, ++index);
-					break;
-				}
-				if (charAtI == '\\') {
-					index++;
-				}
-			}
-		}
-
-		private boolean allowedLiteral(final char c) {
-			return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '.';
-		}
+		return true;
 	}
+
+	@Override
+	public boolean accept(final String contentType) {
+		return JSON_CONTENT_TYPE.equals(contentType);
+	}
+
 }

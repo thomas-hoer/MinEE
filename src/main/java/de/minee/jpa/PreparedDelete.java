@@ -41,8 +41,8 @@ public class PreparedDelete<T> extends AbstractPreparedQuery<T> {
 		for (final Field field : ReflectionUtil.getAllFields(clazz)) {
 			fieldList.add(field);
 			if (List.class.isAssignableFrom(field.getType())) {
-				prepareDelete(connection, field);
-				prepareSelect(connection, field);
+				prepareDelete(field);
+				prepareSelect(field);
 			}
 		}
 

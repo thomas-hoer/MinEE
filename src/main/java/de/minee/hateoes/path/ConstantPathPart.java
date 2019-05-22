@@ -18,11 +18,11 @@ import de.minee.util.Assertions;
  */
 public final class ConstantPathPart implements IPathPart {
 
-	private final String path;
+	private final String pathConstant;
 
 	public ConstantPathPart(final String path) {
 		Assertions.assertNotNull(path, "Path should not be null");
-		this.path = path;
+		this.pathConstant = path;
 	}
 
 	/**
@@ -30,12 +30,12 @@ public final class ConstantPathPart implements IPathPart {
 	 */
 	@Override
 	public boolean isMatch(final String path) {
-		return this.path.equals(path);
+		return this.pathConstant.equals(path);
 	}
 
 	@Override
 	public String toString() {
-		return path;
+		return pathConstant;
 	}
 
 }

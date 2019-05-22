@@ -41,7 +41,7 @@ public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			fieldList.add(field);
 			if (List.class.isAssignableFrom(field.getType())) {
-				prepareInsert(connection, field);
+				prepareInsert(field);
 				continue;
 			}
 			fieldNames.add(field.getName());

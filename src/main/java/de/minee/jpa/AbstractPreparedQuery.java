@@ -34,13 +34,13 @@ public abstract class AbstractPreparedQuery<T> extends AbstractQuery {
 		this.cascade = cascade;
 	}
 
-	protected final void prepareInsert(final Connection connection, final Field field) throws SQLException {
+	protected final void prepareInsert(final Field field) throws SQLException {
 		final Class<?> cls = field.getDeclaringClass();
 		mappingInsert.put(field, connection.prepareStatement(
 				String.format("INSERT INTO Mapping_%s_%s VALUES (?,?)", cls.getSimpleName(), field.getName())));
 	}
 
-	protected final void prepareSelect(final Connection connection, final Field field) throws SQLException {
+	protected final void prepareSelect(final Field field) throws SQLException {
 		final Class<?> cls = field.getDeclaringClass();
 		final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
 		final Class<?> type = (Class<?>) mapToType.getActualTypeArguments()[0];
@@ -49,7 +49,7 @@ public abstract class AbstractPreparedQuery<T> extends AbstractQuery {
 						type.getSimpleName(), cls.getSimpleName(), field.getName())));
 	}
 
-	protected final void prepareDelete(final Connection connection, final Field field) throws SQLException {
+	protected final void prepareDelete(final Field field) throws SQLException {
 		final Class<?> cls = field.getDeclaringClass();
 		final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
 		final Class<?> type = (Class<?>) mapToType.getActualTypeArguments()[0];

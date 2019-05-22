@@ -101,4 +101,9 @@ public class XmlRenderer extends AbstractRenderer {
 		return render(object);
 	}
 
+	@Override
+	public String getContentType() {
+		return "application/xml";
+	}
+
 }

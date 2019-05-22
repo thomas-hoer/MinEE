@@ -89,4 +89,9 @@ public class HtmlRenderer extends AbstractRenderer {
 		return stringBuilder.toString();
 	}
 
+	@Override
+	public String getContentType() {
+		return "text/html";
+	}
+
 }
