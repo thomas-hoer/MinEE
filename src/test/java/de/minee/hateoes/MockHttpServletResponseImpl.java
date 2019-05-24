@@ -3,7 +3,9 @@ package de.minee.hateoes;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
@@ -13,6 +15,7 @@ public class MockHttpServletResponseImpl implements HttpServletResponse {
 
 	private final StringWriter stringWriter = new StringWriter();
 	private int error = 200;
+	private final Map<String, String> header = new HashMap<>();
 
 	@Override
 	public String getCharacterEncoding() {
@@ -156,12 +159,12 @@ public class MockHttpServletResponseImpl implements HttpServletResponse {
 
 	@Override
 	public void setHeader(final String name, final String value) {
-		// Just a Mock method
+		header.put(name, value);
 	}
 
 	@Override
 	public void addHeader(final String name, final String value) {
-		// Just a Mock method
+		header.put(name, value);
 	}
 
 	@Override
@@ -176,7 +179,7 @@ public class MockHttpServletResponseImpl implements HttpServletResponse {
 
 	@Override
 	public void setStatus(final int sc) {
-		// Just a Mock method
+		error = sc;
 	}
 
 	@Deprecated
@@ -187,23 +190,23 @@ public class MockHttpServletResponseImpl implements HttpServletResponse {
 
 	@Override
 	public int getStatus() {
-		return 0;
+		return error;
 	}
 
 	@Override
 	public String getHeader(final String name) {
-		return null;
+		return header.get(name);
 	}
 
 	@Override
 	public Collection<String> getHeaders(final String name) {
-		return null;
+		return header.values();
 	}
 
 	@Override
 	public Collection<String> getHeaderNames() {
 
-		return null;
+		return header.keySet();
 	}
 
 	public String getWrittenOutput() {

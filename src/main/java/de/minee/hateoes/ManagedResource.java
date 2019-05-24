@@ -4,7 +4,7 @@ import de.minee.hateoes.HateoesServlet.HateoesContext;
 import de.minee.hateoes.parser.Parser;
 import de.minee.hateoes.parser.ParserException;
 import de.minee.hateoes.path.Path;
-import de.minee.hateoes.renderer.AbstractRenderer;
+import de.minee.hateoes.renderer.Renderer;
 import de.minee.jpa.AbstractDAO;
 import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-//TODO: Inject Renderer by annotation
 class ManagedResource<T> {
 
 	private static final Logger LOGGER = Logger.getLogger(ManagedResource.class);
@@ -33,7 +32,7 @@ class ManagedResource<T> {
 	private final Set<Operation> allowedOperations;
 	private final Class<T> type;
 	private AbstractDAO dao;
-	private final List<AbstractRenderer> registeredRenderer = new ArrayList<>();
+	private final List<Renderer> registeredRenderer = new ArrayList<>();
 	private final List<Parser> registeredParser = new ArrayList<>();
 
 	/**
@@ -63,7 +62,7 @@ class ManagedResource<T> {
 
 	}
 
-	public void addRenderer(final AbstractRenderer renderer) {
+	public void addRenderer(final Renderer renderer) {
 		registeredRenderer.add(renderer);
 	}
 
@@ -118,12 +117,14 @@ class ManagedResource<T> {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
+		if (result.isEmpty()) {
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
 		try (final PrintWriter writer = resp.getWriter()) {
-			final AbstractRenderer renderer = registeredRenderer.get(0);
+			final Renderer renderer = registeredRenderer.get(0);
 			resp.setContentType(renderer.getContentType());
-			if (result.isEmpty()) {
-				writer.write(renderer.render(null));
-			} else if (result.size() == 1) {
+			if (result.size() == 1) {
 				writer.write(renderer.render(result.get(0)));
 			} else {
 				writer.write(renderer.render(result));
@@ -210,27 +211,10 @@ class ManagedResource<T> {
 			if (bestFitParser == null && registeredParser.size() == 1) {
 				bestFitParser = registeredParser.get(0);
 			}
-			Object instance = null;
-			if (bestFitParser != null) {
-				final String input = req.getReader().lines().collect(Collectors.joining());
-				try {
-					instance = bestFitParser.parse(input, type);
-				} catch (final ParserException e) {
-					resp.getWriter().write(e.getMessage());
-					LOGGER.warn("Cannot parse user Input", e);
-					return;
-				}
-			} else {
-				instance = type.newInstance();
-				for (final Field field : ReflectionUtil.getAllFields(type)) {
-					final Object fieldValue = fromString(field.getType(), req.getParameter(field.getName()));
-					if (fieldValue != null) {
-						ReflectionUtil.executeSet(field, instance, fieldValue);
-					}
-					LOGGER.info(() -> field.getName() + ": " + req.getParameter(field.getName()));
-				}
+			final Object instance = createRequestedInstance(req, resp, bestFitParser);
+			if (instance != null) {
+				resp.getWriter().write(consumer.accept(instance));
 			}
-			resp.getWriter().write(consumer.accept(instance));
 		} catch (final RuntimeException e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			throw e;
@@ -240,11 +224,37 @@ class ManagedResource<T> {
 		}
 	}
 
+	private Object createRequestedInstance(final HttpServletRequest req, final HttpServletResponse resp,
+			final Parser bestFitParser) throws IOException, InstantiationException, IllegalAccessException {
+		Object instance = null;
+		if (bestFitParser != null) {
+			final String input = req.getReader().lines().collect(Collectors.joining());
+			try {
+				instance = bestFitParser.parse(input, type);
+			} catch (final ParserException e) {
+				resp.getWriter().write(e.getMessage());
+				LOGGER.warn("Cannot parse user Input", e);
+			}
+		} else {
+			instance = type.newInstance();
+			for (final Field field : ReflectionUtil.getAllFields(type)) {
+				final Object fieldValue = fromString(field.getType(), req.getParameter(field.getName()));
+				if (fieldValue != null) {
+					ReflectionUtil.executeSet(field, instance, fieldValue);
+				}
+				LOGGER.info(() -> field.getName() + ": " + req.getParameter(field.getName()));
+			}
+		}
+		return instance;
+	}
+
 	private void doPostCreate(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
 		assembleRequestObject(req, resp, instance -> {
 			final UUID newId = dao.insertShallow(instance);
-			return "Success\nNew ID:" + newId;
+			resp.addHeader("id", newId.toString());
+			return "";
 		});
+		resp.setStatus(HttpServletResponse.SC_CREATED);
 	}
 
 	private void doPostEdit(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
@@ -256,7 +266,7 @@ class ManagedResource<T> {
 
 	private void doGetCreate(final HttpServletResponse resp) throws IOException {
 		try (final PrintWriter writer = resp.getWriter()) {
-			final AbstractRenderer renderer = registeredRenderer.get(0);
+			final Renderer renderer = registeredRenderer.get(0);
 			resp.setContentType(renderer.getContentType());
 			writer.write(renderer.forCreate(type));
 		}
@@ -265,7 +275,7 @@ class ManagedResource<T> {
 	private void doGetEdit(final T object, final HttpServletResponse resp) throws IOException {
 		assert (object != null);
 		try (final PrintWriter writer = resp.getWriter()) {
-			final AbstractRenderer renderer = registeredRenderer.get(0);
+			final Renderer renderer = registeredRenderer.get(0);
 			resp.setContentType(renderer.getContentType());
 			writer.write(renderer.forEdit(object));
 		}

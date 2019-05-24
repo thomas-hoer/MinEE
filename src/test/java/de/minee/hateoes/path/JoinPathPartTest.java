@@ -75,7 +75,7 @@ public class JoinPathPartTest {
 		request.addParameters(parameters);
 		response = new MockHttpServletResponseImpl();
 		HATEOES_TEST_SERVLET.service(request, response);
-		assertEquals(HttpServletResponse.SC_OK, response.getError());
+		assertEquals(HttpServletResponse.SC_CREATED, response.getError());
 
 		request = new MockHttpServletRequestImpl("rChain/" + rChainId + "/sRef/" + sRefId);
 		response = new MockHttpServletResponseImpl();
@@ -105,7 +105,7 @@ public class JoinPathPartTest {
 		request.addParameters(parameters);
 		response = new MockHttpServletResponseImpl();
 		HATEOES_TEST_SERVLET.service(request, response);
-		assertEquals(HttpServletResponse.SC_OK, response.getError());
+		assertEquals(HttpServletResponse.SC_CREATED, response.getError());
 
 		request = new MockHttpServletRequestImpl("sRef/" + sRefId + "/rChain/" + rChainId);
 		response = new MockHttpServletResponseImpl();
@@ -136,7 +136,7 @@ public class JoinPathPartTest {
 		request.addParameters(parameters);
 		response = new MockHttpServletResponseImpl();
 		HATEOES_TEST_SERVLET.service(request, response);
-		assertEquals(HttpServletResponse.SC_OK, response.getError());
+		assertEquals(HttpServletResponse.SC_CREATED, response.getError());
 
 		request = new MockHttpServletRequestImpl("sRef/" + sRefId);
 		response = new MockHttpServletResponseImpl();

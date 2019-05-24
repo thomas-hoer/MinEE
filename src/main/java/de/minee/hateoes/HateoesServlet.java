@@ -2,9 +2,8 @@ package de.minee.hateoes;
 
 import de.minee.cdi.CdiAwareHttpServlet;
 import de.minee.cdi.CdiUtil;
-import de.minee.hateoes.renderer.AbstractRenderer;
-import de.minee.hateoes.renderer.HtmlRenderer;
 import de.minee.hateoes.renderer.JsonRenderer;
+import de.minee.hateoes.renderer.Renderer;
 import de.minee.jpa.AbstractDAO;
 import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
@@ -14,6 +13,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -58,10 +58,8 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 		}
 
 		final AbstractDAO inMemDao = new InMemDAO(inMemTypes);
-		final AbstractRenderer renderer = new HtmlRenderer();
 
 		for (final ManagedResource<?> managedResource : context.getManagedResources()) {
-			managedResource.addRenderer(renderer);
 			if (needsPersistentDao.contains(managedResource)) {
 				managedResource.setDao(persistentDao);
 			} else {
@@ -78,6 +76,8 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 			final Class<?> resourceType = field.getType();
 			managedResource = new ManagedResource<>(context, annotation.value(), annotation.allowedOperations(),
 					resourceType);
+			Arrays.stream(annotation.consumes()).map(CdiUtil::getInstance).forEach(managedResource::addParser);
+			Arrays.stream(annotation.produces()).map(CdiUtil::getInstance).forEach(managedResource::addRenderer);
 			context.addResource(managedResource);
 		}
 		return managedResource;
@@ -128,7 +128,7 @@ public class HateoesServlet extends CdiAwareHttpServlet {
 	}
 
 	private void handleRoot(final HttpServletResponse response) throws IOException {
-		final AbstractRenderer renderer = new JsonRenderer();
+		final Renderer renderer = new JsonRenderer();
 		response.setContentType(renderer.getContentType());
 		try (final PrintWriter writer = response.getWriter()) {
 			final Object[] availableResources = context.getManagedResources().stream().map(ManagedResource::toString)

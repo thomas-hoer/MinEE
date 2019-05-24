@@ -6,6 +6,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import de.minee.datamodel.ReferenceList;
+import de.minee.hateoes.parser.JsonParser;
+import de.minee.hateoes.renderer.JsonRenderer;
+import de.minee.hateoes.renderer.Renderer;
 import de.minee.jpa.DAOTestImpl;
 
 import java.io.IOException;
@@ -17,6 +20,7 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
+import org.h2.util.StringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -83,6 +87,12 @@ public class HateoesServletTest {
 		hateoesServlet.service(request, response);
 		final String outputPostResource = response.getWrittenOutput();
 
+		assertTrue(StringUtils.isNullOrEmpty(outputPostResource));
+		assertEquals(HttpServletResponse.SC_CREATED, response.getStatus());
+		assertFalse(StringUtils.isNullOrEmpty(response.getHeader("id")));
+
+		final UUID id = UUID.fromString(response.getHeader("id"));
+
 		// Check again all entries of ReferenceList in Database
 		request = new MockHttpServletRequestImpl("rlists");
 		response = new MockHttpServletResponseImpl();
@@ -92,16 +102,11 @@ public class HateoesServletTest {
 		assertNotNull(outputCheckEmpty);
 		assertFalse(outputCheckEmpty.contains("ReferenceList"));
 
-		assertNotNull(outputPostResource);
-		assertTrue(outputPostResource.contains("Success"));
-		assertTrue(outputPostResource.contains("New ID"));
-
 		assertNotNull(outputCheckResourceIsPersisted);
 		assertTrue(outputCheckResourceIsPersisted.contains("ReferenceList"));
 		// Two elements found
 		assertEquals(3, outputCheckResourceIsPersisted.split("ReferenceList").length);
 
-		final UUID id = UUID.fromString(outputPostResource.split(":")[1]);
 		request = new MockHttpServletRequestImpl("rlist/" + id.toString());
 		response = new MockHttpServletResponseImpl();
 		hateoesServlet.service(request, response);
@@ -142,7 +147,7 @@ public class HateoesServletTest {
 		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("rlists/create");
 		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
 		hateoesServlet.service(request, response);
-		assertEquals(404, response.getError());
+		assertEquals(HttpServletResponse.SC_NOT_FOUND, response.getError());
 	}
 
 	@Test
@@ -151,7 +156,7 @@ public class HateoesServletTest {
 		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl(null);
 		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
 		hateoesServlet.service(request, response);
-		assertEquals(200, response.getError());
+		assertEquals(HttpServletResponse.SC_OK, response.getError());
 		assertEquals("[]", response.getWrittenOutput());
 	}
 
@@ -168,7 +173,7 @@ public class HateoesServletTest {
 		parameters.put("description", "Desc1");
 		request.addParameters(parameters);
 		hateoesServlet.service(request, response);
-		final UUID id = UUID.fromString(response.getWrittenOutput().split(":")[1]);
+		final UUID id = UUID.fromString(response.getHeader("id"));
 		assertNotNull(id);
 
 		request = new MockHttpServletRequestImpl("rlists");
@@ -201,7 +206,8 @@ public class HateoesServletTest {
 		request = new MockHttpServletRequestImpl("rlists/create", Operation.POST, "");
 		response = new MockHttpServletResponseImpl();
 		hateoesServlet.service(request, response);
-		final UUID id = UUID.fromString(response.getWrittenOutput().split(":")[1]);
+
+		final UUID id = UUID.fromString(response.getHeader("id"));
 
 		request = new MockHttpServletRequestImpl("rlist/" + id + "/edit");
 		response = new MockHttpServletResponseImpl();
@@ -220,7 +226,7 @@ public class HateoesServletTest {
 		request.addParameter("name", "old name");
 		response = new MockHttpServletResponseImpl();
 		hateoesServlet.service(request, response);
-		final UUID id = UUID.fromString(response.getWrittenOutput().split(":")[1]);
+		final UUID id = UUID.fromString(response.getHeader("id"));
 
 		request = new MockHttpServletRequestImpl("rlist/" + id + "/edit", Operation.POST, "");
 		request.addParameter("id", id.toString());
@@ -229,7 +235,7 @@ public class HateoesServletTest {
 		hateoesServlet.service(request, response);
 		final String editOutput = response.getWrittenOutput();
 		assertTrue(editOutput.contains("1 Element(s) updated"));
-		assertEquals(200, response.getError());
+		assertEquals(HttpServletResponse.SC_OK, response.getError());
 
 		request = new MockHttpServletRequestImpl("rlist/" + id);
 		response = new MockHttpServletResponseImpl();
@@ -282,6 +288,40 @@ public class HateoesServletTest {
 		assertEquals(HttpServletResponse.SC_NOT_FOUND, response.getError());
 	}
 
+	@Test
+	public void testJsonServlet() throws IOException, ServletException {
+		final Renderer renderer = new JsonRenderer();
+		final HateoesServlet hateoesServlet = createJsonServlet();
+		final UUID uuid = UUID.randomUUID();
+		final MockHttpServletRequestImpl request1 = new MockHttpServletRequestImpl(uuid.toString());
+		final MockHttpServletResponseImpl response1 = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request1, response1);
+		assertEquals(HttpServletResponse.SC_NOT_FOUND, response1.getError());
+
+		final MockHttpServletRequestImpl request2 = new MockHttpServletRequestImpl(uuid.toString() + "/create");
+		final MockHttpServletResponseImpl response2 = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request2, response2);
+		assertEquals(HttpServletResponse.SC_OK, response2.getError());
+		assertEquals(renderer.forCreate(ReferenceList.class), response2.getWrittenOutput());
+
+		final String newJsonObject = "{}";
+		final MockHttpServletRequestImpl request3 = new MockHttpServletRequestImpl(uuid.toString() + "/create",
+				Operation.POST, newJsonObject);
+		final MockHttpServletResponseImpl response3 = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request3, response3);
+		assertEquals(HttpServletResponse.SC_CREATED, response3.getError());
+		final String newId = response3.getHeader("id");
+		assertFalse(StringUtils.isNullOrEmpty(newId));
+		assertEquals("", response3.getWrittenOutput());
+
+		final MockHttpServletRequestImpl request4 = new MockHttpServletRequestImpl(newId);
+		final MockHttpServletResponseImpl response4 = new MockHttpServletResponseImpl();
+		hateoesServlet.service(request4, response4);
+		assertEquals(HttpServletResponse.SC_OK, response4.getStatus());
+		assertEquals(String.format("{id:\"%s\",recursiveObjects:[]}", newId), response4.getWrittenOutput());
+
+	}
+
 	private static HateoesServlet createInMemServlet() throws ServletException {
 		final HateoesServlet servlet = new HateoesServlet() {
 
@@ -297,9 +337,22 @@ public class HateoesServletTest {
 		return servlet;
 	}
 
+	private static HateoesServlet createJsonServlet() throws ServletException {
+		final HateoesServlet servlet = new HateoesServlet() {
+
+			private static final long serialVersionUID = -1207374138713223126L;
+
+			@HateoesResource(value = "{id}", consumes = JsonParser.class, produces = JsonRenderer.class)
+			ReferenceList referenceList;
+		};
+		servlet.init();
+		return servlet;
+	}
+
 	private static HateoesServlet createInMemServlet(final ServletConfig config) throws ServletException {
 		final HateoesServlet servlet = new HateoesServlet();
 		servlet.init(config);
 		return servlet;
 	}
+
 }

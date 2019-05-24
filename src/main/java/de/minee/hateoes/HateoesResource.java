@@ -1,5 +1,9 @@
 package de.minee.hateoes;
 
+import de.minee.hateoes.parser.Parser;
+import de.minee.hateoes.renderer.HtmlRenderer;
+import de.minee.hateoes.renderer.Renderer;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -31,7 +35,7 @@ public @interface HateoesResource {
 	 *
 	 * @return Sub-Path of the Resource
 	 */
-	String value();
+	String value() default "";
 
 	/**
 	 * Sets the Http Operations that are allowed on the Resource.
@@ -55,5 +59,9 @@ public @interface HateoesResource {
 	 * @return
 	 */
 	Operation[] allowedOperations() default { Operation.ALL };
+
+	Class<? extends Parser>[] consumes() default {};
+
+	Class<? extends Renderer>[] produces() default { HtmlRenderer.class };
 
 }

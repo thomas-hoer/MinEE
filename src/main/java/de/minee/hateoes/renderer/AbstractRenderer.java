@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-public abstract class AbstractRenderer {
+public abstract class AbstractRenderer implements Renderer {
 
 	private static final Set<Class<?>> BASE_CLASSES = new HashSet<>();
 
@@ -49,13 +49,6 @@ public abstract class AbstractRenderer {
 			}
 		}
 	}
-
-	// TODO: Use InputStream and HateoesContext
-	public abstract String render(Object input);
-
-	public abstract String forCreate(Class<?> type);
-
-	public abstract String forEdit(Object object);
 
 	/**
 	 * Applies the toString method on the value Object of entry. If the value is an
@@ -102,7 +95,5 @@ public abstract class AbstractRenderer {
 			return value;
 		}
 	}
-
-	public abstract String getContentType();
 
 }

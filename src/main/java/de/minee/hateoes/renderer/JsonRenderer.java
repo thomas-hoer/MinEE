@@ -53,7 +53,9 @@ public class JsonRenderer extends AbstractRenderer {
 		knownObjects.add(input);
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			final Object fieldObject = ReflectionUtil.executeGet(field, input);
-			stringJoiner.add(field.getName() + ":" + render(fieldObject, knownObjects));
+			if (fieldObject != null) {
+				stringJoiner.add(field.getName() + ":" + render(fieldObject, knownObjects));
+			}
 		}
 		knownObjects.remove(input);
 		stringBuilder.append(stringJoiner.toString());
