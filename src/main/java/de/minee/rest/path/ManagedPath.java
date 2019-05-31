@@ -7,13 +7,13 @@ import de.minee.rest.RestServlet.HateoesContext;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
-public class Path<T> {
+public class ManagedPath<T> {
 
 	private final List<IPathPart> pathParts = new ArrayList<>();
 
-	public Path(final HateoesContext context, final String fullPath, final Class<T> type) {
+	public ManagedPath(final HateoesContext context, final String fullPath, final Class<T> type) {
 		final String[] paths = fullPath.split("/");
 		for (final String pathPart : paths) {
 			pathParts.add(PathPartFactory.create(context, type, pathPart));
@@ -44,6 +44,7 @@ public class Path<T> {
 		return isMatch;
 	}
 
+	@SuppressWarnings("unchecked")
 	public List<T> executeSelect(final String[] pathSplit, final InitialQueryConnection<T, AbstractStatement<T>> select)
 			throws SQLException {
 		final List<String> parameterForJoin = new ArrayList<>();
@@ -68,8 +69,6 @@ public class Path<T> {
 
 	@Override
 	public String toString() {
-		final StringJoiner joiner = new StringJoiner("/");
-		pathParts.stream().map(IPathPart::toString).forEach(joiner::add);
-		return joiner.toString();
+		return pathParts.stream().map(IPathPart::toString).collect(Collectors.joining("/"));
 	}
 }

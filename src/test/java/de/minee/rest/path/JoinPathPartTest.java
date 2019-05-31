@@ -6,7 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import de.minee.datamodel.ReferenceChain;
 import de.minee.datamodel.SimpleReference;
-import de.minee.rest.HateoesResource;
+import de.minee.rest.RestResource;
 import de.minee.rest.MockHttpServletRequestImpl;
 import de.minee.rest.MockHttpServletResponseImpl;
 import de.minee.rest.Operation;
@@ -29,24 +29,24 @@ public class JoinPathPartTest {
 
 		private static final long serialVersionUID = -397502535215997545L;
 
-		@HateoesResource("rChain")
+		@RestResource("rChain")
 		ReferenceChain referenceChain;
 
-		@HateoesResource("sRef")
+		@RestResource("sRef")
 		SimpleReference simpleReference;
 
 		// Returns all ReferenceChain that are referencing a SimpleReference with
 		// specific ids
-		@HateoesResource("rChain/{id}/sRef/{simpleReference.id}")
+		@RestResource("rChain/{id}/sRef/{simpleReference.id}")
 		ReferenceChain forwardReference;
 
 		// Returns all ReferenceChain that are referencing a SimpleReference with
 		// specific ids, but in different order
-		@HateoesResource("sRef/{simpleReference.id}/rChain/{id}")
+		@RestResource("sRef/{simpleReference.id}/rChain/{id}")
 		ReferenceChain forwardReference2;
 
 		// Returns all ReferenceChain that are referenced by SimpleReference by given id
-		@HateoesResource("sRef/{SimpleReference.id\\referenceChain}")
+		@RestResource("sRef/{SimpleReference.id\\referenceChain}")
 		ReferenceChain backwardReference;
 
 	};

@@ -10,6 +10,7 @@ import java.util.logging.Level;
  */
 public final class Logger {
 
+	@SuppressWarnings("squid:S1312") // This is a wrapper class for the logger
 	private final java.util.logging.Logger javaUtilLogger;
 
 	private Logger(final Class<?> cls) {

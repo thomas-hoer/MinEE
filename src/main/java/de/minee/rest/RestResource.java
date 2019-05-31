@@ -10,17 +10,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a Field as fully managed HateoesResource.
+ * Marks a Field as fully managed RestResource.
  *
  * <p>
- * If you create a HateoesServlet like the following example, a valid resource
- * path could be http://localhost:8080/rest/type/name depending on your context
- * root.
+ * If you create a RestServlet like the following example, a valid resource path
+ * could be http://localhost:8080/rest/type/name depending on your context root.
  *
  * <pre>
  * &#64;WebServlet("/rest/*")
- * public class Rest extends HateoesServlet {
- * 	&#64;HateoesResource("/type/{name}")
+ * public class Rest extends RestServlet {
+ * 	&#64;RestResource("/type/{name}")
  * 	MyType gallery;
  * }
  * </pre>
@@ -28,7 +27,7 @@ import java.lang.annotation.Target;
  */
 @Target({ ElementType.FIELD, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface HateoesResource {
+public @interface RestResource {
 
 	/**
 	 * Sub-Path of the Resource.

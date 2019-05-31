@@ -11,6 +11,7 @@ import de.minee.util.ReflectionUtil;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,11 +36,21 @@ public class RestServlet extends CdiAwareHttpServlet {
 	public void init() throws ServletException {
 		super.init();
 		initManagedResources();
-		initResources();
+		initMethodResources();
 	}
 
-	private void initResources() {
-
+	private void initMethodResources() {
+		final Class<? extends RestServlet> cls = this.getClass();
+		for (final Method method : cls.getMethods()) {
+			final RestResource annotation = method.getAnnotation(RestResource.class);
+			if (annotation != null) {
+				final MethodResource resource = new MethodResource(annotation.value(), annotation.allowedOperations(),
+						this, method);
+				Arrays.stream(annotation.consumes()).map(CdiUtil::getInstance).forEach(resource::addParser);
+				Arrays.stream(annotation.produces()).map(CdiUtil::getInstance).forEach(resource::addRenderer);
+				context.addResource(resource);
+			}
+		}
 	}
 
 	private void initManagedResources() {
@@ -47,6 +58,7 @@ public class RestServlet extends CdiAwareHttpServlet {
 		boolean daoNeeded = false;
 		AbstractDAO persistentDao = null;
 		final Set<ManagedResource<?>> needsPersistentDao = new HashSet<>();
+		final Set<ManagedResource<?>> needsInMemDao = new HashSet<>();
 		final Set<Class<?>> inMemTypes = new HashSet<>();
 
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
@@ -54,54 +66,43 @@ public class RestServlet extends CdiAwareHttpServlet {
 		}
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
 			final ManagedResource<?> managedResource = checkHateoesResourceAnnotation(field);
-			daoNeeded |= checkPersistentAnnotation(needsPersistentDao, inMemTypes, field, managedResource);
+			if (managedResource != null) {
+				context.addResource(managedResource);
+				if (field.getAnnotation(Persistent.class) != null) {
+					needsPersistentDao.add(managedResource);
+					daoNeeded = true;
+				} else {
+					needsInMemDao.add(managedResource);
+					inMemTypes.add(field.getType());
+				}
+			}
 			persistentDao = checkDataAccessObjectAnnotation(persistentDao, field);
 		}
 
 		if (daoNeeded && persistentDao == null) {
-			throw new HateoesException("A DataAccessObject is needed to provide a persistend managed HateoesResouce");
+			throw new RestException("A DataAccessObject is needed to provide a persistend managed HateoesResouce");
 		}
 
 		final AbstractDAO inMemDao = new InMemDAO(inMemTypes);
+		final AbstractDAO dao = persistentDao;
 
-		for (final ManagedResource<?> managedResource : context.getManagedResources()) {
-			if (needsPersistentDao.contains(managedResource)) {
-				managedResource.setDao(persistentDao);
-			} else {
-				managedResource.setDao(inMemDao);
-			}
-		}
-
+		needsInMemDao.forEach(resource -> resource.setDao(inMemDao));
+		needsPersistentDao.forEach(resource -> resource.setDao(dao));
+		needsInMemDao.forEach(context::addResource);
+		needsPersistentDao.forEach(context::addResource);
 	}
 
 	private ManagedResource<?> checkHateoesResourceAnnotation(final Field field) {
 		ManagedResource<?> managedResource = null;
-		final HateoesResource annotation = field.getAnnotation(HateoesResource.class);
+		final RestResource annotation = field.getAnnotation(RestResource.class);
 		if (annotation != null) {
 			final Class<?> resourceType = field.getType();
 			managedResource = new ManagedResource<>(context, annotation.value(), annotation.allowedOperations(),
 					resourceType);
 			Arrays.stream(annotation.consumes()).map(CdiUtil::getInstance).forEach(managedResource::addParser);
 			Arrays.stream(annotation.produces()).map(CdiUtil::getInstance).forEach(managedResource::addRenderer);
-			context.addResource(managedResource);
 		}
 		return managedResource;
-	}
-
-	private static boolean checkPersistentAnnotation(final Set<ManagedResource<?>> needsPersistentDao,
-			final Set<Class<?>> inMemTypes, final Field field, final ManagedResource<?> managedResource) {
-		boolean daoNeeded = false;
-		if (field.getAnnotation(Persistent.class) != null) {
-			if (managedResource == null) {
-				throw new HateoesException(
-						"You have to also declare @HateoesResouce for @Persistent on field " + field.getName());
-			}
-			daoNeeded = true;
-			needsPersistentDao.add(managedResource);
-		} else if (managedResource != null) {
-			inMemTypes.add(field.getType());
-		}
-		return daoNeeded;
 	}
 
 	private AbstractDAO checkDataAccessObjectAnnotation(final AbstractDAO persistentDAO, final Field field) {
@@ -123,9 +124,9 @@ public class RestServlet extends CdiAwareHttpServlet {
 			return;
 		}
 		final String method = req.getMethod();
-		for (final ManagedResource<?> managedResource : context.getManagedResources()) {
-			if (managedResource.isMatch(pathInfo) && managedResource.isMethodAllowed(method)) {
-				managedResource.serve(req, resp);
+		for (final AbstractResource resource : context.getResources()) {
+			if (resource.isMatch(pathInfo) && resource.isMethodAllowed(method)) {
+				resource.serve(req, resp);
 				return;
 			}
 		}
@@ -136,7 +137,7 @@ public class RestServlet extends CdiAwareHttpServlet {
 		final Renderer renderer = new JsonRenderer();
 		response.setContentType(renderer.getContentType());
 		try (final PrintWriter writer = response.getWriter()) {
-			final Object[] availableResources = context.getManagedResources().stream().map(ManagedResource::toString)
+			final Object[] availableResources = context.getResources().stream().map(AbstractResource::toString)
 					.toArray();
 			writer.write(renderer.render(availableResources));
 		}
@@ -175,19 +176,19 @@ public class RestServlet extends CdiAwareHttpServlet {
 
 	public static class HateoesContext {
 
-		private final List<ManagedResource<?>> managedResources = new ArrayList<>();
+		private final List<AbstractResource> resources = new ArrayList<>();
 		private final Map<String, Class<?>> knownTypes = new HashMap<>();
 
 		public Class<?> getTypeByName(final String typeName) {
 			return knownTypes.get(typeName);
 		}
 
-		private void addResource(final ManagedResource<?> managedResource) {
-			managedResources.add(managedResource);
+		private void addResource(final AbstractResource resource) {
+			resources.add(resource);
 		}
 
-		private List<ManagedResource<?>> getManagedResources() {
-			return managedResources;
+		private List<AbstractResource> getResources() {
+			return resources;
 		}
 
 		private void addType(final Class<?> type) {

@@ -7,12 +7,6 @@ import static org.junit.Assert.assertTrue;
 
 import de.minee.datamodel.ReferenceList;
 import de.minee.jpa.DAOTestImpl;
-import de.minee.rest.DataAccessObject;
-import de.minee.rest.HateoesException;
-import de.minee.rest.HateoesResource;
-import de.minee.rest.Operation;
-import de.minee.rest.Persistent;
-import de.minee.rest.RestServlet;
 import de.minee.rest.parser.JsonParser;
 import de.minee.rest.renderer.JsonRenderer;
 import de.minee.rest.renderer.Renderer;
@@ -30,11 +24,11 @@ import org.h2.util.StringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class HateoesServletTest {
-	private static RestServlet HATEOES_TEST_SERVLET = new RestServlet() {
+public class RestServletTest {
+	public static RestServlet MANAGED_TEST_SERVLET = new RestServlet() {
 		private static final long serialVersionUID = -6669308238856259151L;
 
-		@HateoesResource("rlist/{id}")
+		@RestResource("rlist/{id}")
 		@Persistent
 		ReferenceList referenceList;
 
@@ -42,28 +36,59 @@ public class HateoesServletTest {
 		DAOTestImpl daoImpl;
 	};
 
+	public static RestServlet METHOD_TEST_SERVLET = new RestServlet() {
+
+		@RestResource(value = "rlistDefault", consumes = JsonParser.class, produces = JsonRenderer.class)
+		public ReferenceList foo() {
+			final ReferenceList referenceList = new ReferenceList();
+			referenceList.setName("name");
+			return referenceList;
+		}
+
+		@RestResource(value = "rlist/{id}", consumes = JsonParser.class, produces = JsonRenderer.class)
+		public ReferenceList bar(@PathParam("id") final String id) {
+			final ReferenceList referenceList = new ReferenceList();
+			referenceList.setName(id);
+			return referenceList;
+		}
+
+		@RestResource(value = "rlistPost", consumes = JsonParser.class, produces = JsonRenderer.class)
+		public ReferenceList bar(final ReferenceList referenceList) {
+			final String description = referenceList.getDescription();
+			referenceList.setDescription(referenceList.getName());
+			referenceList.setName(description);
+			return referenceList;
+		}
+
+		@RestResource(value = "exception", consumes = JsonParser.class, produces = JsonRenderer.class)
+		public void ex() {
+			throw new RuntimeException("Don't use this resource");
+		}
+	};
+
 	@BeforeClass
 	public static void initServlet() throws ServletException {
-		HATEOES_TEST_SERVLET.init();
+		MANAGED_TEST_SERVLET.init();
+		METHOD_TEST_SERVLET.init();
 	}
 
 	@Test
 	public void testRoot() throws IOException {
 		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl();
 		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
-		HATEOES_TEST_SERVLET.service(request, response);
+		MANAGED_TEST_SERVLET.service(request, response);
 
 		final String output = response.getWrittenOutput();
 		assertNotNull(output);
 		assertTrue(output.contains("rlist/{id}"));
 	}
 
-	@Test(expected = HateoesException.class)
+	@Test(expected = RestException.class)
 	public void testInitPersistentWithoutDAO() throws ServletException {
 		final RestServlet hateoesServlet = new RestServlet() {
 
 			private static final long serialVersionUID = -2342152424641422998L;
-			@HateoesResource("rlist/{id}/")
+			@RestResource("rlist/{id}/")
 			@Persistent
 			ReferenceList referenceList;
 
@@ -333,10 +358,10 @@ public class HateoesServletTest {
 
 			private static final long serialVersionUID = -1207374138713223126L;
 
-			@HateoesResource("rlists")
+			@RestResource("rlists")
 			ReferenceList referenceLists;
 
-			@HateoesResource("rlist/{id}/")
+			@RestResource("rlist/{id}/")
 			ReferenceList referenceList;
 		};
 		servlet.init();
@@ -348,7 +373,7 @@ public class HateoesServletTest {
 
 			private static final long serialVersionUID = -1207374138713223126L;
 
-			@HateoesResource(value = "{id}", consumes = JsonParser.class, produces = JsonRenderer.class)
+			@RestResource(value = "{id}", consumes = JsonParser.class, produces = JsonRenderer.class)
 			ReferenceList referenceList;
 		};
 		servlet.init();
@@ -361,4 +386,89 @@ public class HateoesServletTest {
 		return servlet;
 	}
 
+	@Test
+	public void testMethodResourceRoot() throws IOException {
+		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl();
+		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
+		METHOD_TEST_SERVLET.service(request, response);
+
+		final String output = response.getWrittenOutput();
+		assertNotNull(output);
+		assertTrue(output.contains("rlist/{id}"));
+	}
+
+	@Test
+	public void testMethodResourceWithoutParam() throws IOException {
+		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("rlistDefault", Operation.POST, "{}");
+		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
+		METHOD_TEST_SERVLET.service(request, response);
+
+		final String output = response.getWrittenOutput();
+		assertEquals("{name:\"name\"}", output);
+	}
+
+	@Test
+	public void testMethodResourcePathParam() throws IOException {
+		final MockHttpServletRequestImpl request1 = new MockHttpServletRequestImpl("rlist/123", Operation.POST, "{}");
+		final MockHttpServletResponseImpl response1 = new MockHttpServletResponseImpl();
+		METHOD_TEST_SERVLET.service(request1, response1);
+
+		final String output1 = response1.getWrittenOutput();
+		assertEquals("{name:\"123\"}", output1);
+
+		final MockHttpServletRequestImpl request2 = new MockHttpServletRequestImpl("rlist/foobar", Operation.POST,
+				"{}");
+		final MockHttpServletResponseImpl response2 = new MockHttpServletResponseImpl();
+		METHOD_TEST_SERVLET.service(request2, response2);
+
+		final String output2 = response2.getWrittenOutput();
+		assertEquals("{name:\"foobar\"}", output2);
+	}
+
+	@Test
+	public void testMethodResourceNotFound() throws IOException {
+		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("noMethod", Operation.POST, "{}");
+		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
+		METHOD_TEST_SERVLET.service(request, response);
+
+		final String output = response.getWrittenOutput();
+		assertEquals("", output);
+		assertEquals(HttpServletResponse.SC_NOT_FOUND, response.getError());
+	}
+
+	@Test
+	public void testMethodResourcePayload() throws IOException {
+		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("rlistPost", Operation.POST,
+				"{\"description\":\"desc\",name:\"name__123\"}");
+		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
+		METHOD_TEST_SERVLET.service(request, response);
+
+		final String output = response.getWrittenOutput();
+		assertEquals("{name:\"desc\",description:\"name__123\"}", output);
+	}
+
+	@Test
+	public void testMethodResourceInvalidPayload() throws IOException {
+		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("rlistPost", Operation.POST,
+				"{\"type\":\"xyz\"}");
+		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
+		METHOD_TEST_SERVLET.service(request, response);
+
+		final String output = response.getWrittenOutput();
+		assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getError());
+		assertEquals(
+				"java.lang.IllegalArgumentException: Class class de.minee.datamodel.ReferenceList does not contain a field named type",
+				output);
+	}
+
+	@Test
+	public void testMethodResourceServerException() throws IOException {
+		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("exception", Operation.POST, "");
+		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
+		METHOD_TEST_SERVLET.service(request, response);
+
+		final String output = response.getWrittenOutput();
+		assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getError());
+		assertEquals("Don't use this resource", output);
+	}
 }

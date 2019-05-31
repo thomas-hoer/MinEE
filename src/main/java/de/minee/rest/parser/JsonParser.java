@@ -93,7 +93,7 @@ public class JsonParser implements Parser {
 		if ("}".equals(tokenizer.lookup())) {
 			return false;
 		}
-		final String propertyName = tokenizer.next();
+		final String propertyName = parseString(tokenizer);
 		tokenizer.expect(":");
 		final Field propertyField = ReflectionUtil.getDeclaredField(type, propertyName);
 		Assertions.assertNotNull(propertyField, "Class " + type + " does not contain a field named " + propertyName);

@@ -16,7 +16,7 @@ import de.minee.util.Assertions;
  * </p>
  *
  */
-public final class ConstantPathPart implements IPathPart {
+public final class ConstantPathPart implements IParameterPathPart {
 
 	private final String pathConstant;
 
@@ -36,6 +36,11 @@ public final class ConstantPathPart implements IPathPart {
 	@Override
 	public String toString() {
 		return pathConstant;
+	}
+
+	@Override
+	public boolean mathParamName(final String paramPart) {
+		return false;
 	}
 
 }

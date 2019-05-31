@@ -3,6 +3,7 @@ package de.minee.util;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -151,4 +152,22 @@ public final class ReflectionUtil {
 			return null;
 		}
 	}
+
+	/**
+	 * Returns a list of all methods of the class and its parent classes. This
+	 * includes private and protected methods.
+	 *
+	 * @param cls Class that should be explored
+	 * @return List of all methods
+	 */
+	public static List<Method> getAllMethods(final Class<?> cls) {
+		Assertions.assertNotNull(cls, ASSERTION_CLASS_SHOULD_NOT_BE_NULL);
+
+		final List<Method> methods = new ArrayList<>(Arrays.asList(cls.getDeclaredMethods()));
+		if (!Object.class.equals(cls) && !cls.isEnum() && !cls.isInterface()) {
+			methods.addAll(getAllMethods(cls.getSuperclass()));
+		}
+		return methods;
+	}
+
 }

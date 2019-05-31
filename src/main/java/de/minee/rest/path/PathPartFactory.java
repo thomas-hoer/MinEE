@@ -8,7 +8,15 @@ public final class PathPartFactory {
 		// No instance needed for a static class
 	}
 
-	public static <T> IPathPart create(final HateoesContext context, final Class<T> baseClass, final String pathPart) {
+	public static IParameterPathPart createSimple(final String pathPart) {
+		if (pathPart.startsWith("{") && pathPart.endsWith("}")) {
+			final String elPathPart = pathPart.substring(1, pathPart.length() - 1);
+			return new ParameterPathPart(elPathPart);
+		}
+		return new ConstantPathPart(pathPart);
+	}
+
+	public static IPathPart create(final HateoesContext context, final Class<?> baseClass, final String pathPart) {
 		if (pathPart.startsWith("{") && pathPart.endsWith("}")) {
 			final String elPathPart = pathPart.substring(1, pathPart.length() - 1);
 			if (elPathPart.contains("\\")) {

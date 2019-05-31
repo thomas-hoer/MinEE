@@ -10,7 +10,7 @@ import de.minee.datamodel.SimpleReference;
 import de.minee.jpa.AbstractStatement;
 import de.minee.jpa.DAOTestImpl;
 import de.minee.jpa.InitialQueryConnection;
-import de.minee.rest.HateoesException;
+import de.minee.rest.RestException;
 import de.minee.rest.ManagedResource;
 import de.minee.rest.Operation;
 import de.minee.rest.renderer.HtmlRenderer;
@@ -61,7 +61,7 @@ public class ManagedResourceTest {
 		assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getError());
 	}
 
-	@Test(expected = HateoesException.class)
+	@Test(expected = RestException.class)
 	public void testServeCreateException() throws IOException {
 		final ManagedResource<SimpleReference> resource = new ManagedResource<>(null, "root",
 				new Operation[] { Operation.ALL }, SimpleReference.class);
