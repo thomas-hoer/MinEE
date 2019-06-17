@@ -119,17 +119,17 @@ class MethodResource extends AbstractResource {
 				writer.write(renderer.render(result));
 			}
 		} catch (IllegalAccessException | IllegalArgumentException e) {
+			LOGGER.warn("Not able to invoke method " + method, e);
 			resp.getWriter().write(e.getMessage());
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			LOGGER.warn("Not able to invoke method " + method, e);
 		} catch (final InvocationTargetException e) {
+			LOGGER.warn("Exception thrown during " + method, e);
 			resp.getWriter().write(e.getTargetException().getMessage());
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			LOGGER.warn("Exception thrown during " + method, e);
 		} catch (final MappingException e) {
+			LOGGER.warn("Cannot parse user Input", e);
 			resp.getWriter().write(e.getMessage());
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			LOGGER.warn("Cannot parse user Input", e);
 		}
 
 	}

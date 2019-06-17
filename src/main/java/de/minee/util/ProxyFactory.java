@@ -37,6 +37,7 @@ public final class ProxyFactory {
 
 	private static class ProxyMethodHandler implements MethodHandler {
 
+		private static final int SUBSTR_IS = 2;
 		private static final int SUBSTR_GET = 3;
 		private String lastCalledMethod;
 
@@ -46,7 +47,11 @@ public final class ProxyFactory {
 			if ("toString".equals(methodName)) {
 				return lastCalledMethod;
 			}
-			lastCalledMethod = methodName.substring(SUBSTR_GET);
+			if (methodName.startsWith("is")) {
+				lastCalledMethod = methodName.substring(SUBSTR_IS);
+			} else if (methodName.startsWith("get")) {
+				lastCalledMethod = methodName.substring(SUBSTR_GET);
+			}
 			return null;
 		}
 

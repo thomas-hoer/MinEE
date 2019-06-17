@@ -349,7 +349,7 @@ public class RestServletTest {
 		final MockHttpServletResponseImpl response4 = new MockHttpServletResponseImpl();
 		hateoesServlet.service(request4, response4);
 		assertEquals(HttpServletResponse.SC_OK, response4.getStatus());
-		assertEquals(String.format("{id:\"%s\",recursiveObjects:[]}", newId), response4.getWrittenOutput());
+		assertEquals(String.format("{\"id\":\"%s\",\"recursiveObjects\":[]}", newId), response4.getWrittenOutput());
 
 	}
 
@@ -404,7 +404,7 @@ public class RestServletTest {
 		METHOD_TEST_SERVLET.service(request, response);
 
 		final String output = response.getWrittenOutput();
-		assertEquals("{name:\"name\"}", output);
+		assertEquals("{\"name\":\"name\"}", output);
 	}
 
 	@Test
@@ -414,7 +414,7 @@ public class RestServletTest {
 		METHOD_TEST_SERVLET.service(request1, response1);
 
 		final String output1 = response1.getWrittenOutput();
-		assertEquals("{name:\"123\"}", output1);
+		assertEquals("{\"name\":\"123\"}", output1);
 
 		final MockHttpServletRequestImpl request2 = new MockHttpServletRequestImpl("rlist/foobar", Operation.POST,
 				"{}");
@@ -422,7 +422,7 @@ public class RestServletTest {
 		METHOD_TEST_SERVLET.service(request2, response2);
 
 		final String output2 = response2.getWrittenOutput();
-		assertEquals("{name:\"foobar\"}", output2);
+		assertEquals("{\"name\":\"foobar\"}", output2);
 	}
 
 	@Test
@@ -444,7 +444,7 @@ public class RestServletTest {
 		METHOD_TEST_SERVLET.service(request, response);
 
 		final String output = response.getWrittenOutput();
-		assertEquals("{name:\"desc\",description:\"name__123\"}", output);
+		assertEquals("{\"name\":\"desc\",\"description\":\"name__123\"}", output);
 	}
 
 	@Test
