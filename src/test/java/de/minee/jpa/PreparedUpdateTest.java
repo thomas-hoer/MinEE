@@ -12,7 +12,6 @@ import de.minee.datamodel.ReferenceChain;
 import de.minee.datamodel.ReferenceList;
 import de.minee.datamodel.SimpleReference;
 
-import java.sql.SQLException;
 import java.util.Arrays;
 
 import org.junit.Test;
@@ -23,7 +22,7 @@ public class PreparedUpdateTest extends AbstractTestDAO {
 	private static final String NAME_2 = "Name2";
 
 	@Override
-	protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
+	protected int updateDatabaseSchema(final int oldDbSchemaVersion) {
 		createTable(RecursiveObject.class);
 		createTable(ReferenceList.class);
 		createTable(SimpleReference.class);
@@ -35,7 +34,7 @@ public class PreparedUpdateTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testSimpleUpdate() throws SQLException {
+	public void testSimpleUpdate() {
 		final RecursiveObject recursiveObject = new RecursiveObject();
 		recursiveObject.setName(NAME_1);
 		insert(recursiveObject);
@@ -50,7 +49,7 @@ public class PreparedUpdateTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testUpdateReference() throws SQLException {
+	public void testUpdateReference() {
 		final SimpleReference simpleReference = new SimpleReference();
 		final ReferenceChain referenceChain = new ReferenceChain();
 		referenceChain.setName(NAME_1);
@@ -73,7 +72,7 @@ public class PreparedUpdateTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testUpdateShallow() throws SQLException {
+	public void testUpdateShallow() {
 		final SimpleReference simpleReference = new SimpleReference();
 		simpleReference.setName(NAME_1);
 
@@ -93,7 +92,7 @@ public class PreparedUpdateTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testUpdateList() throws SQLException {
+	public void testUpdateList() {
 		final ReferenceList referenceList = new ReferenceList();
 		referenceList.setDescription(NAME_1);
 		final RecursiveObject recursiveObject = new RecursiveObject();
@@ -116,8 +115,8 @@ public class PreparedUpdateTest extends AbstractTestDAO {
 		assertEquals(NAME_2, selectedElement.getRecursiveObjects().get(0).getName());
 	}
 
-	@Test(expected = SQLException.class)
-	public void testUpdateListFailureInsert() throws SQLException {
+	@Test(expected = DatabaseException.class)
+	public void testUpdateListFailureInsert() {
 		final ReferenceList referenceList = new ReferenceList();
 		final RecursiveObject recursiveObject = new RecursiveObject();
 		referenceList.setRecursiveObjects(Arrays.asList(recursiveObject));

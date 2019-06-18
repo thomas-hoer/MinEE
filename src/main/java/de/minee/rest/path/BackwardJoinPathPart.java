@@ -5,7 +5,6 @@ import de.minee.jpa.InitialQueryConnection;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Method;
-import java.sql.SQLException;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -29,7 +28,7 @@ public class BackwardJoinPathPart<T> extends AbstractVariablePathPart<T> {
 	}
 
 	@Override
-	public void appendQuery(final InitialQueryConnection<T, AbstractStatement<T>> query) throws SQLException {
+	public void appendQuery(final InitialQueryConnection<T, AbstractStatement<T>> query) {
 		@SuppressWarnings("unchecked")
 		final Function<Object, T> function = t -> (T) ReflectionUtil.invoke(joinMethod, t);
 		final UnaryOperator<Object> whereField = t -> ReflectionUtil.invoke(whereMethod, t);

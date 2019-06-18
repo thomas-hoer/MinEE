@@ -37,27 +37,39 @@ public abstract class AbstractDAO {
 		return Environment.getEnvironmentVariable("DB_PASSWORD");
 	}
 
-	protected abstract int updateDatabaseSchema(int oldDbSchemaVersion) throws SQLException;
+	/**
+	 * If the database is newly created oldDbSchemaVersion will initially be 0.
+	 *
+	 * @param oldDbSchemaVersion schema version of the existing database or 0
+	 * @return new Schema Version that will be passed next time the database
+	 *         connection will be opened @
+	 */
+	protected abstract int updateDatabaseSchema(int oldDbSchemaVersion);
 
-	private synchronized Connection createConnection() throws SQLException {
+	private synchronized Connection createConnection() {
 		final String connectionString = getConnectionString();
 		if (connections.containsKey(connectionString) && !"jdbc:h2:mem:".equals(connectionString)) {
 			return connections.get(connectionString);
 		}
-		final Connection connection = DriverManager.getConnection(connectionString, getUserName(), getPassword());
+		Connection connection;
+		try {
+			connection = DriverManager.getConnection(connectionString, getUserName(), getPassword());
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
+		}
 		checkVersion(connection);
 		connections.put(connectionString, connection);
 		return connection;
 	}
 
-	protected Connection getConnection() throws SQLException {
+	protected Connection getConnection() {
 		if (localConnection == null) {
 			localConnection = createConnection();
 		}
 		return localConnection;
 	}
 
-	private void checkVersion(final Connection con) throws SQLException {
+	private void checkVersion(final Connection con) {
 		int dbSchemaVersion = 0;
 		try (Statement statement = con.createStatement();
 				ResultSet resultSetCustomProperties = statement.executeQuery(
@@ -77,6 +89,8 @@ public abstract class AbstractDAO {
 			statementForSchemaUpdate = statement;
 			dbSchemaVersion = updateDatabaseSchema(dbSchemaVersion);
 			statementForSchemaUpdate = null;
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
 		}
 
 		try (PreparedStatement preparedStatement = con
@@ -84,25 +98,35 @@ public abstract class AbstractDAO {
 			preparedStatement.setInt(1, dbSchemaVersion);
 			preparedStatement.setString(2, "dbShemaVersion");
 			preparedStatement.execute();
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
 		}
 	}
 
-	protected void dropTable(final Class<?> cls) throws SQLException {
+	protected void dropTable(final Class<?> cls) {
 		dropTable(cls.getSimpleName());
 	}
 
-	protected void dropTable(final String table) throws SQLException {
+	protected void dropTable(final String table) {
 		if (statementForSchemaUpdate == null) {
-			throw new SQLException("dropTable is only allowed during updateDatabaseSchema process");
+			throw new DatabaseException("dropTable is only allowed during updateDatabaseSchema process");
 		}
 		final String dropTableQuery = String.format("DROP TABLE %s", table);
 		LOGGER.info(dropTableQuery);
-		statementForSchemaUpdate.execute(dropTableQuery);
+		execute(statementForSchemaUpdate, dropTableQuery);
 	}
 
-	protected void createTable(final Class<?> cls) throws SQLException {
+	private static boolean execute(final Statement statement, final String query) {
+		try {
+			return statement.execute(query);
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
+		}
+	}
+
+	protected void createTable(final Class<?> cls) {
 		if (statementForSchemaUpdate == null) {
-			throw new SQLException("createTable is only allowed during updateDatabaseSchema process");
+			throw new DatabaseException("createTable is only allowed during updateDatabaseSchema process");
 		}
 		final StringBuilder stringBuilder = new StringBuilder();
 		final List<Field> fields = ReflectionUtil.getAllFields(cls);
@@ -128,16 +152,16 @@ public abstract class AbstractDAO {
 		stringBuilder.append(")");
 		final String createTableQuery = stringBuilder.toString();
 		LOGGER.info(createTableQuery);
-		statementForSchemaUpdate.execute(createTableQuery);
+		execute(statementForSchemaUpdate, createTableQuery);
 	}
 
-	protected void updateTable(final Class<?> cls) throws SQLException {
+	protected void updateTable(final Class<?> cls) {
 		updateTable(cls, false);
 	}
 
-	protected void updateTable(final Class<?> cls, final boolean allowDeletion) throws SQLException {
+	protected void updateTable(final Class<?> cls, final boolean allowDeletion) {
 		if (statementForSchemaUpdate == null) {
-			throw new SQLException("createTable is only allowed during updateDatabaseSchema process");
+			throw new DatabaseException("createTable is only allowed during updateDatabaseSchema process");
 		}
 		final Map<String, String> existingFields = analyseExistingFieldsForTable(cls);
 
@@ -170,7 +194,7 @@ public abstract class AbstractDAO {
 
 	}
 
-	private Map<String, String> analyseExistingFieldsForTable(final Class<?> cls) throws SQLException {
+	private Map<String, String> analyseExistingFieldsForTable(final Class<?> cls) {
 		final Map<String, String> existingFields = new HashMap<>();
 		try (ResultSet resultSetColumns = statementForSchemaUpdate.executeQuery(
 				"SELECT COLUMNS.COLUMN_NAME, COLUMNS.TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMNS.TABLE_NAME = '"
@@ -178,6 +202,8 @@ public abstract class AbstractDAO {
 			while (resultSetColumns.next()) {
 				existingFields.put(resultSetColumns.getString(1), resultSetColumns.getString(2));
 			}
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
 		}
 		try (ResultSet resultSetMappingTable = statementForSchemaUpdate
 				.executeQuery("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLES.TABLE_NAME LIKE 'MAPPING_"
@@ -187,11 +213,13 @@ public abstract class AbstractDAO {
 						.replace("MAPPING_" + cls.getSimpleName().toUpperCase() + "_", "");
 				existingFields.put(tableName, "List");
 			}
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
 		}
 		return existingFields;
 	}
 
-	private void alterTableDropField(final Class<?> cls, final Entry<String, String> entry) throws SQLException {
+	private void alterTableDropField(final Class<?> cls, final Entry<String, String> entry) {
 		final StringBuilder query = new StringBuilder();
 		query.append("ALTER TABLE ");
 		query.append(cls.getSimpleName());
@@ -200,11 +228,10 @@ public abstract class AbstractDAO {
 		query.append(";");
 		final String alterTableQuery = query.toString();
 		LOGGER.info(alterTableQuery);
-		statementForSchemaUpdate.execute(alterTableQuery);
+		execute(statementForSchemaUpdate, alterTableQuery);
 	}
 
-	private void alterTableAddField(final Class<?> cls, final Field field, final String mappedType)
-			throws SQLException {
+	private void alterTableAddField(final Class<?> cls, final Field field, final String mappedType) {
 		if (mappedType != null) {
 			final StringBuilder query = new StringBuilder();
 			query.append("ALTER TABLE ");
@@ -216,13 +243,13 @@ public abstract class AbstractDAO {
 			query.append(";");
 			final String alterTableQuery = query.toString();
 			LOGGER.info(alterTableQuery);
-			statementForSchemaUpdate.execute(alterTableQuery);
+			execute(statementForSchemaUpdate, alterTableQuery);
 		} else {
 			createMappingTableFor(field, statementForSchemaUpdate);
 		}
 	}
 
-	private static void createMappingTableFor(final Field field, final Statement statement) throws SQLException {
+	private static void createMappingTableFor(final Field field, final Statement statement) {
 		final Class<?> fromClazz = field.getDeclaringClass();
 
 		final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
@@ -254,7 +281,7 @@ public abstract class AbstractDAO {
 
 		final String createTableQuery = stringBuilder.toString();
 		LOGGER.info(createTableQuery);
-		statement.execute(createTableQuery);
+		execute(statement, createTableQuery);
 
 	}
 
@@ -262,15 +289,14 @@ public abstract class AbstractDAO {
 	 * Creates a Query for selecting Objects of type clazz.
 	 *
 	 * @param clazz Class corresponding to a DB Table
-	 * @return Fluent style based query builder
-	 * @throws SQLException SQLException in case of an error
+	 * @return Fluent style based query builder @ SQLException in case of an error
 	 */
-	public <T> InitialQueryConnection<T, AbstractStatement<T>> select(final Class<T> clazz) throws SQLException {
+	public <T> InitialQueryConnection<T, AbstractStatement<T>> select(final Class<T> clazz) {
 		final AbstractStatement<T> statement = SelectStatement.select(clazz, getConnection());
 		return new InitialQueryConnection<>(statement, getConnection());
 	}
 
-	public <T> UUID insertShallow(final T objectToInsert) throws SQLException {
+	public <T> UUID insertShallow(final T objectToInsert) {
 		return PreparedInsert.insert(objectToInsert, getConnection(), Cascade.NONE);
 	}
 
@@ -278,42 +304,41 @@ public abstract class AbstractDAO {
 	 * Deep insert of the Object and recursively their children.
 	 *
 	 * @param objectToInsert object that should be persisted
-	 * @return id of the inserted object
-	 * @throws SQLException SQLException in case of an error
+	 * @return id of the inserted object @ SQLException in case of an error
 	 */
-	public <T> UUID insert(final T objectToInsert) throws SQLException {
+	public <T> UUID insert(final T objectToInsert) {
 		return PreparedInsert.insert(objectToInsert, getConnection(), Cascade.INSERT);
 	}
 
-	public <T> int update(final T objectToUpdate) throws SQLException {
+	public <T> int update(final T objectToUpdate) {
 		return PreparedUpdate.update(objectToUpdate, getConnection(), Cascade.UPDATE);
 	}
 
-	public <T> int updateShallow(final T objectToUpdate) throws SQLException {
+	public <T> int updateShallow(final T objectToUpdate) {
 		return PreparedUpdate.update(objectToUpdate, getConnection(), Cascade.NONE);
 	}
 
-	public <T> UUID merge(final T objectToMerge) throws SQLException {
+	public <T> UUID merge(final T objectToMerge) {
 		return PreparedMerge.merge(objectToMerge, getConnection(), Cascade.MERGE);
 	}
 
 	/**
 	 * Directly deletes a Object and recursively its children.
 	 *
-	 * @param objectToDelete Object that shall be deleted from Database
-	 * @throws SQLException SQLException in case of an error
+	 * @param objectToDelete Object that shall be deleted from Database @
+	 *                       SQLException in case of an error
 	 */
-	public <T> void delete(final T objectToDelete) throws SQLException {
+	public <T> void delete(final T objectToDelete) {
 		PreparedDelete.delete(objectToDelete, getConnection(), Cascade.DELETE);
 	}
 
 	/**
 	 * Deletes a Object. Referenced Objects will not be deleted.
 	 *
-	 * @param objectToDelete Object that shall be deleted from Database
-	 * @throws SQLException SQLException in case of an error
+	 * @param objectToDelete Object that shall be deleted from Database @
+	 *                       SQLException in case of an error
 	 */
-	public <T> void deleteShallow(final T objectToDelete) throws SQLException {
+	public <T> void deleteShallow(final T objectToDelete) {
 		PreparedDelete.delete(objectToDelete, getConnection(), Cascade.NONE);
 	}
 }

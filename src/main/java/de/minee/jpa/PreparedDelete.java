@@ -28,11 +28,10 @@ public class PreparedDelete<T> extends AbstractPreparedQuery<T> {
 	 * @param clazz      Class corresponding to the table where a entry should be
 	 *                   deleted
 	 * @param connection Database connection
-	 * @param cascade    Rule how referenced objects should be threaded
-	 * @throws SQLException SQLException in case of an error
+	 * @param cascade    Rule how referenced objects should be threaded @
+	 *                   SQLException in case of an error
 	 */
-	public PreparedDelete(final Class<T> clazz, final Connection connection, final Cascade cascade)
-			throws SQLException {
+	public PreparedDelete(final Class<T> clazz, final Connection connection, final Cascade cascade) {
 		super(connection, cascade);
 		if (!(Cascade.DELETE == cascade || Cascade.NONE == cascade)) {
 			throw new IllegalArgumentException("Only NONE and DELETE are allowed values for Cascade");
@@ -48,36 +47,43 @@ public class PreparedDelete<T> extends AbstractPreparedQuery<T> {
 
 		final String deleteQuery = String.format(DELETE_TEMPLATE, clazz.getSimpleName());
 		LOGGER.info(deleteQuery);
-		preparedStatement = connection.prepareStatement(deleteQuery);
+		try {
+			preparedStatement = connection.prepareStatement(deleteQuery);
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
+		}
 	}
 
 	/**
 	 * Executes a prepared delete statement on element objectToDelete.
 	 *
-	 * @param objectToDelete Object that gets deleted
-	 * @throws SQLException SQLException in case of an error
+	 * @param objectToDelete Object that gets deleted @ SQLException in case of an
+	 *                       error
 	 */
-	public void execute(final T objectToDelete) throws SQLException {
+	public void execute(final T objectToDelete) {
 		Assertions.assertNotNull(objectToDelete, "Instance for delete should not be null");
 		final UUID objectId = MappingHelper.getId(objectToDelete);
 		Assertions.assertNotNull(objectId, "Object " + objectToDelete + " does not contain an id field");
 
-		for (final Field field : fieldList) {
-			final Object fieldElementToDelete = ReflectionUtil.executeGet(field, objectToDelete);
+		try {
+			for (final Field field : fieldList) {
+				final Object fieldElementToDelete = ReflectionUtil.executeGet(field, objectToDelete);
 
-			if (List.class.isAssignableFrom(field.getType())) {
-				handleList(field, fieldElementToDelete, objectId);
-				continue;
-			}
+				if (List.class.isAssignableFrom(field.getType())) {
+					handleList(field, fieldElementToDelete, objectId);
+					continue;
+				}
 
-			final Object dbObject = MappingHelper.getDbObject(fieldElementToDelete);
-			if (Cascade.DELETE == cascade && dbObject != fieldElementToDelete && UUID.class.isInstance(dbObject)) {
-				delete(fieldElementToDelete, connection, cascade);
+				final Object dbObject = MappingHelper.getDbObject(fieldElementToDelete);
+				if (Cascade.DELETE == cascade && dbObject != fieldElementToDelete && UUID.class.isInstance(dbObject)) {
+					delete(fieldElementToDelete, connection, cascade);
+				}
 			}
+			preparedStatement.setObject(1, objectId);
+			preparedStatement.executeUpdate();
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
 		}
-
-		preparedStatement.setObject(1, objectId);
-		preparedStatement.executeUpdate();
 	}
 
 	private void handleList(final Field field, final Object fieldElementToDelete, final UUID objectId)
@@ -118,8 +124,7 @@ public class PreparedDelete<T> extends AbstractPreparedQuery<T> {
 		}
 	}
 
-	protected static <S> void delete(final S objectToDelete, final Connection connection, final Cascade cascade)
-			throws SQLException {
+	protected static <S> void delete(final S objectToDelete, final Connection connection, final Cascade cascade) {
 		@SuppressWarnings("unchecked")
 		final Class<S> clazz = (Class<S>) objectToDelete.getClass();
 		final PreparedDelete<S> delete = new PreparedDelete<>(clazz, connection, cascade);

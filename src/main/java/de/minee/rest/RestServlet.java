@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -166,7 +165,7 @@ public class RestServlet extends CdiAwareHttpServlet {
 		}
 
 		@Override
-		protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
+		protected int updateDatabaseSchema(final int oldDbSchemaVersion) {
 			for (final Class<?> type : inMemTypes) {
 				createTable(type);
 			}

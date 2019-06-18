@@ -29,10 +29,10 @@ class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 	 * @param cls        Class corresponding to the table where a entry should be
 	 *                   merged
 	 * @param connection Database connection
-	 * @param cascade    Rule how referenced objects should be threaded
-	 * @throws SQLException SQLException in case of an error
+	 * @param cascade    Rule how referenced objects should be threaded @
+	 *                   SQLException in case of an error
 	 */
-	public PreparedMerge(final Class<S> cls, final Connection connection, final Cascade cascade) throws SQLException {
+	public PreparedMerge(final Class<S> cls, final Connection connection, final Cascade cascade) {
 		super(connection, cascade);
 
 		final StringJoiner fieldNames = new StringJoiner(",");
@@ -51,7 +51,7 @@ class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 
 		final String mergeQuery = String.format(MERGE_TEMPLATE, cls.getSimpleName(), fieldNames, values);
 		LOGGER.info(mergeQuery);
-		preparedStatement = connection.prepareStatement(mergeQuery);
+		preparedStatement = prepare(mergeQuery);
 	}
 
 	private UUID execute(final S objectToMerge) throws SQLException {
@@ -125,11 +125,14 @@ class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 		removeReferences(field, objectId, existingElements);
 	}
 
-	protected static <T> UUID merge(final T objectToMerge, final Connection connection, final Cascade cascade)
-			throws SQLException {
+	protected static <T> UUID merge(final T objectToMerge, final Connection connection, final Cascade cascade) {
 		@SuppressWarnings("unchecked")
 		final Class<T> clazz = (Class<T>) objectToMerge.getClass();
 		final PreparedMerge<T> merge = new PreparedMerge<>(clazz, connection, cascade);
-		return merge.execute(objectToMerge);
+		try {
+			return merge.execute(objectToMerge);
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
+		}
 	}
 }

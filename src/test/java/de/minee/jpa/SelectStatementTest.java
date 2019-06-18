@@ -26,7 +26,7 @@ public class SelectStatementTest extends AbstractTestDAO {
 	private static final String VALUE_3 = "YZ";
 
 	@Override
-	protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
+	protected int updateDatabaseSchema(final int oldDbSchemaVersion) {
 		createTable(SimpleReference.class);
 		createTable(RecursiveObject.class);
 		createTable(ReferenceList.class);
@@ -39,7 +39,7 @@ public class SelectStatementTest extends AbstractTestDAO {
 	 * @throws SQLException SQLException in case of an error
 	 */
 	@Before
-	public void init() throws SQLException {
+	public void init() {
 		SimpleReference simpleReference;
 
 		simpleReference = new SimpleReference();
@@ -69,7 +69,7 @@ public class SelectStatementTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testSelectAnd() throws SQLException {
+	public void testSelectAnd() {
 		final List<SimpleReference> result = select(SimpleReference.class).where(SimpleReference::getName).is().and()
 				.where(SimpleReference::getValue).is().execute(Arrays.asList(NAME_1, VALUE_1));
 
@@ -78,7 +78,7 @@ public class SelectStatementTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testSelectOr() throws SQLException {
+	public void testSelectOr() {
 		final List<SimpleReference> result = select(SimpleReference.class).where(SimpleReference::getName).is().or()
 				.where(SimpleReference::getValue).is().execute(Arrays.asList(NAME_1, VALUE_1));
 
@@ -87,18 +87,18 @@ public class SelectStatementTest extends AbstractTestDAO {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void testEmptyQuery() throws SQLException {
+	public void testEmptyQuery() {
 		select(SimpleReference.class).query("").execute();
 	}
 
 	@Test
-	public void testQuery() throws SQLException {
+	public void testQuery() {
 		final List<SimpleReference> result = select(SimpleReference.class).query("Name = '" + NAME_1 + "'").execute();
 		assertEquals(2, result.size());
 	}
 
 	@Test
-	public void testSelectIn() throws SQLException {
+	public void testSelectIn() {
 		final List<SimpleReference> result = select(SimpleReference.class).where(SimpleReference::getName)
 				.in(NAME_1, NAME_3).execute();
 
@@ -107,7 +107,7 @@ public class SelectStatementTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testSelectInList() throws SQLException {
+	public void testSelectInList() {
 		final RecursiveObject recursiveObject1 = new RecursiveObject();
 		recursiveObject1.setId(UUID.randomUUID());
 		final RecursiveObject recursiveObject2 = new RecursiveObject();
@@ -122,13 +122,13 @@ public class SelectStatementTest extends AbstractTestDAO {
 		assertEquals(1, result.size());
 	}
 
-	@Test(expected = SQLException.class)
-	public void testConditionNotSet() throws SQLException {
+	@Test(expected = DatabaseException.class)
+	public void testConditionNotSet() {
 		select(SimpleReference.class).where(SimpleReference::getName).is().execute();
 	}
 
 	@Test(expected = MappingException.class)
-	public void testCheckCondition() throws SQLException {
+	public void testCheckCondition() {
 		final WhereClause<String, SimpleReference, ?> where = select(SimpleReference.class)
 				.where(SimpleReference::getName);
 		where.is();
@@ -136,7 +136,7 @@ public class SelectStatementTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testToString() throws SQLException {
+	public void testToString() {
 		final AbstractStatement<SimpleReference> statement = select(SimpleReference.class)
 				.where(SimpleReference::getName).is(NAME_1).and().where(SimpleReference::getValue).is();
 
@@ -145,8 +145,8 @@ public class SelectStatementTest extends AbstractTestDAO {
 				statement.toString());
 	}
 
-	@Test(expected = SQLException.class)
-	public void testNotSupportedJoin() throws SQLException {
+	@Test(expected = DatabaseException.class)
+	public void testNotSupportedJoin() {
 		select(TestClass.class).join(TestClass::getRef);
 	}
 

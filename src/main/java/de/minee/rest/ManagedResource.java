@@ -1,6 +1,7 @@
 package de.minee.rest;
 
 import de.minee.jpa.AbstractDAO;
+import de.minee.jpa.DatabaseException;
 import de.minee.rest.RestServlet.HateoesContext;
 import de.minee.rest.parser.Parser;
 import de.minee.rest.parser.ParserException;
@@ -12,7 +13,6 @@ import de.minee.util.ReflectionUtil;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -76,7 +76,7 @@ class ManagedResource<T> extends AbstractResource {
 				return;
 			}
 			result = getSelectedResource(pathSplit);
-		} catch (final SQLException e) {
+		} catch (final DatabaseException e) {
 			LOGGER.error("Cannot access database or database entities", e);
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return;
@@ -97,7 +97,7 @@ class ManagedResource<T> extends AbstractResource {
 	}
 
 	private void serveEdit(final HttpServletRequest req, final HttpServletResponse resp, final String[] pathSplit)
-			throws SQLException, IOException {
+			throws IOException {
 		final String method = req.getMethod();
 		final List<T> result = getSelectedResource(pathSplit);
 		if (result.isEmpty()) {
@@ -122,7 +122,7 @@ class ManagedResource<T> extends AbstractResource {
 		}
 	}
 
-	private List<T> getSelectedResource(final String[] pathSplit) throws SQLException {
+	private List<T> getSelectedResource(final String[] pathSplit) {
 		return path.executeSelect(pathSplit, dao.select(type));
 	}
 
@@ -152,7 +152,7 @@ class ManagedResource<T> extends AbstractResource {
 					throw new RestException(fieldType.getSimpleName() + " with Id " + parameter + " not found");
 				}
 				return result;
-			} catch (final SQLException e) {
+			} catch (final DatabaseException e) {
 				throw new RestException("Cannot translate String to type " + fieldType.getSimpleName(), e);
 			}
 		}
@@ -160,7 +160,7 @@ class ManagedResource<T> extends AbstractResource {
 	}
 
 	private interface ManagedResourceConsumer {
-		String accept(Object instance) throws SQLException;
+		String accept(Object instance);
 	}
 
 	private void assembleRequestObject(final HttpServletRequest req, final HttpServletResponse resp,
@@ -171,12 +171,12 @@ class ManagedResource<T> extends AbstractResource {
 			if (instance != null) {
 				resp.getWriter().write(consumer.accept(instance));
 			}
+		} catch (InstantiationException | IllegalAccessException | DatabaseException | IOException e) {
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			throw new IOException(e);
 		} catch (final RuntimeException e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			throw e;
-		} catch (InstantiationException | IllegalAccessException | SQLException | IOException e) {
-			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			throw new IOException(e);
 		}
 	}
 

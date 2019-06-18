@@ -21,7 +21,7 @@ import org.junit.Test;
 public class PreparedMergeTest extends AbstractTestDAO {
 
 	@Override
-	protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
+	protected int updateDatabaseSchema(final int oldDbSchemaVersion) {
 		createTable(RecursiveObject.class);
 		createTable(ReferenceList.class);
 		createTable(SimpleReference.class);

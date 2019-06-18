@@ -26,7 +26,7 @@ public class PreparedDeleteTest extends AbstractTestDAO {
 	public static final UUID ID_1 = UUID.randomUUID();
 
 	@Override
-	protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
+	protected int updateDatabaseSchema(final int oldDbSchemaVersion) {
 		createTable(RecursiveObject.class);
 		createTable(ReferenceList.class);
 		createTable(SimpleReference.class);

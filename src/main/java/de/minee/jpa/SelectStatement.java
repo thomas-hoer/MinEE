@@ -46,16 +46,15 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 	 * Executes a prepared statement by handing over the query arguments.
 	 *
 	 * @param args Arguments for the prepared statement
-	 * @return A list of the found database entries
-	 * @throws SQLException SQLException in case of an error
+	 * @return A list of the found database entries @ SQLException in case of an
+	 *         error
 	 */
 	@Override
-	public List<T> execute(final Collection<?> args) throws SQLException {
+	public List<T> execute(final Collection<?> args) {
 		final String query = assembleFullSelectQuery();
 		LOGGER.info(query);
 
 		final List<T> resultList = new ArrayList<>();
-		ResultSet resultSet = null;
 		try (PreparedStatement preparedStatement = getConnection().prepareStatement(query)) {
 			int i = 1;
 			final Map<Object, Object> handledObjects = new HashMap<>();
@@ -63,17 +62,16 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 				preparedStatement.setObject(i++, arg);
 			}
 			LOGGER.info(preparedStatement::toString);
-			resultSet = preparedStatement.executeQuery();
-			while (resultSet.next()) {
-				final T obj = getType().newInstance();
-				resultList.add(mapResultSet(resultSet, obj, handledObjects));
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					final T obj = getType().newInstance();
+					resultList.add(mapResultSet(resultSet, obj, handledObjects));
+				}
 			}
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
 		} catch (final InstantiationException | IllegalAccessException e) {
-			throw new SQLException(INSTANTIATION_ERROR_MESSAGE + getType().getName(), e);
-		} finally {
-			if (resultSet != null) {
-				resultSet.close();
-			}
+			throw new DatabaseException(INSTANTIATION_ERROR_MESSAGE + getType().getName(), e);
 		}
 		return resultList;
 	}
@@ -81,11 +79,11 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 	/**
 	 * Executes the Query.
 	 *
-	 * @return A list of the found database entries
-	 * @throws SQLException SQLException in case of an error
+	 * @return A list of the found database entries @ SQLException in case of an
+	 *         error
 	 */
 	@Override
-	public List<T> execute() throws SQLException {
+	public List<T> execute() {
 		final String query = assembleFullSelectQuery();
 		LOGGER.info(query);
 		final List<T> resultList = new ArrayList<>();
@@ -96,15 +94,17 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 				final T obj = getType().newInstance();
 				resultList.add(mapResultSet(rs, obj, handledObjects));
 			}
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
 		} catch (final InstantiationException | IllegalAccessException e) {
-			throw new SQLException(INSTANTIATION_ERROR_MESSAGE + getType().getName(), e);
+			throw new DatabaseException(INSTANTIATION_ERROR_MESSAGE + getType().getName(), e);
 		}
 		return resultList;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected T byId(final UUID id, final Map<Object, Object> handledObjects) throws SQLException {
+	protected T byId(final UUID id, final Map<Object, Object> handledObjects) {
 		if (handledObjects.containsKey(id)) {
 			return (T) handledObjects.get(id);
 		}
@@ -122,13 +122,14 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 			final T obj = getType().newInstance();
 			handledObjects.put(id, obj);
 			return rs.next() ? mapResultSet(rs, obj, handledObjects) : null;
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
 		} catch (final InstantiationException | IllegalAccessException e) {
-			throw new SQLException(INSTANTIATION_ERROR_MESSAGE + getType().getName(), e);
+			throw new DatabaseException(INSTANTIATION_ERROR_MESSAGE + getType().getName(), e);
 		}
 	}
 
-	private T mapResultSet(final ResultSet rs, final T instance, final Map<Object, Object> handledObjects)
-			throws SQLException {
+	private T mapResultSet(final ResultSet rs, final T instance, final Map<Object, Object> handledObjects) {
 		for (final Field field : fieldList) {
 			if (List.class.isAssignableFrom(field.getType())) {
 				handleList(instance, field, handledObjects);
@@ -139,7 +140,7 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 		return instance;
 	}
 
-	void handleList(final T obj, final Field field, final Map<Object, Object> handledObjects) throws SQLException {
+	void handleList(final T obj, final Field field, final Map<Object, Object> handledObjects) {
 		final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
 		final Class<?> type = (Class<?>) mapToType.getActualTypeArguments()[0];
 		final boolean supportedType = MappingHelper.isSupportedType(type);
@@ -147,39 +148,47 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 		final String query = "SELECT " + type.getSimpleName() + " FROM Mapping_" + getType().getSimpleName() + "_"
 				+ field.getName();
 		executeQuery(query, resultSet -> {
-			if (supportedType) {
-				list.add(resultSet.getObject(1));
-			} else {
-				final Object o = select(type, getConnection()).byId((UUID) resultSet.getObject(1), handledObjects);
-				list.add(o);
+			try {
+				if (supportedType) {
+					list.add(resultSet.getObject(1));
+				} else {
+					final Object o = select(type, getConnection()).byId((UUID) resultSet.getObject(1), handledObjects);
+					list.add(o);
+				}
+			} catch (final SQLException e) {
+				throw new DatabaseException(e);
 			}
 		});
 		ReflectionUtil.executeSet(field, obj, list);
 	}
 
-	void handleFieldColumn(final Field field, final ResultSet rs, final T obj, final Map<Object, Object> handledObjects)
-			throws SQLException {
-		final Object value = rs.getObject(field.getName());
-		if (value != null) {
-			if (value.getClass().isAssignableFrom(field.getType())) {
-				ReflectionUtil.executeSet(field, obj, value);
-			} else if (UUID.class.equals(value.getClass())) {
-				final Object resolvedValue = select(field.getType(), getConnection()).byId((UUID) value,
-						handledObjects);
-				ReflectionUtil.executeSet(field, obj, resolvedValue);
-			} else if (field.getType().isEnum()) {
-				final String stringValue = rs.getString(field.getName());
-				ReflectionUtil.executeSet(field, obj, MappingHelper.getEnum(field.getType(), stringValue));
-			} else if (field.getType().isArray()) {
-				if (byte.class.equals(field.getType().getComponentType())) {
-					ReflectionUtil.executeSet(field, obj, Base64.getDecoder().decode((String) value));
+	void handleFieldColumn(final Field field, final ResultSet rs, final T obj,
+			final Map<Object, Object> handledObjects) {
+		try {
+			final Object value = rs.getObject(field.getName());
+			if (value != null) {
+				if (value.getClass().isAssignableFrom(field.getType())) {
+					ReflectionUtil.executeSet(field, obj, value);
+				} else if (UUID.class.equals(value.getClass())) {
+					final Object resolvedValue = select(field.getType(), getConnection()).byId((UUID) value,
+							handledObjects);
+					ReflectionUtil.executeSet(field, obj, resolvedValue);
+				} else if (field.getType().isEnum()) {
+					final String stringValue = rs.getString(field.getName());
+					ReflectionUtil.executeSet(field, obj, MappingHelper.getEnum(field.getType(), stringValue));
+				} else if (field.getType().isArray()) {
+					if (byte.class.equals(field.getType().getComponentType())) {
+						ReflectionUtil.executeSet(field, obj, Base64.getDecoder().decode((String) value));
+					} else {
+						ReflectionUtil.executeSet(field, obj, rs.getArray(field.getName()).getArray());
+					}
 				} else {
-					ReflectionUtil.executeSet(field, obj, rs.getArray(field.getName()).getArray());
+					throw new DatabaseException("Cannot set value of type " + value.getClass() + " to "
+							+ field.getName() + " of type " + field.getType());
 				}
-			} else {
-				throw new SQLException("Cannot set value of type " + value.getClass() + " to " + field.getName()
-						+ " of type " + field.getType());
 			}
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
 		}
 	}
 

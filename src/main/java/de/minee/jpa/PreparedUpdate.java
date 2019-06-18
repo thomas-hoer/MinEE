@@ -29,10 +29,10 @@ class PreparedUpdate<S> extends AbstractPreparedQuery<S> {
 	 * @param cls        Class corresponding to the table where a entry should be
 	 *                   updated
 	 * @param connection Database connection
-	 * @param cascade    Rule how referenced objects should be threaded
-	 * @throws SQLException SQLException in case of an error
+	 * @param cascade    Rule how referenced objects should be threaded @
+	 *                   SQLException in case of an error
 	 */
-	public PreparedUpdate(final Class<S> cls, final Connection connection, final Cascade cascade) throws SQLException {
+	public PreparedUpdate(final Class<S> cls, final Connection connection, final Cascade cascade) {
 		super(connection, cascade);
 		final StringJoiner stringJoiner = new StringJoiner(",");
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
@@ -48,7 +48,7 @@ class PreparedUpdate<S> extends AbstractPreparedQuery<S> {
 
 		final String updateQuery = String.format(UPDATE_TEMPLATE, cls.getSimpleName(), stringJoiner);
 		LOGGER.info(updateQuery);
-		preparedStatement = connection.prepareStatement(updateQuery);
+		preparedStatement = prepare(updateQuery);
 	}
 
 	private int execute(final S objectToUpdate) throws SQLException {
@@ -126,11 +126,15 @@ class PreparedUpdate<S> extends AbstractPreparedQuery<S> {
 		removeReferences(field, objectId, existingElements);
 	}
 
-	protected static <T> int update(final T objectToUpdate, final Connection connection, final Cascade cascade)
-			throws SQLException {
+	protected static <T> int update(final T objectToUpdate, final Connection connection, final Cascade cascade) {
 		@SuppressWarnings("unchecked")
 		final Class<T> clazz = (Class<T>) objectToUpdate.getClass();
 		final PreparedUpdate<T> update = new PreparedUpdate<>(clazz, connection, cascade);
-		return update.execute(objectToUpdate);
+		try {
+			return update.execute(objectToUpdate);
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
+		}
+
 	}
 }

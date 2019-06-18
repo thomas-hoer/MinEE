@@ -4,7 +4,6 @@ import de.minee.jpa.AbstractStatement;
 import de.minee.jpa.InitialQueryConnection;
 import de.minee.rest.RestServlet.HateoesContext;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,8 +44,8 @@ public class ManagedPath<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<T> executeSelect(final String[] pathSplit, final InitialQueryConnection<T, AbstractStatement<T>> select)
-			throws SQLException {
+	public List<T> executeSelect(final String[] pathSplit,
+			final InitialQueryConnection<T, AbstractStatement<T>> select) {
 		final List<String> parameterForJoin = new ArrayList<>();
 		final List<String> parameterForWhere = new ArrayList<>();
 		for (int i = 0; i < pathParts.size(); i++) {

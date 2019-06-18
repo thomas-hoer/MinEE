@@ -7,7 +7,6 @@ import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.UUID;
@@ -29,10 +28,8 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 	 *
 	 * @param whereField Getter to the Field that is selected
 	 * @param statement  Statement on which the Where clause is attached to
-	 * @throws SQLException In case no Proxy Object can be created for the Table
-	 *                      Class
 	 */
-	public WhereClause(final Function<T, S> whereField, final U statement) throws SQLException {
+	public WhereClause(final Function<T, S> whereField, final U statement) {
 		Assertions.assertNotNull(statement, "Statement should not be null");
 		Assertions.assertNotNull(whereField, "Where field should not be null");
 
@@ -43,7 +40,7 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 		try {
 			proxy = ProxyFactory.getProxy(type);
 		} catch (final ProxyException e) {
-			throw new SQLException("Can not create Proxy Object for Type " + type.getSimpleName(), e);
+			throw new DatabaseException("Can not create Proxy Object for Type " + type.getSimpleName(), e);
 		}
 		whereField.apply(proxy);
 		final String proxyFieldName = proxy.toString();

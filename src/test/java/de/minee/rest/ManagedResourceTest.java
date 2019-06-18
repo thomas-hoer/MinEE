@@ -9,14 +9,11 @@ import de.minee.datamodel.ReferenceList;
 import de.minee.datamodel.SimpleReference;
 import de.minee.jpa.AbstractStatement;
 import de.minee.jpa.DAOTestImpl;
+import de.minee.jpa.DatabaseException;
 import de.minee.jpa.InitialQueryConnection;
-import de.minee.rest.RestException;
-import de.minee.rest.ManagedResource;
-import de.minee.rest.Operation;
 import de.minee.rest.renderer.HtmlRenderer;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletResponse;
@@ -50,9 +47,8 @@ public class ManagedResourceTest {
 		resource.addRenderer(new HtmlRenderer());
 		resource.setDao(new DAOTestImpl() {
 			@Override
-			public <T> InitialQueryConnection<T, AbstractStatement<T>> select(final Class<T> clazz)
-					throws SQLException {
-				throw new SQLException();
+			public <T> InitialQueryConnection<T, AbstractStatement<T>> select(final Class<T> clazz) {
+				throw new DatabaseException("");
 			}
 		});
 		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("root");
@@ -68,9 +64,8 @@ public class ManagedResourceTest {
 		resource.addRenderer(new HtmlRenderer());
 		resource.setDao(new DAOTestImpl() {
 			@Override
-			public <T> InitialQueryConnection<T, AbstractStatement<T>> select(final Class<T> clazz)
-					throws SQLException {
-				throw new SQLException();
+			public <T> InitialQueryConnection<T, AbstractStatement<T>> select(final Class<T> clazz) {
+				throw new DatabaseException("");
 			}
 		});
 		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("root/create", Operation.POST, "");

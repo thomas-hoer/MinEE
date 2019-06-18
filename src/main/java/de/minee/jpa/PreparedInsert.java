@@ -30,10 +30,10 @@ public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 	 * @param cls        Class corresponding to the table where a entry should be
 	 *                   inserted
 	 * @param connection Database connection
-	 * @param cascade    Rule how referenced objects should be threaded
-	 * @throws SQLException SQLException in case of an error
+	 * @param cascade    Rule how referenced objects should be threaded @
+	 *                   SQLException in case of an error
 	 */
-	public PreparedInsert(final Class<T> cls, final Connection connection, final Cascade cascade) throws SQLException {
+	public PreparedInsert(final Class<T> cls, final Connection connection, final Cascade cascade) {
 		super(connection, cascade);
 
 		final StringJoiner fieldNames = new StringJoiner(",");
@@ -50,7 +50,7 @@ public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 
 		final String insertQuery = String.format(INSERT_TEMPLATE, cls.getSimpleName(), fieldNames, values);
 		LOGGER.info(insertQuery);
-		preparedStatement = connection.prepareStatement(insertQuery);
+		preparedStatement = prepare(insertQuery);
 	}
 
 	/**
@@ -59,8 +59,7 @@ public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 	 *
 	 * @param objectToInsert Object that should be persisted
 	 * @param handledObjects Object cache of inserted entries in the same session
-	 * @return Id of the inserted Object
-	 * @throws SQLException SQLException in case of an error
+	 * @return Id of the inserted Object @ SQLException in case of an error
 	 */
 	private UUID execute(final T objectToInsert, final Set<Object> handledObjects) throws SQLException {
 		Assertions.assertNotNull(objectToInsert, "Instance for insert should not be null");
@@ -99,12 +98,11 @@ public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 			LOGGER.info(preparedMappingStatement::toString);
 			preparedMappingStatement.execute();
 		}
-
 		return objectId;
 	}
 
 	private void handleList(final List<Pair<Field, Object>> mappingsToInsert, final Field field,
-			final Object fieldElementToInsert) throws SQLException {
+			final Object fieldElementToInsert) {
 		if (fieldElementToInsert == null) {
 			return;
 		}
@@ -129,20 +127,27 @@ public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 		}
 	}
 
-	protected static <S> UUID insert(final S objectToInsert, final Connection connection, final Cascade cascade)
-			throws SQLException {
+	protected static <S> UUID insert(final S objectToInsert, final Connection connection, final Cascade cascade) {
 		@SuppressWarnings("unchecked")
 		final Class<S> clazz = (Class<S>) objectToInsert.getClass();
 		final PreparedInsert<S> insert = new PreparedInsert<>(clazz, connection, cascade);
-		return insert.execute(objectToInsert, new HashSet<>());
+		try {
+			return insert.execute(objectToInsert, new HashSet<>());
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
+		}
 	}
 
 	private static <S> UUID insert(final S objectToInsert, final Connection connection, final Cascade cascade,
-			final Set<Object> handledObjects) throws SQLException {
+			final Set<Object> handledObjects) {
 		@SuppressWarnings("unchecked")
 		final Class<S> clazz = (Class<S>) objectToInsert.getClass();
 		final PreparedInsert<S> insert = new PreparedInsert<>(clazz, connection, cascade);
-		return insert.execute(objectToInsert, handledObjects);
+		try {
+			return insert.execute(objectToInsert, handledObjects);
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
+		}
 	}
 
 }

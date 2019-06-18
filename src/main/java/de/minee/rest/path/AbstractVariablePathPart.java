@@ -3,8 +3,6 @@ package de.minee.rest.path;
 import de.minee.jpa.AbstractStatement;
 import de.minee.jpa.InitialQueryConnection;
 
-import java.sql.SQLException;
-
 public abstract class AbstractVariablePathPart<T> implements IPathPart {
 
 	private final String variablePath;
@@ -21,7 +19,7 @@ public abstract class AbstractVariablePathPart<T> implements IPathPart {
 	/**
 	 * Extends the query.
 	 */
-	abstract void appendQuery(InitialQueryConnection<T, AbstractStatement<T>> query) throws SQLException;
+	abstract void appendQuery(InitialQueryConnection<T, AbstractStatement<T>> query);
 
 	@Override
 	public String toString() {

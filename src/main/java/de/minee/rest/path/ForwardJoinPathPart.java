@@ -5,7 +5,6 @@ import de.minee.jpa.InitialQueryConnection;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Method;
-import java.sql.SQLException;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -14,14 +13,14 @@ import java.util.function.UnaryOperator;
  *
  * <p>
  * For example:
- * 
+ *
  * <pre>
  * &#64;HateoesResource("/type/{child.attr}")
  * MyType myType;
  * </pre>
- * 
+ *
  * will result in a query like
- * 
+ *
  * <pre>
  * SELECT MyType.* FROM MyType Join ChildType on ChildType.id = MyType.child WHERE ChildType.attr = {child.attr}
  * MyType myType;
@@ -46,7 +45,7 @@ public class ForwardJoinPathPart<T> extends AbstractVariablePathPart<T> {
 	}
 
 	@Override
-	public void appendQuery(final InitialQueryConnection<T, AbstractStatement<T>> query) throws SQLException {
+	public void appendQuery(final InitialQueryConnection<T, AbstractStatement<T>> query) {
 		final Function<T, Object> function = t -> ReflectionUtil.invoke(method, t);
 		final UnaryOperator<Object> whereField = t -> ReflectionUtil.invoke(whereMethod, t);
 		query.join(function).where(whereField).is();

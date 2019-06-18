@@ -3,7 +3,6 @@ package de.minee.jpa;
 import de.minee.util.Assertions;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -57,10 +56,10 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 	 * Selects an Object directly by its Id.
 	 *
 	 * @param id Id of the entry
-	 * @return Object with Id id or null if no entry can be found
-	 * @throws SQLException SQLException in case of an error
+	 * @return Object with Id id or null if no entry can be found @ SQLException in
+	 * case of an error
 	 */
-	public T byId(final UUID id) throws SQLException {
+	public T byId(final UUID id) {
 		return byId(id, new HashMap<>());
 	}
 
@@ -71,10 +70,10 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 	 *
 	 * @param id             Id of the entry
 	 * @param handledObjects Object cache of fetched entries in the same session
-	 * @return Object with Id id or null if no entry can be found
-	 * @throws SQLException SQLException in case of an error
+	 * @return Object with Id id or null if no entry can be found @ SQLException in
+	 * case of an error
 	 */
-	protected abstract T byId(final UUID id, final Map<Object, Object> handledObjects) throws SQLException;
+	protected abstract T byId(final UUID id, final Map<Object, Object> handledObjects);
 
 	/**
 	 * Creates a fully assembled and executable Select Query.
@@ -149,9 +148,9 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 		return this;
 	}
 
-	public abstract List<T> execute() throws SQLException;
+	public abstract List<T> execute();
 
-	public abstract List<T> execute(Collection<?> args) throws SQLException;
+	public abstract List<T> execute(Collection<?> args);
 
 	@Override
 	public String toString() {

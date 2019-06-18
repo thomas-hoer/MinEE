@@ -7,7 +7,6 @@ import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Method;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -23,15 +22,15 @@ public class InitialQueryConnection<T, U extends AbstractStatement<T>> extends A
 		this.connection = connection;
 	}
 
-	public T byId(final UUID id) throws SQLException {
+	public T byId(final UUID id) {
 		return getStatement().byId(id);
 	}
 
-	public List<T> execute() throws SQLException {
+	public List<T> execute() {
 		return getStatement().execute();
 	}
 
-	public List<T> execute(final Collection<?> args) throws SQLException {
+	public List<T> execute(final Collection<?> args) {
 		return getStatement().execute(args);
 	}
 
@@ -45,15 +44,14 @@ public class InitialQueryConnection<T, U extends AbstractStatement<T>> extends A
 		return joinClause;
 	}
 
-	public <S> InitialQueryConnection<S, AbstractJoinClause<S, T>> join(final Function<T, S> whereField)
-			throws SQLException {
+	public <S> InitialQueryConnection<S, AbstractJoinClause<S, T>> join(final Function<T, S> whereField) {
 
 		final Class<T> cls = getStatement().getType();
 		T proxy;
 		try {
 			proxy = ProxyFactory.getProxy(cls);
 		} catch (final ProxyException e) {
-			throw new SQLException(e);
+			throw new DatabaseException(e);
 		}
 		whereField.apply(proxy);
 		final String proxyFieldName = proxy.toString();

@@ -4,7 +4,6 @@ import de.minee.util.ProxyFactory;
 import de.minee.util.ProxyFactory.ProxyException;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.function.Function;
 
 public class BackwardJoinClause<S, T> extends AbstractJoinClause<S, T> {
@@ -16,12 +15,12 @@ public class BackwardJoinClause<S, T> extends AbstractJoinClause<S, T> {
 		super(queryConnectio, cls, connection);
 	}
 
-	public InitialQueryConnection<S, AbstractJoinClause<S, T>> on(final Function<S, T> whereField) throws SQLException {
+	public InitialQueryConnection<S, AbstractJoinClause<S, T>> on(final Function<S, T> whereField) {
 		S proxy;
 		try {
 			proxy = ProxyFactory.getProxy(getType());
 		} catch (final ProxyException e) {
-			throw new SQLException(e);
+			throw new DatabaseException(e);
 		}
 		whereField.apply(proxy);
 		proxyFieldName = proxy.toString();

@@ -15,7 +15,6 @@ import de.minee.datamodel.update.ReferenceChain;
 import de.minee.datamodel.update.ReferenceList;
 import de.minee.datamodel.update.SimpleReference;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -28,7 +27,7 @@ import org.junit.Test;
 public class AbstractDAOTest extends AbstractTestDAO {
 
 	@Override
-	protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
+	protected int updateDatabaseSchema(final int oldDbSchemaVersion) {
 		createTable(RecursiveObject.class);
 		createTable(de.minee.datamodel.ReferenceList.class);
 		createTable(de.minee.datamodel.SimpleReference.class);
@@ -45,13 +44,13 @@ public class AbstractDAOTest extends AbstractTestDAO {
 		return 1;
 	}
 
-	@Test(expected = SQLException.class)
-	public void testCreateTableFor() throws SQLException {
+	@Test(expected = DatabaseException.class)
+	public void testCreateTableFor() {
 		createTable(RecursiveObject.class);
 	}
 
-	@Test(expected = SQLException.class)
-	public void testDeletionOnUpdateTable() throws SQLException {
+	@Test(expected = DatabaseException.class)
+	public void testDeletionOnUpdateTable() {
 		final de.minee.datamodel.SimpleReference picture = new de.minee.datamodel.SimpleReference();
 		picture.setId(UUID.randomUUID());
 		picture.setName("abc");
@@ -59,7 +58,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testEnum() throws SQLException {
+	public void testEnum() {
 		final EnumObject pictureContent = new EnumObject();
 		pictureContent.setEnumeration(Enumeration.ENUM_VALUE_1);
 
@@ -75,7 +74,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testCycle() throws SQLException {
+	public void testCycle() {
 		final RecursiveObject recursiveObject = new RecursiveObject();
 		recursiveObject.setChild(recursiveObject);
 
@@ -88,7 +87,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testSelectEnum() throws SQLException {
+	public void testSelectEnum() {
 		final EnumObject pictureContent1 = new EnumObject();
 		pictureContent1.setEnumeration(Enumeration.ENUM_VALUE_1);
 		final EnumObject pictureContent2 = new EnumObject();
@@ -114,7 +113,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testList() throws SQLException {
+	public void testList() {
 		final List<RecursiveObject> categories = new ArrayList<>();
 		final RecursiveObject category1 = new RecursiveObject();
 		final RecursiveObject category2 = new RecursiveObject();
@@ -139,7 +138,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testListWithNullElement() throws SQLException {
+	public void testListWithNullElement() {
 		final List<RecursiveObject> recursiveObjects = new ArrayList<>();
 		final RecursiveObject recursiveObject = new RecursiveObject();
 		recursiveObject.setId(UUID.randomUUID());
@@ -158,7 +157,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testUpdatedLists() throws SQLException {
+	public void testUpdatedLists() {
 
 		final RecursiveObject category = new RecursiveObject();
 		category.setId(UUID.randomUUID());
@@ -187,7 +186,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testShallowInsertList() throws SQLException {
+	public void testShallowInsertList() {
 		final ReferenceList gallery = new ReferenceList();
 		gallery.setRecursiveObjects(Arrays.asList(new RecursiveObject()));
 
@@ -204,7 +203,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testShallowInsertListWithId() throws SQLException {
+	public void testShallowInsertListWithId() {
 		final ReferenceList gallery = new ReferenceList();
 		final RecursiveObject category = new RecursiveObject();
 		category.setId(UUID.randomUUID());
@@ -224,7 +223,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testShallowInsertListWithSeperateInsertedListElement() throws SQLException {
+	public void testShallowInsertListWithSeperateInsertedListElement() {
 		final ReferenceList gallery = new ReferenceList();
 		final RecursiveObject category = new RecursiveObject();
 		insertShallow(category);
@@ -244,7 +243,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testShallowInsertChild() throws SQLException {
+	public void testShallowInsertChild() {
 		final ReferenceChain referenceChain = new ReferenceChain();
 		referenceChain.setPicture(new SimpleReference());
 
@@ -260,7 +259,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testSelectNull() throws SQLException {
+	public void testSelectNull() {
 		final ReferenceChain referenceChain = new ReferenceChain();
 		referenceChain.setEmail("email");
 		insert(referenceChain);
@@ -273,7 +272,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testAutoSetId() throws SQLException {
+	public void testAutoSetId() {
 
 		// Direct setting of Id into the Object
 		final SimpleReference picture = new SimpleReference();
@@ -307,7 +306,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testPrimitiveList() throws SQLException {
+	public void testPrimitiveList() {
 		final PrimitiveList primitiveList = new PrimitiveList();
 		primitiveList.setBoolList(Arrays.asList(true, false, true));
 
@@ -326,7 +325,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
-	public void testArray() throws SQLException {
+	public void testArray() {
 		final ArrayTypes arrayTypes = new ArrayTypes();
 		arrayTypes.setByteArray(new byte[] { 1, -1, 10, 99, 44 });
 		arrayTypes.setIntArray(new Integer[] { 1, 2, 10, 10, 11, 0 });
@@ -349,11 +348,11 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test(expected = MappingException.class)
-	public void testUnsupportedType() throws SQLException {
+	public void testUnsupportedType() {
 		final AbstractDAO dao = new AbstractTestDAO() {
 
 			@Override
-			protected int updateDatabaseSchema(final int oldDbSchemaVersion) throws SQLException {
+			protected int updateDatabaseSchema(final int oldDbSchemaVersion) {
 				createTable(NotSupportedType.class);
 				return 0;
 			}
@@ -362,31 +361,31 @@ public class AbstractDAOTest extends AbstractTestDAO {
 		dao.select(NotSupportedType.class).execute();
 	}
 
-	@Test(expected = SQLException.class)
-	public void testDropTable() throws SQLException {
+	@Test(expected = DatabaseException.class)
+	public void testDropTable() {
 		dropTable(SimpleReference.class);
 	}
 
-	@Test(expected = SQLException.class)
-	public void testUpdateTable() throws SQLException {
+	@Test(expected = DatabaseException.class)
+	public void testUpdateTable() {
 		updateTable(SimpleReference.class);
 	}
 
-	@Test(expected = SQLException.class)
-	public void testUnsuportedType() throws SQLException {
+	@Test(expected = DatabaseException.class)
+	public void testUnsuportedType() {
 		select(NotSupportedType.class).execute();
 	}
 
-	@Test(expected = SQLException.class)
-	public void testDateType() throws SQLException {
+	@Test(expected = DatabaseException.class)
+	public void testDateType() {
 		final DateType object = new DateType();
 		object.setDate(new Date());
 		insert(object);
 		select(DateType.class).execute();
 	}
 
-	@Test(expected = SQLException.class)
-	public void testSelectWithNotSupportedDatatype() throws SQLException {
+	@Test(expected = DatabaseException.class)
+	public void testSelectWithNotSupportedDatatype() {
 		final NonDefaultConstructor object = new NonDefaultConstructor(UUID.randomUUID());
 		insert(object);
 		select(NonDefaultConstructor.class).execute();

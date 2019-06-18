@@ -5,7 +5,6 @@ import de.minee.jpa.InitialQueryConnection;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Method;
-import java.sql.SQLException;
 
 public class SimplePathPart<T> extends AbstractVariablePathPart<T> {
 
@@ -17,7 +16,7 @@ public class SimplePathPart<T> extends AbstractVariablePathPart<T> {
 	}
 
 	@Override
-	public void appendQuery(final InitialQueryConnection<T, AbstractStatement<T>> query) throws SQLException {
+	public void appendQuery(final InitialQueryConnection<T, AbstractStatement<T>> query) {
 		query.where(t -> ReflectionUtil.invoke(method, t)).is();
 	}
 

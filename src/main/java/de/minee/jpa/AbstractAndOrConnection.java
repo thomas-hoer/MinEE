@@ -2,7 +2,6 @@ package de.minee.jpa;
 
 import de.minee.util.Assertions;
 
-import java.sql.SQLException;
 import java.util.function.Function;
 
 /**
@@ -25,9 +24,8 @@ public abstract class AbstractAndOrConnection<T, U extends AbstractStatement<T>>
 	 *
 	 * @param whereField Getter to the Field that is selected
 	 * @return WhereClause to set the relation to the field
-	 * @throws SQLException SQLException in case of an error
 	 */
-	public <S> WhereClause<S, T, U> where(final Function<T, S> whereField) throws SQLException {
+	public <S> WhereClause<S, T, U> where(final Function<T, S> whereField) {
 		final WhereClause<S, T, U> where = new WhereClause<>(whereField, statement);
 		statement.add(this);
 		whereClause = where;
