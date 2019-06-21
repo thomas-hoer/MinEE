@@ -37,7 +37,15 @@ public final class Logger {
 		javaUtilLogger.log(Level.WARNING, message, throwable);
 	}
 
+	public void warn(final Throwable throwable) {
+		javaUtilLogger.log(Level.WARNING, throwable.getMessage(), throwable);
+	}
+
 	public void error(final String message, final Throwable throwable) {
 		javaUtilLogger.log(Level.SEVERE, message, throwable);
+	}
+
+	public void error(final Throwable throwable) {
+		javaUtilLogger.log(Level.SEVERE, throwable.getMessage(), throwable);
 	}
 }

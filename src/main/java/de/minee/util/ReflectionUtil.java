@@ -114,7 +114,7 @@ public final class ReflectionUtil {
 			field.set(instance, forSet);
 			return true;
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			LOGGER.warn(e.getMessage(), e);
+			LOGGER.warn(e);
 		}
 		return false;
 	}
@@ -134,7 +134,7 @@ public final class ReflectionUtil {
 		try {
 			return field.get(instance);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			LOGGER.warn(e.getMessage(), e);
+			LOGGER.warn(e);
 			return null;
 		}
 	}
@@ -148,7 +148,7 @@ public final class ReflectionUtil {
 		try {
 			return method.invoke(object, args);
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			LOGGER.warn(e.getMessage(), e);
+			LOGGER.warn(e);
 			return null;
 		}
 	}
