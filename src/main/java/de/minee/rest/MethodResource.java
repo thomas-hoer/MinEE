@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 class MethodResource extends AbstractResource {
 
@@ -40,6 +41,8 @@ class MethodResource extends AbstractResource {
 			final ArgumentMapping mapping;
 			if (pathParam != null) {
 				mapping = new PathParamMapping(path, pathParam.value());
+			} else if (HttpSession.class.isAssignableFrom(annotatedTypes[i])) {
+				mapping = new SessionMapping();
 			} else {
 				mapping = new PayloadMapping(annotatedTypes[i]);
 			}
@@ -99,6 +102,13 @@ class MethodResource extends AbstractResource {
 		public Object map(final HttpServletRequest req) {
 			final String[] paths = req.getPathInfo().split("/");
 			return paths[pathNr];
+		}
+	}
+
+	private static class SessionMapping implements ArgumentMapping {
+		@Override
+		public Object map(final HttpServletRequest req) {
+			return req.getSession();
 		}
 	}
 
