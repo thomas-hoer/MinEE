@@ -1,5 +1,6 @@
 package de.minee.rest.parser;
 
+import de.minee.jpa.MappingHelper;
 import de.minee.util.Assertions;
 import de.minee.util.ReflectionUtil;
 
@@ -7,7 +8,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class JsonParser implements Parser {
 
@@ -31,10 +31,8 @@ public class JsonParser implements Parser {
 			tokenizer.next();
 			return null;
 		}
-		if (String.class.isAssignableFrom(type)) {
-			return (T) parseString(tokenizer);
-		} else if (UUID.class.isAssignableFrom(type)) {
-			return (T) UUID.fromString(parseString(tokenizer));
+		if (MappingHelper.isSupportedType(type)) {
+			return (T) MappingHelper.parseType(parseString(tokenizer), type);
 		} else if (type.isArray()) {
 			return (T) parseArray(tokenizer, type.getComponentType());
 		}

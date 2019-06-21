@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.StringJoiner;
 import java.util.UUID;
 
-final class MappingHelper {
+public final class MappingHelper {
 
 	private static final String VARCHAR = "VARCHAR";
 	private static final String DOUBLE = "DOUBLE";
@@ -125,5 +125,30 @@ final class MappingHelper {
 
 	public static String mapType(final Class<?> cls) {
 		return MAPPED_TYPES.get(cls);
+	}
+
+	public static Object parseType(final String object, final Class<?> cls) {
+		if (Integer.class.isAssignableFrom(cls)) {
+			return Integer.valueOf(object);
+		} else if (Long.class.isAssignableFrom(cls)) {
+			return Long.valueOf(object);
+		} else if (Byte.class.isAssignableFrom(cls)) {
+			return Byte.valueOf(object);
+		} else if (Boolean.class.isAssignableFrom(cls)) {
+			return Boolean.valueOf(object);
+		} else if (Short.class.isAssignableFrom(cls)) {
+			return Short.valueOf(object);
+		} else if (Float.class.isAssignableFrom(cls)) {
+			return Float.valueOf(object);
+		} else if (Double.class.isAssignableFrom(cls)) {
+			return Double.valueOf(object);
+		} else if (Character.class.isAssignableFrom(cls)) {
+			return object.toString().charAt(0);
+		} else if (UUID.class.isAssignableFrom(cls)) {
+			return UUID.fromString(object);
+		} else if (String.class.isAssignableFrom(cls)) {
+			return object.toString();
+		}
+		return null;
 	}
 }
