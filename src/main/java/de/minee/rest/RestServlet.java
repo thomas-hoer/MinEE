@@ -135,6 +135,7 @@ public class RestServlet extends CdiAwareHttpServlet {
 	private void handleRoot(final HttpServletResponse response) throws IOException {
 		final Renderer renderer = new JsonRenderer();
 		response.setContentType(renderer.getContentType());
+		response.setCharacterEncoding("UTF-8");
 		try (final PrintWriter writer = response.getWriter()) {
 			final Object[] availableResources = context.getResources().stream().map(AbstractResource::toString)
 					.toArray();

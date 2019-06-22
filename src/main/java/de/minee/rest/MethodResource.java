@@ -123,6 +123,7 @@ class MethodResource extends AbstractResource {
 			final Object[] args = methodParams.stream().map(param -> param.map(req)).toArray();
 			Object result = null;
 			result = this.method.invoke(this.instance, args);
+			resp.setCharacterEncoding("UTF-8");
 			try (final PrintWriter writer = resp.getWriter()) {
 				final Renderer renderer = getRenderer().get(0);
 				resp.setContentType(renderer.getContentType());
