@@ -32,7 +32,7 @@ public class JsonRenderer extends AbstractRenderer {
 			return;
 		}
 		final Class<?> cls = input.getClass();
-		if (cls.isPrimitive()) {
+		if (cls.isPrimitive() || Boolean.class.isAssignableFrom(cls)) {
 			stringBuilder.append(input);
 			return;
 		}

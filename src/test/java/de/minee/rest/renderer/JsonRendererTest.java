@@ -11,7 +11,6 @@ import de.minee.datamodel.ReferenceChain;
 import de.minee.datamodel.ReferenceList;
 import de.minee.datamodel.SimpleReference;
 import de.minee.datamodel.enumeration.Enumeration;
-import de.minee.rest.renderer.JsonRenderer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -149,6 +148,37 @@ public class JsonRendererTest {
 		assertTrue(output2.contains(Enumeration.ENUM_VALUE_2.name()));
 	}
 
+	@Test
+	public void testBoolean1() {
+		final TestBoolean testBoolean = new TestBoolean();
+		testBoolean.bool1 = true;
+		testBoolean.bool2 = false;
+		final String actual = renderer.render(testBoolean);
+		assertEquals("{\"bool1\":true,\"bool2\":false}", actual);
+	}
+
+	@Test
+	public void testBoolean2() {
+		final TestBoolean testBoolean = new TestBoolean();
+		testBoolean.bool1 = false;
+		testBoolean.bool2 = true;
+		final String actual = renderer.render(testBoolean);
+		assertEquals("{\"bool1\":false,\"bool2\":true}", actual);
+	}
+
+	@Test
+	public void testBoolean3() {
+		final TestBoolean testBoolean = new TestBoolean();
+		testBoolean.bool1 = true;
+		final String actual = renderer.render(testBoolean);
+		assertEquals("{\"bool1\":true}", actual);
+	}
+
+	static class TestBoolean {
+		boolean bool1;
+		Boolean bool2;
+	}
+
 	private static Object createExampleObject() {
 		final SimpleReference simpleReference = new SimpleReference();
 		simpleReference.setId(ID_1);
@@ -168,4 +198,5 @@ public class JsonRendererTest {
 
 		return object;
 	}
+
 }
