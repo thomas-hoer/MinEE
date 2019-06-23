@@ -272,6 +272,27 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test
+	public void testSelectIsNot() {
+		final EnumObject enumObject1 = new EnumObject();
+		enumObject1.setString("abc");
+		final EnumObject enumObject2 = new EnumObject();
+		enumObject2.setString("def");
+		final EnumObject enumObject3 = new EnumObject();
+		enumObject3.setString("ghi");
+
+		insert(enumObject1);
+		insert(enumObject2);
+		insert(enumObject3);
+
+		final List<EnumObject> selectedResources = select(EnumObject.class).where(EnumObject::getString).isNot("def")
+				.execute();
+
+		assertEquals(2, selectedResources.size());
+		assertEquals("abc", selectedResources.get(0).getString());
+		assertEquals("ghi", selectedResources.get(1).getString());
+	}
+
+	@Test
 	public void testAutoSetId() {
 
 		// Direct setting of Id into the Object

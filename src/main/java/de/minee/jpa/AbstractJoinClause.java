@@ -12,7 +12,7 @@ import java.util.UUID;
  * @param <S> The class that should be joined
  * @param <T> The base class of the From clause
  */
-abstract class AbstractJoinClause<S, T> extends AbstractStatement<S> {
+public abstract class AbstractJoinClause<S, T> extends AbstractStatement<S> {
 
 	private final InitialQueryConnection<T, ? extends AbstractStatement<T>> queryConnection;
 

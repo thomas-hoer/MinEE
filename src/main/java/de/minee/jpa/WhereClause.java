@@ -60,8 +60,10 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 	}
 
 	/**
+	 * Checks the property to be equal to given value. This creates a prepared
+	 * Statement. The value will be passed in the .execute method.
 	 *
-	 * @return
+	 * @return Statement for next condition or execution
 	 */
 	public U is() {
 		checkConditionSet();
@@ -71,9 +73,22 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 	}
 
 	/**
+	 * Checks the property to not be equal to isNot.
+	 *
+	 * @param isNot
+	 * @return Statement for next condition or execution
+	 */
+	public U isNot(final S isNot) {
+		checkConditionSet();
+		setCondition(Operator.IS_NOT, isNot);
+		return selectStatement;
+	}
+
+	/**
+	 * Checks the property to be equal to isEqual.
 	 *
 	 * @param isEqual
-	 * @return
+	 * @return Statement for next condition or execution
 	 */
 	public U is(final S isEqual) {
 		checkConditionSet();
@@ -86,9 +101,10 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 	}
 
 	/**
+	 * Checks the property to be one of the specified values of inElements.
 	 *
-	 * @param inElements
-	 * @return
+	 * @param inElements Array of Elements that are possible matches
+	 * @return Statement for next condition or execution
 	 */
 	public U in(final S... inElements) {
 		checkConditionSet();
@@ -97,8 +113,9 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 	}
 
 	/**
+	 * Checks the property to be null.
 	 *
-	 * @return
+	 * @return Statement for next condition or execution
 	 */
 	public U isNull() {
 		checkConditionSet();
@@ -191,7 +208,7 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 	}
 
 	private enum Operator {
-		EQUALS(" = "), IN(" IN "), IS_NULL(" IS NULL ");
+		EQUALS(" = "), IN(" IN "), IS_NULL(" IS NULL "), IS_NOT(" != ");
 
 		private String sqlOperation;
 
