@@ -49,7 +49,8 @@ public class JsonParser implements Parser {
 		} else {
 			paranthesisToken = token;
 		}
-		return paranthesisToken.replace("\\\\", "\\").replace("\\\"", "\"");
+		return paranthesisToken.replace("\\\\", "\\").replace("\\\"", "\"").replace("\\b", "\b").replace("\\f", "\f")
+				.replace("\\r", "\r").replace("\\n", "\n").replace("\\t", "\t");
 	}
 
 	@SuppressWarnings("unchecked")

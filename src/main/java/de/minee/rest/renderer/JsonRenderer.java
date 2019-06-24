@@ -45,7 +45,7 @@ public class JsonRenderer extends AbstractRenderer {
 			return;
 		}
 		if (isDirectPrintable(cls)) {
-			stringBuilder.append('"').append(input.toString()).append('"');
+			stringBuilder.append('"').append(escape(input.toString())).append('"');
 			return;
 		}
 		stringBuilder.append("{");

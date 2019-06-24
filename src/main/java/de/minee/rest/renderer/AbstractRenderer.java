@@ -29,6 +29,11 @@ public abstract class AbstractRenderer implements Renderer {
 		BASE_CLASSES.add(Double.class);
 	}
 
+	protected static String escape(final String input) {
+		return input.replace("\\", "\\\\").replace("\b", "\\b").replace("\f", "\\f").replace("\r", "\\r")
+				.replace("\n", "\\n").replace("\t", "\\t").replace("\"", "\\\"");
+	}
+
 	protected static boolean isDirectPrintable(final Class<?> cls) {
 		return cls.isPrimitive() || cls.isEnum() || isBaseClass(cls);
 	}
