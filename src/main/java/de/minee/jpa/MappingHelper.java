@@ -17,7 +17,7 @@ public final class MappingHelper {
 	private static final String DOUBLE = "DOUBLE";
 	private static final String REAL = "REAL";
 	private static final String BIGINT = "BIGINT";
-	private static final String INT = "INT";
+	private static final String INT = "INTEGER";
 	private static final String TINYINT = "TINYINT";
 	private static final String BOOLEAN = "BOOLEAN";
 	private static final String SMALLINT = "SMALLINT";
@@ -143,11 +143,11 @@ public final class MappingHelper {
 		} else if (Double.class.isAssignableFrom(cls)) {
 			return Double.valueOf(object);
 		} else if (Character.class.isAssignableFrom(cls)) {
-			return object.toString().charAt(0);
+			return object.charAt(0);
 		} else if (UUID.class.isAssignableFrom(cls)) {
 			return UUID.fromString(object);
 		} else if (String.class.isAssignableFrom(cls)) {
-			return object.toString();
+			return object;
 		}
 		return null;
 	}

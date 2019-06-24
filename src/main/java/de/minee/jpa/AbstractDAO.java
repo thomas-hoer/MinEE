@@ -171,10 +171,12 @@ public abstract class AbstractDAO {
 
 			final String fieldName = field.getName().toUpperCase();
 			if (existingFields.containsKey(fieldName)) {
-				if (existingFields.get(fieldName).equalsIgnoreCase(mappedType)) {
+				final String fieldType = existingFields.get(fieldName);
+				if (fieldType.equalsIgnoreCase(mappedType)) {
 					existingFields.remove(fieldName);
-				} else if (List.class.isAssignableFrom(field.getType())
-						&& "List".equals(existingFields.get(fieldName))) {
+				} else if (List.class.isAssignableFrom(field.getType()) && "List".equals(fieldType)) {
+					existingFields.remove(fieldName);
+				} else if ("ENUM".equals(fieldType) && mappedType.startsWith("ENUM")) {
 					existingFields.remove(fieldName);
 				} else {
 					throw new UnsupportedOperationException("Cannot change field type");

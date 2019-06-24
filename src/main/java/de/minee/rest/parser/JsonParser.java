@@ -33,6 +33,8 @@ public class JsonParser implements Parser {
 		}
 		if (MappingHelper.isSupportedType(type)) {
 			return (T) MappingHelper.parseType(parseString(tokenizer), type);
+		} else if (type.isEnum()) {
+			return (T) Enum.valueOf((Class<? extends Enum>) type, parseString(tokenizer));
 		} else if (type.isArray()) {
 			return (T) parseArray(tokenizer, type.getComponentType());
 		}

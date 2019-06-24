@@ -22,6 +22,8 @@ import javax.servlet.http.HttpServletResponse;
 
 class ManagedResource<T> extends AbstractResource {
 
+	private static final String UTF_8 = "UTF-8";
+
 	private static final Logger LOGGER = Logger.getLogger(ManagedResource.class);
 
 	private final ManagedPath<T> path;
@@ -85,7 +87,7 @@ class ManagedResource<T> extends AbstractResource {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
-		resp.setCharacterEncoding("UTF-8");
+		resp.setCharacterEncoding(UTF_8);
 		try (final PrintWriter writer = resp.getWriter()) {
 			final Renderer renderer = getRenderer().get(0);
 			resp.setContentType(renderer.getContentType());
@@ -222,7 +224,7 @@ class ManagedResource<T> extends AbstractResource {
 	}
 
 	private void doGetCreate(final HttpServletResponse resp) throws IOException {
-		resp.setCharacterEncoding("UTF-8");
+		resp.setCharacterEncoding(UTF_8);
 		try (final PrintWriter writer = resp.getWriter()) {
 			final Renderer renderer = getRenderer().get(0);
 			resp.setContentType(renderer.getContentType());
@@ -232,7 +234,7 @@ class ManagedResource<T> extends AbstractResource {
 
 	private void doGetEdit(final T object, final HttpServletResponse resp) throws IOException {
 		assert (object != null);
-		resp.setCharacterEncoding("UTF-8");
+		resp.setCharacterEncoding(UTF_8);
 		try (final PrintWriter writer = resp.getWriter()) {
 			final Renderer renderer = getRenderer().get(0);
 			resp.setContentType(renderer.getContentType());
