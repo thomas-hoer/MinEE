@@ -141,7 +141,7 @@ public class SelectStatementTest extends AbstractTestDAO {
 				.where(SimpleReference::getName).is(NAME_1).and().where(SimpleReference::getValue).is();
 
 		assertEquals(
-				"SELECT SimpleReference.* FROM SimpleReference WHERE  SimpleReference.Name = 'XX' AND SimpleReference.Value = ?",
+				"SELECT SimpleReference.* FROM SimpleReference WHERE  SimpleReference.name = 'XX' AND SimpleReference.value = ?",
 				statement.toString());
 	}
 
