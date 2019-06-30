@@ -7,6 +7,7 @@ import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.util.Collection;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.UUID;
@@ -174,6 +175,15 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 			Assertions.assertNotNull(conditionElement, "One or more condition in the conditionset is null");
 			if (conditionElement.getClass().isPrimitive()) {
 				stringJoiner.add(conditionElement.toString());
+			} else if (Collection.class.isInstance(conditionElement)) {
+				final Collection<?> collection = (Collection<?>) conditionElement;
+				for (final Object o : collection) {
+					if (o.getClass().isPrimitive()) {
+						stringJoiner.add(o.toString());
+					} else {
+						stringJoiner.add("'" + computeConditionValue(o) + "'");
+					}
+				}
 			} else {
 				stringJoiner.add("'" + computeConditionValue(conditionElement) + "'");
 			}
