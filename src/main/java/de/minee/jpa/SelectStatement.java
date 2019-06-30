@@ -146,7 +146,7 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 		final boolean supportedType = MappingHelper.isSupportedType(type);
 		final List<Object> list = new ArrayList<>();
 		final String query = "SELECT " + type.getSimpleName() + " FROM Mapping_" + getType().getSimpleName() + "_"
-				+ field.getName();
+				+ field.getName() + " WHERE " + getType().getSimpleName() + " = '" + MappingHelper.getId(obj) + "'";
 		executeQuery(query, resultSet -> {
 			try {
 				if (supportedType) {
