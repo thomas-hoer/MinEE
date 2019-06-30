@@ -1,7 +1,5 @@
 package de.minee.rest;
 
-import de.minee.rest.Operation;
-
 import java.io.BufferedReader;
 import java.io.StringReader;
 import java.security.Principal;
@@ -269,8 +267,7 @@ public class MockHttpServletRequestImpl implements HttpServletRequest {
 
 	@Override
 	public Cookie[] getCookies() {
-
-		return null;
+		return new Cookie[0];
 	}
 
 	@Override
