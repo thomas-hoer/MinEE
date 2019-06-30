@@ -12,9 +12,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -43,6 +45,8 @@ class MethodResource extends AbstractResource {
 				mapping = new PathParamMapping(path, pathParam.value());
 			} else if (HttpSession.class.isAssignableFrom(annotatedTypes[i])) {
 				mapping = new SessionMapping();
+			} else if (Cookies.class.isAssignableFrom(annotatedTypes[i])) {
+				mapping = new CookieMapping();
 			} else {
 				mapping = new PayloadMapping(annotatedTypes[i]);
 			}
@@ -62,7 +66,7 @@ class MethodResource extends AbstractResource {
 	}
 
 	private interface ArgumentMapping {
-		Object map(HttpServletRequest req);
+		Object map(RequestContext context);
 	}
 
 	private class PayloadMapping implements ArgumentMapping {
@@ -74,7 +78,8 @@ class MethodResource extends AbstractResource {
 		}
 
 		@Override
-		public Object map(final HttpServletRequest req) {
+		public Object map(final RequestContext context) {
+			final HttpServletRequest req = context.getRequest();
 			final Parser parser = getParser(req.getContentType());
 			try {
 				final String input = req.getReader().lines().collect(Collectors.joining());
@@ -99,7 +104,8 @@ class MethodResource extends AbstractResource {
 		}
 
 		@Override
-		public Object map(final HttpServletRequest req) {
+		public Object map(final RequestContext context) {
+			final HttpServletRequest req = context.getRequest();
 			final String[] paths = req.getPathInfo().split("/");
 			return paths[pathNr];
 		}
@@ -107,8 +113,16 @@ class MethodResource extends AbstractResource {
 
 	private static class SessionMapping implements ArgumentMapping {
 		@Override
-		public Object map(final HttpServletRequest req) {
+		public Object map(final RequestContext context) {
+			final HttpServletRequest req = context.getRequest();
 			return req.getSession();
+		}
+	}
+
+	private static class CookieMapping implements ArgumentMapping {
+		@Override
+		public Object map(final RequestContext context) {
+			return context.getCookies();
 		}
 	}
 
@@ -120,10 +134,18 @@ class MethodResource extends AbstractResource {
 	@Override
 	public void serve(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
 		try {
-			final Object[] args = methodParams.stream().map(param -> param.map(req)).toArray();
+			final RequestContext context = new RequestContext();
+			context.setCookies(new Cookies(req.getCookies()));
+			context.setRequest(req);
+			final Object[] args = methodParams.stream().map(param -> param.map(context)).toArray();
 			Object result = null;
 			result = this.method.invoke(this.instance, args);
 			resp.setCharacterEncoding("UTF-8");
+
+			final Collection<Cookie> changedCookies = context.getCookies().getChangedCookies();
+			for (final Cookie cookie : changedCookies) {
+				resp.addCookie(cookie);
+			}
 			try (final PrintWriter writer = resp.getWriter()) {
 				final Renderer renderer = getRenderer().get(0);
 				resp.setContentType(renderer.getContentType());
