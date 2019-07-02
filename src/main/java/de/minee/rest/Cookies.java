@@ -12,8 +12,10 @@ public class Cookies {
 	private final Map<String, Cookie> changedCookies = new HashMap<>();
 
 	public Cookies(final Cookie[] cookies) {
-		for (final Cookie cookie : cookies) {
-			this.cookies.put(cookie.getName(), cookie);
+		if (cookies != null) {
+			for (final Cookie cookie : cookies) {
+				this.cookies.put(cookie.getName(), cookie);
+			}
 		}
 	}
 
