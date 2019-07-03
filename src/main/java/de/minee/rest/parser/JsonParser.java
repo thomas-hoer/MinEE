@@ -6,6 +6,7 @@ import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class JsonParser implements Parser {
 	public <T> T parse(final String payload, final Class<T> type) throws ParserException {
 		final JsonTokenizer tokenizer = new JsonTokenizer(payload);
 		try {
-			final T result = parse(tokenizer, type);
+			final T result = parse(tokenizer, type, null);
 			Assertions.assertFalse(tokenizer.hasNext(), "Root node is closed but there is still payload left to parse");
 			return result;
 		} catch (final RuntimeException cause) {
@@ -26,7 +27,8 @@ public class JsonParser implements Parser {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> T parse(final JsonTokenizer tokenizer, final Class<T> type) throws ParserException {
+	private static <T> T parse(final JsonTokenizer tokenizer, final Class<T> type, final Field field)
+			throws ParserException {
 		if ("null".equals(tokenizer.lookup())) {
 			tokenizer.next();
 			return null;
@@ -37,6 +39,9 @@ public class JsonParser implements Parser {
 			return (T) Enum.valueOf((Class<? extends Enum>) type, parseString(tokenizer));
 		} else if (type.isArray()) {
 			return (T) parseArray(tokenizer, type.getComponentType());
+		} else if (List.class.isAssignableFrom(type)) {
+			final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
+			return (T) parseList(tokenizer, (Class<?>) mapToType.getActualTypeArguments()[0]);
 		}
 		return parseClass(tokenizer, type);
 	}
@@ -54,12 +59,12 @@ public class JsonParser implements Parser {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <T> T[] parseArray(final JsonTokenizer tokenizer, final Class<T> type) throws ParserException {
+	private static <T> List<T> parseList(final JsonTokenizer tokenizer, final Class<T> type) throws ParserException {
 		final List<T> list = new ArrayList<>();
 		tokenizer.expect("[");
 		if (!"]".equals(tokenizer.lookup())) {
 			while (tokenizer.hasNext()) {
-				list.add(parse(tokenizer, type));
+				list.add(parse(tokenizer, type, null));
 				if (",".equals(tokenizer.lookup())) {
 					tokenizer.next();
 				} else {
@@ -69,7 +74,12 @@ public class JsonParser implements Parser {
 		}
 
 		tokenizer.expect("]");
-		return list.toArray((T[]) Array.newInstance(type, 0));
+		return list;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T> T[] parseArray(final JsonTokenizer tokenizer, final Class<T> type) throws ParserException {
+		return parseList(tokenizer, type).toArray((T[]) Array.newInstance(type, 0));
 	}
 
 	private static <T> T parseClass(final JsonTokenizer tokenizer, final Class<T> type) throws ParserException {
@@ -98,7 +108,7 @@ public class JsonParser implements Parser {
 		tokenizer.expect(":");
 		final Field propertyField = ReflectionUtil.getDeclaredField(type, propertyName);
 		Assertions.assertNotNull(propertyField, "Class " + type + " does not contain a field named " + propertyName);
-		ReflectionUtil.executeSet(propertyField, instance, parse(tokenizer, propertyField.getType()));
+		ReflectionUtil.executeSet(propertyField, instance, parse(tokenizer, propertyField.getType(), propertyField));
 		if (",".equals(tokenizer.lookup())) {
 			tokenizer.next();
 		} else {
