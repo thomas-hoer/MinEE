@@ -324,6 +324,10 @@ public abstract class AbstractDAO {
 		return PreparedMerge.merge(objectToMerge, getConnection(), Cascade.MERGE);
 	}
 
+	public <T> UUID mergeShallow(final T objectToMerge) {
+		return PreparedMerge.merge(objectToMerge, getConnection(), Cascade.NONE);
+	}
+
 	/**
 	 * Directly deletes a Object and recursively its children.
 	 *
