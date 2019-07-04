@@ -5,6 +5,7 @@ import de.minee.util.ReflectionUtil;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ public final class MappingHelper {
 	private static final String BOOLEAN = "BOOLEAN";
 	private static final String SMALLINT = "SMALLINT";
 	private static final String UUID_TYPE = "UUID";
+	private static final String DATE_TYPE = "DATE";
 
 	private static final Map<Class<?>, String> MAPPED_TYPES = new HashMap<>();
 	private static final UUID NULL_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
@@ -45,6 +47,7 @@ public final class MappingHelper {
 		MAPPED_TYPES.put(float.class, REAL);
 		MAPPED_TYPES.put(double.class, DOUBLE);
 		MAPPED_TYPES.put(UUID.class, UUID_TYPE);
+		MAPPED_TYPES.put(Date.class, DATE_TYPE);
 	}
 
 	private MappingHelper() {
@@ -148,6 +151,8 @@ public final class MappingHelper {
 			return UUID.fromString(object);
 		} else if (String.class.isAssignableFrom(cls)) {
 			return object;
+		} else if (Date.class.isAssignableFrom(cls)) {
+			return new Date(Long.parseLong(object));
 		}
 		return null;
 	}
