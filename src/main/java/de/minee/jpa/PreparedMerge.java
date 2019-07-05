@@ -107,6 +107,8 @@ class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 			final Object element;
 			if (MappingHelper.isSupportedType(listElement.getClass())) {
 				element = listElement;
+			}else if(listElement.getClass().isEnum()) {
+				element = listElement.toString();
 			} else {
 				if (Cascade.MERGE == cascade) {
 					merge(listElement, connection, cascade);

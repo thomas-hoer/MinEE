@@ -144,6 +144,7 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 		final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
 		final Class<?> type = (Class<?>) mapToType.getActualTypeArguments()[0];
 		final boolean supportedType = MappingHelper.isSupportedType(type);
+		final boolean isEnum = type.isEnum();
 		final List<Object> list = new ArrayList<>();
 		final String query = "SELECT " + type.getSimpleName() + " FROM Mapping_" + getType().getSimpleName() + "_"
 				+ field.getName() + " WHERE " + getType().getSimpleName() + " = '" + MappingHelper.getId(obj) + "'";
@@ -151,6 +152,8 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 			try {
 				if (supportedType) {
 					list.add(resultSet.getObject(1));
+				} else if(isEnum) {
+					list.add(Enum.valueOf((Class<? extends Enum>)type, resultSet.getString(1)));
 				} else {
 					final Object o = select(type, getConnection()).byId((UUID) resultSet.getObject(1), handledObjects);
 					list.add(o);

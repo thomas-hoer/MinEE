@@ -270,6 +270,9 @@ public abstract class AbstractDAO {
 			stringBuilder.append(type.getSimpleName());
 			stringBuilder.append(" ");
 			stringBuilder.append(MappingHelper.mapType(type));
+		} else if(type.isEnum()){
+			stringBuilder.append(type.getSimpleName());
+			stringBuilder.append(" VARCHAR");
 		} else {
 			stringBuilder.append(type.getSimpleName());
 			stringBuilder.append(" UUID");

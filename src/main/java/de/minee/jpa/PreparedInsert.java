@@ -113,6 +113,8 @@ public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 			}
 			if (MappingHelper.isSupportedType(listElement.getClass())) {
 				mappingsToInsert.add(new Pair<>(field, listElement));
+			}else if( listElement.getClass().isEnum()) {
+				mappingsToInsert.add(new Pair<>(field, listElement.toString()));
 			} else {
 				final UUID insertId;
 				if (Cascade.INSERT == cascade) {

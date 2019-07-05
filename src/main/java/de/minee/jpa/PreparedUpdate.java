@@ -108,6 +108,8 @@ class PreparedUpdate<S> extends AbstractPreparedQuery<S> {
 			final Object element;
 			if (MappingHelper.isSupportedType(listElement.getClass())) {
 				element = listElement;
+			}else if(listElement.getClass().isEnum()) {
+				element = listElement.toString();
 			} else {
 				if (Cascade.UPDATE == cascade) {
 					update(listElement, connection, cascade);
