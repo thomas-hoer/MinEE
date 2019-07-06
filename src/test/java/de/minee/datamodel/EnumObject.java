@@ -2,6 +2,7 @@ package de.minee.datamodel;
 
 import de.minee.datamodel.enumeration.Enumeration;
 
+import java.util.List;
 import java.util.UUID;
 
 public class EnumObject {
@@ -9,6 +10,7 @@ public class EnumObject {
 	private UUID id;
 	private String string;
 	private Enumeration enumeration;
+	private List<Enumeration> enumList;
 
 	public UUID getId() {
 		return id;
@@ -32,6 +34,14 @@ public class EnumObject {
 
 	public void setEnumeration(final Enumeration enumeration) {
 		this.enumeration = enumeration;
+	}
+
+	public List<Enumeration> getEnumList() {
+		return enumList;
+	}
+
+	public void setEnumList(final List<Enumeration> enumList) {
+		this.enumList = enumList;
 	}
 
 }

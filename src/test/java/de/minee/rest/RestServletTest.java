@@ -13,11 +13,13 @@ import de.minee.rest.renderer.Renderer;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
 import org.h2.util.StringUtils;
@@ -63,6 +65,11 @@ public class RestServletTest {
 		@RestResource(value = "exception", consumes = JsonParser.class, produces = JsonRenderer.class)
 		public void ex() {
 			throw new RuntimeException("Don't use this resource");
+		}
+
+		@RestResource(value = "cookies", consumes = JsonParser.class, produces = JsonRenderer.class)
+		public void cookie(final Cookies cookies) {
+			cookies.add("cookieName", "cookieValue", 1000);
 		}
 	};
 
@@ -470,5 +477,19 @@ public class RestServletTest {
 		final String output = response.getWrittenOutput();
 		assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getError());
 		assertEquals("Don't use this resource", output);
+	}
+
+	@Test
+	public void testMethodResourceCookies() throws IOException {
+		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("cookies", Operation.POST, "");
+		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
+		METHOD_TEST_SERVLET.service(request, response);
+
+		final List<Cookie> cookies = response.getCookies();
+		assertEquals(1, cookies.size());
+		final Cookie cookie = cookies.get(0);
+		assertEquals("cookieName", cookie.getName());
+		assertEquals("cookieValue", cookie.getValue());
+		assertEquals(1000, cookie.getMaxAge());
 	}
 }

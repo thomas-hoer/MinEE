@@ -10,6 +10,7 @@ import de.minee.datamodel.NotSupportedType;
 import de.minee.datamodel.PrimitiveList;
 import de.minee.datamodel.RecursiveObject;
 import de.minee.datamodel.enumeration.Enumeration;
+import de.minee.datamodel.invalid.FieldPropertyMismatch;
 import de.minee.datamodel.invalid.NonDefaultConstructor;
 import de.minee.datamodel.update.ReferenceChain;
 import de.minee.datamodel.update.ReferenceList;
@@ -36,6 +37,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 		createTable(PrimitiveList.class);
 		createTable(ArrayTypes.class);
 		createTable(NonDefaultConstructor.class);
+		createTable(FieldPropertyMismatch.class);
 		updateTable(ReferenceChain.class);
 		updateTable(SimpleReference.class, true);
 		updateTable(ReferenceList.class);
@@ -59,19 +61,62 @@ public class AbstractDAOTest extends AbstractTestDAO {
 
 	@Test
 	public void testEnum() {
-		final EnumObject pictureContent = new EnumObject();
-		pictureContent.setEnumeration(Enumeration.ENUM_VALUE_1);
+		final EnumObject enumObject = new EnumObject();
+		enumObject.setEnumeration(Enumeration.ENUM_VALUE_1);
 
-		final UUID id = insert(pictureContent);
+		final UUID id = insert(enumObject);
 
 		Assert.assertNotNull(id);
 
-		final EnumObject selectedPictureContent = select(EnumObject.class).byId(id);
+		final EnumObject selectedEnumObject = select(EnumObject.class).byId(id);
 
-		Assert.assertNotNull(selectedPictureContent);
-		Assert.assertEquals(pictureContent.getId(), selectedPictureContent.getId());
-		Assert.assertEquals(pictureContent.getEnumeration(), selectedPictureContent.getEnumeration());
+		Assert.assertNotNull(selectedEnumObject);
+		Assert.assertEquals(enumObject.getId(), selectedEnumObject.getId());
+		Assert.assertEquals(enumObject.getEnumeration(), selectedEnumObject.getEnumeration());
 	}
+
+	@Test
+	public void testEnumList() {
+		final EnumObject enumObject = new EnumObject();
+		enumObject.setEnumList(Arrays.asList(Enumeration.ENUM_VALUE_1,Enumeration.ENUM_VALUE_2));
+
+		final UUID id = insert(enumObject);
+
+		Assert.assertNotNull(id);
+
+		final EnumObject selectedEnumObject = select(EnumObject.class).byId(id);
+
+		Assert.assertNotNull(selectedEnumObject);
+		Assert.assertEquals(enumObject.getId(), selectedEnumObject.getId());
+		Assert.assertEquals(2, selectedEnumObject.getEnumList().size());
+		Assert.assertTrue(selectedEnumObject.getEnumList().contains(Enumeration.ENUM_VALUE_1));
+		Assert.assertTrue(selectedEnumObject.getEnumList().contains(Enumeration.ENUM_VALUE_2));
+
+		// Delete ENUM_VALUE_1 Add ENUM_VALUE_3
+		enumObject.setEnumList(Arrays.asList(Enumeration.ENUM_VALUE_2,Enumeration.ENUM_VALUE_3));
+		merge(enumObject);
+
+		final EnumObject selectedEnumObject2 = select(EnumObject.class).byId(id);
+
+		Assert.assertNotNull(selectedEnumObject2);
+		Assert.assertEquals(enumObject.getId(), selectedEnumObject2.getId());
+		Assert.assertEquals(2, selectedEnumObject2.getEnumList().size());
+		Assert.assertTrue(selectedEnumObject2.getEnumList().contains(Enumeration.ENUM_VALUE_2));
+		Assert.assertTrue(selectedEnumObject2.getEnumList().contains(Enumeration.ENUM_VALUE_3));
+
+
+		enumObject.setEnumList(Arrays.asList(Enumeration.ENUM_VALUE_4,Enumeration.ENUM_VALUE_5));
+		update(enumObject);
+
+		final EnumObject selectedEnumObject3 = select(EnumObject.class).byId(id);
+
+		Assert.assertNotNull(selectedEnumObject3);
+		Assert.assertEquals(enumObject.getId(), selectedEnumObject3.getId());
+		Assert.assertEquals(2, selectedEnumObject3.getEnumList().size());
+		Assert.assertTrue(selectedEnumObject3.getEnumList().contains(Enumeration.ENUM_VALUE_4));
+		Assert.assertTrue(selectedEnumObject3.getEnumList().contains(Enumeration.ENUM_VALUE_5));
+	}
+
 
 	@Test
 	public void testCycle() {
@@ -88,27 +133,27 @@ public class AbstractDAOTest extends AbstractTestDAO {
 
 	@Test
 	public void testSelectEnum() {
-		final EnumObject pictureContent1 = new EnumObject();
-		pictureContent1.setEnumeration(Enumeration.ENUM_VALUE_1);
-		final EnumObject pictureContent2 = new EnumObject();
-		pictureContent2.setEnumeration(Enumeration.ENUM_VALUE_2);
-		final EnumObject pictureContent3 = new EnumObject();
-		pictureContent3.setEnumeration(Enumeration.ENUM_VALUE_1);
+		final EnumObject enumObject1 = new EnumObject();
+		enumObject1.setEnumeration(Enumeration.ENUM_VALUE_1);
+		final EnumObject enumObject2 = new EnumObject();
+		enumObject2.setEnumeration(Enumeration.ENUM_VALUE_2);
+		final EnumObject enumObject3 = new EnumObject();
+		enumObject3.setEnumeration(Enumeration.ENUM_VALUE_1);
 
-		insert(pictureContent1);
-		insert(pictureContent2);
-		insert(pictureContent3);
+		insert(enumObject1);
+		insert(enumObject2);
+		insert(enumObject3);
 
-		final List<EnumObject> selectedPictureContent1 = select(EnumObject.class).where(EnumObject::getEnumeration)
+		final List<EnumObject> selectedEnumObject1 = select(EnumObject.class).where(EnumObject::getEnumeration)
 				.is(Enumeration.ENUM_VALUE_1).execute();
 
-		Assert.assertNotNull(selectedPictureContent1);
-		Assert.assertEquals(2, selectedPictureContent1.size());
+		Assert.assertNotNull(selectedEnumObject1);
+		Assert.assertEquals(2, selectedEnumObject1.size());
 
-		final List<EnumObject> selectedPictureContent2 = select(EnumObject.class).execute();
+		final List<EnumObject> selectedEnumObject2 = select(EnumObject.class).execute();
 
-		Assert.assertNotNull(selectedPictureContent2);
-		Assert.assertEquals(3, selectedPictureContent2.size());
+		Assert.assertNotNull(selectedEnumObject2);
+		Assert.assertEquals(3, selectedEnumObject2.size());
 
 	}
 
@@ -406,9 +451,33 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	}
 
 	@Test(expected = DatabaseException.class)
+	public void testFieldPropertyMismatch() {
+		final FieldPropertyMismatch object = new FieldPropertyMismatch();
+		object.setBool(true);
+		insert(object);
+		final List<FieldPropertyMismatch> list = select(FieldPropertyMismatch.class).where(FieldPropertyMismatch::getBool).is().execute(Arrays.asList(true));
+	}
+
+	@Test(expected = DatabaseException.class)
 	public void testSelectWithNotSupportedDatatype() {
 		final NonDefaultConstructor object = new NonDefaultConstructor(UUID.randomUUID());
 		insert(object);
 		select(NonDefaultConstructor.class).execute();
+	}
+
+	@Test(expected = DatabaseException.class)
+	public void testSelectWithNotSupportedDatatype2() {
+		final UUID randomUUID = UUID.randomUUID();
+		final NonDefaultConstructor object = new NonDefaultConstructor(randomUUID);
+		insert(object);
+		select(NonDefaultConstructor.class).where(NonDefaultConstructor::getId).is().execute(Arrays.asList(randomUUID));
+	}
+
+	@Test(expected = DatabaseException.class)
+	public void testSelectWithNotSupportedDatatypeById() {
+		final UUID randomUUID = UUID.randomUUID();
+		final NonDefaultConstructor object = new NonDefaultConstructor(randomUUID);
+		insert(object);
+		select(NonDefaultConstructor.class).byId(randomUUID);
 	}
 }

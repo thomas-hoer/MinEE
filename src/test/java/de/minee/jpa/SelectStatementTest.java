@@ -146,6 +146,17 @@ public class SelectStatementTest extends AbstractTestDAO {
 	}
 
 	@Test(expected = DatabaseException.class)
+	public void testConnectionLost() throws SQLException{
+		getConnection().createStatement().execute("SHUTDOWN");
+		final List<SimpleReference> list = select(SimpleReference.class).where(SimpleReference::getName).is().execute(Arrays.asList(NAME_1));
+	}
+	@Test(expected = DatabaseException.class)
+	public void testConnectionLost2() throws SQLException{
+		getConnection().createStatement().execute("SHUTDOWN");
+		final SimpleReference sr = select(SimpleReference.class).byId(UUID.randomUUID());
+	}
+
+	@Test(expected = DatabaseException.class)
 	public void testNotSupportedJoin() {
 		select(TestClass.class).join(TestClass::getRef);
 	}

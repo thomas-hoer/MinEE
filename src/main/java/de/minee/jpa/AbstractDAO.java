@@ -105,6 +105,14 @@ public abstract class AbstractDAO {
 
 	protected void dropTable(final Class<?> cls) {
 		dropTable(cls.getSimpleName());
+		final List<Field> fields = ReflectionUtil.getAllFields(cls);
+		for (final Field field : fields) {
+			final String mappedType = MappingHelper.mapDatabaseType(field);
+			if (mappedType == null) {
+				final String mappingTableName = String.format("Mapping_%s_%s",cls.getSimpleName(),field.getName());
+				dropTable(mappingTableName);
+			}
+		}
 	}
 
 	protected void dropTable(final String table) {
@@ -170,19 +178,19 @@ public abstract class AbstractDAO {
 			final String mappedType = MappingHelper.mapDatabaseType(field);
 
 			final String fieldName = field.getName().toUpperCase();
-			if (existingFields.containsKey(fieldName)) {
-				final String fieldType = existingFields.get(fieldName);
-				if (fieldType.equalsIgnoreCase(mappedType)) {
-					existingFields.remove(fieldName);
-				} else if (List.class.isAssignableFrom(field.getType()) && "List".equals(fieldType)) {
-					existingFields.remove(fieldName);
-				} else if ("ENUM".equals(fieldType) && mappedType.startsWith("ENUM")) {
-					existingFields.remove(fieldName);
-				} else {
-					throw new UnsupportedOperationException("Cannot change field type");
-				}
-			} else {
+			if (!existingFields.containsKey(fieldName)) {
 				alterTableAddField(cls, field, mappedType);
+				continue;
+			}
+			final String fieldType = existingFields.get(fieldName);
+			if (fieldType.equalsIgnoreCase(mappedType)) {
+				existingFields.remove(fieldName);
+			} else if (List.class.isAssignableFrom(field.getType()) && "List".equals(fieldType)) {
+				existingFields.remove(fieldName);
+			} else if ("ENUM".equals(fieldType) && mappedType.startsWith("ENUM")) {
+				existingFields.remove(fieldName);
+			} else {
+				throw new UnsupportedOperationException("Cannot change field type");
 			}
 		}
 

@@ -1,9 +1,7 @@
 package de.minee.rest.parser;
 
+import de.minee.datamodel.PrimitiveObjects;
 import de.minee.datamodel.SimpleReference;
-import de.minee.rest.parser.JsonParser;
-import de.minee.rest.parser.Parser;
-import de.minee.rest.parser.ParserException;
 
 import java.util.UUID;
 
@@ -94,5 +92,26 @@ public class JsonParserTest {
 	@Test(expected = ParserException.class)
 	public void testParseInvalidPayload2() throws ParserException {
 		parser.parse("\"a", Object.class);
+	}
+
+	@Test
+	public void testParsePrimitives() throws ParserException {
+		final PrimitiveObjects object = parser.parse("{\"byteValue\":42,\"longValue\":34359738368,\"intValue\":1023,\"shortValue\":32767}", PrimitiveObjects.class);
+		final Long expectedLong = 34359738368l;
+		final Integer expectedInt = 1023;
+		final Short expectedShort = 32767;
+		final Byte expectedByte = 42;
+		Assert.assertEquals(expectedLong, object.getLongValue());
+		Assert.assertEquals(expectedInt, object.getIntValue());
+		Assert.assertEquals(expectedShort, object.getShortValue());
+		Assert.assertEquals(expectedByte, object.getByteValue());
+	}
+	@Test
+	public void testParsePrimitivFloating() throws ParserException {
+		final PrimitiveObjects object = parser.parse("{\"floatValue\":1.234,\"doubleValue\":3.1415E+92}", PrimitiveObjects.class);
+		final Float expectedFloat = 1.234f;
+		final Double expectedDouble = 3.1415E+92;
+		Assert.assertEquals(expectedFloat, object.getFloatValue());
+		Assert.assertEquals(expectedDouble, object.getDoubleValue());
 	}
 }

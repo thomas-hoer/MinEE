@@ -2,8 +2,10 @@ package de.minee.rest;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -16,7 +18,7 @@ public class MockHttpServletResponseImpl implements HttpServletResponse {
 	private final StringWriter stringWriter = new StringWriter();
 	private int error = 200;
 	private final Map<String, String> header = new HashMap<>();
-
+	private final List<Cookie> cookies = new ArrayList<>();
 	@Override
 	public String getCharacterEncoding() {
 
@@ -102,7 +104,11 @@ public class MockHttpServletResponseImpl implements HttpServletResponse {
 
 	@Override
 	public void addCookie(final Cookie cookie) {
-		// Just a Mock method
+		cookies.add(cookie);
+	}
+
+	public List<Cookie> getCookies(){
+		return cookies;
 	}
 
 	@Override
