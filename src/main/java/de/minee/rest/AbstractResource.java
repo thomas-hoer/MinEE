@@ -8,8 +8,10 @@ import de.minee.rest.renderer.Renderer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -19,6 +21,7 @@ abstract class AbstractResource {
 
 	private final Set<Operation> allowedOperations;
 	private final List<Renderer> rendererList = new ArrayList<>();
+	private final Map<String, Renderer> rendererMap = new HashMap<>();
 	private final List<Parser> parserList = new ArrayList<>();
 
 	AbstractResource(final Operation[] allowedOperations) {
@@ -51,18 +54,21 @@ abstract class AbstractResource {
 
 	public void addRenderer(final Renderer renderer) {
 		rendererList.add(renderer);
+		rendererMap.put(renderer.getContentType(), renderer);
 	}
 
 	public void addParser(final Parser parser) {
 		parserList.add(parser);
 	}
 
-	// TODO: Implement best fit selection
-	List<Renderer> getRenderer() {
+	Renderer getRenderer(final String contentType) {
 		if (rendererList.isEmpty()) {
-			rendererList.add(CdiUtil.getInstance(HtmlRenderer.class));
+			addRenderer(CdiUtil.getInstance(HtmlRenderer.class));
 		}
-		return rendererList;
+		if (contentType != null && rendererMap.containsKey(contentType)) {
+			return rendererMap.get(contentType);
+		}
+		return rendererList.get(0);
 	}
 
 	Parser getParser(final String contentType) {

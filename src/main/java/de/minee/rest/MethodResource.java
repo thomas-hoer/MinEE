@@ -147,7 +147,7 @@ class MethodResource extends AbstractResource {
 				resp.addCookie(cookie);
 			}
 			try (final PrintWriter writer = resp.getWriter()) {
-				final Renderer renderer = getRenderer().get(0);
+				final Renderer renderer = getRenderer(req.getContentType());
 				resp.setContentType(renderer.getContentType());
 				writer.write(renderer.render(result));
 			}

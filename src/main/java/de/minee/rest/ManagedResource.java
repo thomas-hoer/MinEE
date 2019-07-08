@@ -88,7 +88,7 @@ class ManagedResource<T> extends AbstractResource {
 		}
 		resp.setCharacterEncoding(UTF_8);
 		try (final PrintWriter writer = resp.getWriter()) {
-			final Renderer renderer = getRenderer().get(0);
+			final Renderer renderer = getRenderer(req.getContentType());
 			resp.setContentType(renderer.getContentType());
 			if (result.size() == 1) {
 				writer.write(renderer.render(result.get(0)));
@@ -108,7 +108,7 @@ class ManagedResource<T> extends AbstractResource {
 			resp.sendError(HttpServletResponse.SC_CONFLICT);
 		} else {
 			if (method.equals(Operation.GET.name())) {
-				doGetEdit(result.get(0), resp);
+				doGetEdit(result.get(0), req, resp);
 			} else if (method.equals(Operation.POST.name())) {
 				doPostEdit(req, resp);
 			}
@@ -118,7 +118,7 @@ class ManagedResource<T> extends AbstractResource {
 	private void serveCreate(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
 		final String method = req.getMethod();
 		if (method.equals(Operation.GET.name())) {
-			doGetCreate(resp);
+			doGetCreate(req, resp);
 		} else if (method.equals(Operation.POST.name())) {
 			doPostCreate(req, resp);
 		}
@@ -222,20 +222,21 @@ class ManagedResource<T> extends AbstractResource {
 		});
 	}
 
-	private void doGetCreate(final HttpServletResponse resp) throws IOException {
+	private void doGetCreate(final HttpServletRequest req, final HttpServletResponse resp) throws IOException {
 		resp.setCharacterEncoding(UTF_8);
 		try (final PrintWriter writer = resp.getWriter()) {
-			final Renderer renderer = getRenderer().get(0);
+			final Renderer renderer = getRenderer(req.getContentType());
 			resp.setContentType(renderer.getContentType());
 			writer.write(renderer.forCreate(type));
 		}
 	}
 
-	private void doGetEdit(final T object, final HttpServletResponse resp) throws IOException {
+	private void doGetEdit(final T object, final HttpServletRequest req, final HttpServletResponse resp)
+			throws IOException {
 		assert (object != null);
 		resp.setCharacterEncoding(UTF_8);
 		try (final PrintWriter writer = resp.getWriter()) {
-			final Renderer renderer = getRenderer().get(0);
+			final Renderer renderer = getRenderer(req.getContentType());
 			resp.setContentType(renderer.getContentType());
 			writer.write(renderer.forEdit(object));
 		}
