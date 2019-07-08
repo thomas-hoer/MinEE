@@ -6,11 +6,11 @@ import static org.junit.Assert.assertTrue;
 
 import de.minee.datamodel.ReferenceChain;
 import de.minee.datamodel.SimpleReference;
-import de.minee.rest.RestResource;
 import de.minee.rest.MockHttpServletRequestImpl;
 import de.minee.rest.MockHttpServletResponseImpl;
 import de.minee.rest.Operation;
 import de.minee.rest.RestServlet;
+import de.minee.rest.annotation.RestResource;
 
 import java.io.IOException;
 import java.util.HashMap;

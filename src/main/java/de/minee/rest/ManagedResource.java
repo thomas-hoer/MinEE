@@ -2,7 +2,6 @@ package de.minee.rest;
 
 import de.minee.jpa.AbstractDAO;
 import de.minee.jpa.DatabaseException;
-import de.minee.rest.RestServlet.HateoesContext;
 import de.minee.rest.parser.Parser;
 import de.minee.rest.parser.ParserException;
 import de.minee.rest.path.ManagedPath;

@@ -2,6 +2,7 @@ package de.minee.rest.path;
 
 import de.minee.jpa.AbstractStatement;
 import de.minee.jpa.InitialQueryConnection;
+import de.minee.rest.HateoesContext;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Method;
@@ -15,7 +16,7 @@ public class BackwardJoinPathPart<T> extends AbstractVariablePathPart<T> {
 	private final Method whereMethod;
 
 	@SuppressWarnings("unchecked")
-	public BackwardJoinPathPart(final de.minee.rest.RestServlet.HateoesContext context, final String path) {
+	public BackwardJoinPathPart(final HateoesContext context, final String path) {
 		super(path);
 		final String[] backwardReference = path.split("\\\\");
 		final String backwardClass = backwardReference[0];

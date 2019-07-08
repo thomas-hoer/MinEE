@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import de.minee.datamodel.ReferenceList;
 import de.minee.jpa.DAOTestImpl;
+import de.minee.rest.annotation.RestResource;
 import de.minee.rest.parser.JsonParser;
 import de.minee.rest.renderer.JsonRenderer;
 import de.minee.rest.renderer.Renderer;

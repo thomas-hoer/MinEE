@@ -2,7 +2,7 @@ package de.minee.rest.path;
 
 import de.minee.jpa.AbstractStatement;
 import de.minee.jpa.InitialQueryConnection;
-import de.minee.rest.RestServlet.HateoesContext;
+import de.minee.rest.HateoesContext;
 
 import java.util.ArrayList;
 import java.util.List;

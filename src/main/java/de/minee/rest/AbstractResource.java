@@ -1,6 +1,8 @@
 package de.minee.rest;
 
+import de.minee.cdi.CdiUtil;
 import de.minee.rest.parser.Parser;
+import de.minee.rest.renderer.HtmlRenderer;
 import de.minee.rest.renderer.Renderer;
 
 import java.io.IOException;
@@ -57,6 +59,9 @@ abstract class AbstractResource {
 
 	// TODO: Implement best fit selection
 	List<Renderer> getRenderer() {
+		if (rendererList.isEmpty()) {
+			rendererList.add(CdiUtil.getInstance(HtmlRenderer.class));
+		}
 		return rendererList;
 	}
 

@@ -95,6 +95,7 @@ public class JsonTokenizer {
 	private static boolean allowedLiteral(final char c) {
 		final boolean letter = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 		final boolean number = c >= '0' && c <= '9';
-		return letter || number || c == '.' || c=='+' || c=='-';
+		final boolean numberAtithmetic = c == '.' || c == '+' || c == '-';
+		return letter || number || numberAtithmetic;
 	}
 }

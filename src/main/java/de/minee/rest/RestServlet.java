@@ -3,6 +3,10 @@ package de.minee.rest;
 import de.minee.cdi.CdiAwareHttpServlet;
 import de.minee.cdi.CdiUtil;
 import de.minee.jpa.AbstractDAO;
+import de.minee.rest.annotation.Consumes;
+import de.minee.rest.annotation.Produces;
+import de.minee.rest.annotation.RestResource;
+import de.minee.rest.parser.Parser;
 import de.minee.rest.renderer.JsonRenderer;
 import de.minee.rest.renderer.Renderer;
 import de.minee.util.Logger;
@@ -14,10 +18,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.ServletException;
@@ -30,12 +32,28 @@ public class RestServlet extends CdiAwareHttpServlet {
 	private static final Logger LOGGER = Logger.getLogger(RestServlet.class);
 
 	private final HateoesContext context = new HateoesContext();
+	private final List<Class<? extends Parser>> servletParser = new ArrayList<>();
+	private final List<Class<? extends Renderer>> servletRenderer = new ArrayList<>();
 
 	@Override
 	public void init() throws ServletException {
 		super.init();
+		initServletResources();
 		initManagedResources();
 		initMethodResources();
+	}
+
+	private void initServletResources() {
+		final Class<? extends RestServlet> cls = this.getClass();
+		final Produces produces = cls.getAnnotation(Produces.class);
+		if (produces != null) {
+			servletRenderer.addAll(Arrays.asList(produces.value()));
+		}
+		final Consumes consumes = cls.getAnnotation(Consumes.class);
+		if (consumes != null) {
+			servletParser.addAll(Arrays.asList(consumes.value()));
+		}
+
 	}
 
 	private void initMethodResources() {
@@ -47,6 +65,8 @@ public class RestServlet extends CdiAwareHttpServlet {
 						this, method);
 				Arrays.stream(annotation.consumes()).map(CdiUtil::getInstance).forEach(resource::addParser);
 				Arrays.stream(annotation.produces()).map(CdiUtil::getInstance).forEach(resource::addRenderer);
+				servletParser.stream().map(CdiUtil::getInstance).forEach(resource::addParser);
+				servletRenderer.stream().map(CdiUtil::getInstance).forEach(resource::addRenderer);
 				context.addResource(resource);
 			}
 		}
@@ -64,7 +84,7 @@ public class RestServlet extends CdiAwareHttpServlet {
 			context.addType(field.getType());
 		}
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
-			final ManagedResource<?> managedResource = checkHateoesResourceAnnotation(field);
+			final ManagedResource<?> managedResource = checkResourceAnnotation(field);
 			if (managedResource != null) {
 				context.addResource(managedResource);
 				if (field.getAnnotation(Persistent.class) != null) {
@@ -91,7 +111,7 @@ public class RestServlet extends CdiAwareHttpServlet {
 		needsPersistentDao.forEach(context::addResource);
 	}
 
-	private ManagedResource<?> checkHateoesResourceAnnotation(final Field field) {
+	private ManagedResource<?> checkResourceAnnotation(final Field field) {
 		ManagedResource<?> managedResource = null;
 		final RestResource annotation = field.getAnnotation(RestResource.class);
 		if (annotation != null) {
@@ -100,6 +120,8 @@ public class RestServlet extends CdiAwareHttpServlet {
 					resourceType);
 			Arrays.stream(annotation.consumes()).map(CdiUtil::getInstance).forEach(managedResource::addParser);
 			Arrays.stream(annotation.produces()).map(CdiUtil::getInstance).forEach(managedResource::addRenderer);
+			servletParser.stream().map(CdiUtil::getInstance).forEach(managedResource::addParser);
+			servletRenderer.stream().map(CdiUtil::getInstance).forEach(managedResource::addRenderer);
 		}
 		return managedResource;
 	}
@@ -143,57 +165,4 @@ public class RestServlet extends CdiAwareHttpServlet {
 		}
 	}
 
-	private static final class InMemDAO extends AbstractDAO {
-		private final Set<Class<?>> inMemTypes;
-
-		private InMemDAO(final Set<Class<?>> inMemTypes) {
-			this.inMemTypes = inMemTypes;
-		}
-
-		@Override
-		protected String getConnectionString() {
-			return "jdbc:h2:mem:";
-		}
-
-		@Override
-		protected String getUserName() {
-			return "";
-		}
-
-		@Override
-		protected String getPassword() {
-			return "";
-		}
-
-		@Override
-		protected int updateDatabaseSchema(final int oldDbSchemaVersion) {
-			for (final Class<?> type : inMemTypes) {
-				createTable(type);
-			}
-			return 1;
-		}
-	}
-
-	public static class HateoesContext {
-
-		private final List<AbstractResource> resources = new ArrayList<>();
-		private final Map<String, Class<?>> knownTypes = new HashMap<>();
-
-		public Class<?> getTypeByName(final String typeName) {
-			return knownTypes.get(typeName);
-		}
-
-		private void addResource(final AbstractResource resource) {
-			resources.add(resource);
-		}
-
-		private List<AbstractResource> getResources() {
-			return resources;
-		}
-
-		private void addType(final Class<?> type) {
-			knownTypes.put(type.getSimpleName(), type);
-		}
-
-	}
 }

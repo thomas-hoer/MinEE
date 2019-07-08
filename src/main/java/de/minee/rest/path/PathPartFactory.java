@@ -1,6 +1,6 @@
 package de.minee.rest.path;
 
-import de.minee.rest.RestServlet.HateoesContext;
+import de.minee.rest.HateoesContext;
 
 public final class PathPartFactory {
 
