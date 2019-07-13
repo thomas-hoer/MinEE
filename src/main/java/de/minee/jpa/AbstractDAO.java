@@ -23,6 +23,7 @@ public abstract class AbstractDAO {
 	private static final Logger LOGGER = Logger.getLogger(AbstractDAO.class);
 	private static final Map<String, Connection> connections = new HashMap<>();
 	private Connection localConnection;
+	private Connection tempConnection;
 	private Statement statementForSchemaUpdate;
 
 	protected String getConnectionString() {
@@ -38,7 +39,10 @@ public abstract class AbstractDAO {
 	}
 
 	/**
-	 * If the database is newly created oldDbSchemaVersion will initially be 0.
+	 * If the database is newly created oldDbSchemaVersion will initially be 0. It
+	 * is not allowed to change the data through the fluent api directly during the
+	 * updateDatabaseSchema process. However if you need to modify data use
+	 * updateData() within this method. Data changes will be executed synchronously.
 	 *
 	 * @param oldDbSchemaVersion schema version of the existing database or 0
 	 * @return new Schema Version that will be passed next time the database
@@ -46,20 +50,22 @@ public abstract class AbstractDAO {
 	 */
 	protected abstract int updateDatabaseSchema(int oldDbSchemaVersion);
 
-	private synchronized Connection createConnection() {
-		final String connectionString = getConnectionString();
-		if (connections.containsKey(connectionString) && !"jdbc:h2:mem:".equals(connectionString)) {
-			return connections.get(connectionString);
+	private Connection createConnection() {
+		synchronized (connections) {
+			final String connectionString = getConnectionString();
+			if (connections.containsKey(connectionString)) {
+				return connections.get(connectionString);
+			}
+			Connection connection;
+			try {
+				connection = DriverManager.getConnection(connectionString, getUserName(), getPassword());
+			} catch (final SQLException e) {
+				throw new DatabaseException(e);
+			}
+			checkVersion(connection);
+			connections.put(connectionString, connection);
+			return connection;
 		}
-		Connection connection;
-		try {
-			connection = DriverManager.getConnection(connectionString, getUserName(), getPassword());
-		} catch (final SQLException e) {
-			throw new DatabaseException(e);
-		}
-		checkVersion(connection);
-		connections.put(connectionString, connection);
-		return connection;
 	}
 
 	protected Connection getConnection() {
@@ -87,7 +93,9 @@ public abstract class AbstractDAO {
 			}
 
 			statementForSchemaUpdate = statement;
+			tempConnection = con;
 			dbSchemaVersion = updateDatabaseSchema(dbSchemaVersion);
+			tempConnection = null;
 			statementForSchemaUpdate = null;
 		} catch (final SQLException e) {
 			throw new DatabaseException(e);
@@ -109,7 +117,7 @@ public abstract class AbstractDAO {
 		for (final Field field : fields) {
 			final String mappedType = MappingHelper.mapDatabaseType(field);
 			if (mappedType == null) {
-				final String mappingTableName = String.format("Mapping_%s_%s",cls.getSimpleName(),field.getName());
+				final String mappingTableName = String.format("Mapping_%s_%s", cls.getSimpleName(), field.getName());
 				dropTable(mappingTableName);
 			}
 		}
@@ -161,6 +169,25 @@ public abstract class AbstractDAO {
 		final String createTableQuery = stringBuilder.toString();
 		LOGGER.info(createTableQuery);
 		execute(statementForSchemaUpdate, createTableQuery);
+	}
+
+	protected interface UpdateData {
+		void execute();
+	}
+
+	/**
+	 * This method is supposed to allow Data changes during the updateDatabaseSchema
+	 * process.
+	 *
+	 * @param updateData
+	 */
+	protected void updateData(final UpdateData updateData) {
+		if (localConnection != null) {
+			throw new DatabaseException("Please don't use updateData() outside of updateDatabaseSchema()");
+		}
+		localConnection = tempConnection;
+		updateData.execute();
+		localConnection = null;
 	}
 
 	protected void updateTable(final Class<?> cls) {
@@ -278,7 +305,7 @@ public abstract class AbstractDAO {
 			stringBuilder.append(type.getSimpleName());
 			stringBuilder.append(" ");
 			stringBuilder.append(MappingHelper.mapType(type));
-		} else if(type.isEnum()){
+		} else if (type.isEnum()) {
 			stringBuilder.append(type.getSimpleName());
 			stringBuilder.append(" VARCHAR");
 		} else {
