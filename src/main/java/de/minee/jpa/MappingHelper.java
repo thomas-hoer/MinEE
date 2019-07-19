@@ -131,21 +131,21 @@ public final class MappingHelper {
 	}
 
 	public static Object parseType(final String object, final Class<?> cls) {
-		if (Integer.class.isAssignableFrom(cls)) {
+		if (Integer.class.isAssignableFrom(cls) || int.class.isAssignableFrom(cls)) {
 			return Integer.valueOf(object);
-		} else if (Long.class.isAssignableFrom(cls)) {
+		} else if (Long.class.isAssignableFrom(cls) || long.class.isAssignableFrom(cls)) {
 			return Long.valueOf(object);
-		} else if (Byte.class.isAssignableFrom(cls)) {
+		} else if (Byte.class.isAssignableFrom(cls) || byte.class.isAssignableFrom(cls)) {
 			return Byte.valueOf(object);
-		} else if (Boolean.class.isAssignableFrom(cls)) {
+		} else if (Boolean.class.isAssignableFrom(cls) || boolean.class.isAssignableFrom(cls)) {
 			return Boolean.valueOf(object);
-		} else if (Short.class.isAssignableFrom(cls)) {
+		} else if (Short.class.isAssignableFrom(cls) || short.class.isAssignableFrom(cls)) {
 			return Short.valueOf(object);
-		} else if (Float.class.isAssignableFrom(cls)) {
+		} else if (Float.class.isAssignableFrom(cls) || float.class.isAssignableFrom(cls)) {
 			return Float.valueOf(object);
-		} else if (Double.class.isAssignableFrom(cls)) {
+		} else if (Double.class.isAssignableFrom(cls) || double.class.isAssignableFrom(cls)) {
 			return Double.valueOf(object);
-		} else if (Character.class.isAssignableFrom(cls)) {
+		} else if (Character.class.isAssignableFrom(cls) || char.class.isAssignableFrom(cls)) {
 			return object.charAt(0);
 		} else if (UUID.class.isAssignableFrom(cls)) {
 			return UUID.fromString(object);
@@ -153,6 +153,26 @@ public final class MappingHelper {
 			return object;
 		} else if (Date.class.isAssignableFrom(cls)) {
 			return new Date(Long.parseLong(object));
+		}
+		return null;
+	}
+	public static Object getDefaultPrimitive(final Class<?> cls) {
+		if (int.class.isAssignableFrom(cls)) {
+			return Integer.valueOf(0);
+		} else if (long.class.isAssignableFrom(cls)) {
+			return Long.valueOf(0);
+		} else if (byte.class.isAssignableFrom(cls)) {
+			return Byte.valueOf((byte)0);
+		} else if (boolean.class.isAssignableFrom(cls)) {
+			return Boolean.FALSE;
+		} else if (short.class.isAssignableFrom(cls)) {
+			return Short.valueOf((short)0);
+		} else if ( float.class.isAssignableFrom(cls)) {
+			return Float.valueOf(0f);
+		} else if (double.class.isAssignableFrom(cls)) {
+			return Double.valueOf(0d);
+		} else if (char.class.isAssignableFrom(cls)) {
+			return '\0';
 		}
 		return null;
 	}

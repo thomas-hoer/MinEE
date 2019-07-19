@@ -1,5 +1,7 @@
 package de.minee.util;
 
+import de.minee.jpa.MappingHelper;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -69,9 +71,11 @@ public final class ProxyFactory {
 				lastCalledProperty = methodName.substring(SUBSTR_GET);
 			}
 			lastCalledProperty = lastCalledProperty.substring(0, 1).toLowerCase() + lastCalledProperty.substring(1);
+			if(proceed.getReturnType().isPrimitive()) {
+				return MappingHelper.getDefaultPrimitive(proceed.getReturnType());
+			}
 			return null;
 		}
-
 	}
 
 	public static class ProxyException extends Exception {
