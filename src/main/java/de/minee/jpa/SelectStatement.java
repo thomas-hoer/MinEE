@@ -170,7 +170,7 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 		try {
 			final Object value = rs.getObject(field.getName());
 			if (value != null) {
-				if (value.getClass().isAssignableFrom(field.getType())) {
+				if (field.getType().isAssignableFrom(value.getClass())) {
 					ReflectionUtil.executeSet(field, obj, value);
 				} else if (UUID.class.equals(value.getClass())) {
 					final Object resolvedValue = select(field.getType(), getConnection()).byId((UUID) value,

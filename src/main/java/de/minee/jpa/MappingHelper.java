@@ -23,7 +23,7 @@ public final class MappingHelper {
 	private static final String BOOLEAN = "BOOLEAN";
 	private static final String SMALLINT = "SMALLINT";
 	private static final String UUID_TYPE = "UUID";
-	private static final String DATE_TYPE = "DATE";
+	private static final String DATE_TYPE = "DATETIME";
 
 	private static final Map<Class<?>, String> MAPPED_TYPES = new HashMap<>();
 	private static final UUID NULL_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
