@@ -53,7 +53,7 @@ public abstract class AbstractDAO {
 	private Connection createConnection() {
 		synchronized (connections) {
 			final String connectionString = getConnectionString();
-			if (connections.containsKey(connectionString)) {
+			if (connections.containsKey(connectionString) && !"jdbc:h2:mem:".equals(connectionString)) {
 				return connections.get(connectionString);
 			}
 			Connection connection;
@@ -384,5 +384,18 @@ public abstract class AbstractDAO {
 	 */
 	public <T> void deleteShallow(final T objectToDelete) {
 		PreparedDelete.delete(objectToDelete, getConnection(), Cascade.NONE);
+	}
+
+	public int executeNative(final String sql, final Object... args) {
+		try (final PreparedStatement preparedStatement = getConnection().prepareStatement(sql)){
+			int i = 1;
+			for(final Object object : args) {
+				final Object dbObject = MappingHelper.getDbObject(object);
+				preparedStatement.setObject(i++, dbObject);
+			}
+			return preparedStatement.executeUpdate();
+		} catch (final SQLException e) {
+			throw new DatabaseException(e);
+		}
 	}
 }
