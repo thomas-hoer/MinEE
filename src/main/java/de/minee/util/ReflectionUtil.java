@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javassist.Modifier;
+
 public final class ReflectionUtil {
 
 	private static final String ASSERTION_CLASS_SHOULD_NOT_BE_NULL = "Class should not be null";
@@ -50,7 +52,7 @@ public final class ReflectionUtil {
 		final Field[] declaredFields = cls.getDeclaredFields();
 		// The filter is needed such that the code behave the same with and without the
 		// Jacoco plugin
-		final List<Field> fields = Arrays.stream(declaredFields).filter(field -> !"$jacocoData".equals(field.getName()))
+		final List<Field> fields = Arrays.stream(declaredFields).filter(field -> !Modifier.isStatic(field.getModifiers())).filter(field -> !"$jacocoData".equals(field.getName()))
 				.collect(Collectors.toList());
 		if (!Object.class.equals(cls) && !cls.isEnum() && !cls.isInterface()) {
 			fields.addAll(getAllFields(cls.getSuperclass()));
