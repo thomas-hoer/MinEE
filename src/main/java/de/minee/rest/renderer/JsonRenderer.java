@@ -4,6 +4,7 @@ import de.minee.util.Assertions;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -79,14 +80,24 @@ public class JsonRenderer extends AbstractRenderer {
 		final StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append("{");
 		final StringJoiner stringJoiner = new StringJoiner(",");
-		stringJoiner.add("Type:\"" + type.getSimpleName() + "\"");
+		stringJoiner.add("\"type\":\"" + type.getSimpleName() + "\"");
 		for (final Field field : ReflectionUtil.getAllFields(type)) {
 			final Class<?> fieldType = field.getType();
 			final Field idField = ReflectionUtil.getDeclaredField(fieldType, "id");
-			if (idField == null) {
-				stringJoiner.add(field.getName() + ":\"" + fieldType.getSimpleName() + "\"");
+			if (fieldType.isArray() || List.class.isAssignableFrom(fieldType)) {
+				final Class<?> subType = ReflectionUtil.getCollectionType(field);
+				stringJoiner.add("\"" + field.getName() + "\":{\"type\":\"List\",\"of\":"
+						+ generateTypeDescription(subType, knownTypes) + "}");
+			} else if (fieldType.isEnum()) {
+				final StringJoiner values = new StringJoiner(",", "[", "]");
+				Arrays.stream(fieldType.getEnumConstants()).map(enumEntry -> String.format("\"%s\"", enumEntry))
+						.forEach(values::add);
+				stringJoiner.add("\"" + field.getName() + "\":{\"type\":\"Enum\",\"name\":\""
+						+ fieldType.getSimpleName() + "\",\"values\":" + values.toString() + "}");
+			} else if (idField == null) {
+				stringJoiner.add("\"" + field.getName() + "\":{\"type\":\"" + fieldType.getSimpleName() + "\"}");
 			} else {
-				stringJoiner.add(field.getName() + ":" + generateTypeDescription(fieldType, knownTypes));
+				stringJoiner.add("\"" + field.getName() + "\":" + generateTypeDescription(fieldType, knownTypes));
 			}
 		}
 		stringBuilder.append(stringJoiner.toString());

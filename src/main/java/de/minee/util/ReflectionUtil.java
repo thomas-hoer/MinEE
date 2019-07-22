@@ -3,6 +3,7 @@ package de.minee.util;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -52,8 +53,9 @@ public final class ReflectionUtil {
 		final Field[] declaredFields = cls.getDeclaredFields();
 		// The filter is needed such that the code behave the same with and without the
 		// Jacoco plugin
-		final List<Field> fields = Arrays.stream(declaredFields).filter(field -> !Modifier.isStatic(field.getModifiers())).filter(field -> !"$jacocoData".equals(field.getName()))
-				.collect(Collectors.toList());
+		final List<Field> fields = Arrays.stream(declaredFields)
+				.filter(field -> !Modifier.isStatic(field.getModifiers()))
+				.filter(field -> !"$jacocoData".equals(field.getName())).collect(Collectors.toList());
 		if (!Object.class.equals(cls) && !cls.isEnum() && !cls.isInterface()) {
 			fields.addAll(getAllFields(cls.getSuperclass()));
 		}
@@ -172,4 +174,8 @@ public final class ReflectionUtil {
 		return methods;
 	}
 
+	public static Class<?> getCollectionType(final Field field) {
+		final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
+		return (Class<?>) mapToType.getActualTypeArguments()[0];
+	}
 }

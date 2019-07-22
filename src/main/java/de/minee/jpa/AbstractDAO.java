@@ -5,7 +5,6 @@ import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -289,8 +288,7 @@ public abstract class AbstractDAO {
 	private static void createMappingTableFor(final Field field, final Statement statement) {
 		final Class<?> fromClazz = field.getDeclaringClass();
 
-		final ParameterizedType mapToType = (ParameterizedType) field.getGenericType();
-		final Class<?> type = (Class<?>) mapToType.getActualTypeArguments()[0];
+		final Class<?> type = ReflectionUtil.getCollectionType(field);
 
 		final StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append("CREATE TABLE ");
@@ -387,9 +385,9 @@ public abstract class AbstractDAO {
 	}
 
 	public int executeNative(final String sql, final Object... args) {
-		try (final PreparedStatement preparedStatement = getConnection().prepareStatement(sql)){
+		try (final PreparedStatement preparedStatement = getConnection().prepareStatement(sql)) {
 			int i = 1;
-			for(final Object object : args) {
+			for (final Object object : args) {
 				final Object dbObject = MappingHelper.getDbObject(object);
 				preparedStatement.setObject(i++, dbObject);
 			}

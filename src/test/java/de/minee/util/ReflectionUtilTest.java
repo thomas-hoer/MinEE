@@ -205,8 +205,7 @@ public class ReflectionUtilTest {
 	@Test
 	public void testGetAllFieldsEnum() {
 		final List<Field> fields = ReflectionUtil.getAllFields(Cascade.class);
-		// Each enum value + array VALUES
-		Assert.assertEquals(6, fields.size());
+		Assert.assertEquals(0, fields.size());
 	}
 
 	@Test
