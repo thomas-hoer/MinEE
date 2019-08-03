@@ -36,16 +36,17 @@ public class JsonRenderer extends AbstractRenderer {
 		if (cls.isPrimitive() || Boolean.class.isAssignableFrom(cls)) {
 			stringBuilder.append(input);
 			return;
-		}
-		if (cls.isArray() || List.class.isAssignableFrom(cls)) {
+		} else if (cls.isArray() || List.class.isAssignableFrom(cls)) {
 			stringBuilder.append('[');
 			final StringJoiner stringJoiner = new StringJoiner(",");
 			forEach(input, o -> stringJoiner.add(render(o, knownObjects)));
 			stringBuilder.append(stringJoiner.toString());
 			stringBuilder.append(']');
 			return;
-		}
-		if (isDirectPrintable(cls)) {
+		} else if (isNumber(cls)) {
+			stringBuilder.append(escape(input.toString()));
+			return;
+		} else if (isDirectPrintable(cls)) {
 			stringBuilder.append('"').append(escape(input.toString())).append('"');
 			return;
 		}

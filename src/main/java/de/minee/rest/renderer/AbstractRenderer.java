@@ -38,6 +38,10 @@ public abstract class AbstractRenderer implements Renderer {
 		return cls.isPrimitive() || cls.isEnum() || isBaseClass(cls);
 	}
 
+	protected static boolean isNumber(final Class<?> cls) {
+		return cls.isPrimitive() || Number.class.isAssignableFrom(cls);
+	}
+
 	protected static boolean isBaseClass(final Class<?> cls) {
 		return BASE_CLASSES.contains(cls);
 	}
