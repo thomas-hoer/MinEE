@@ -73,7 +73,7 @@ class PreparedUpdate<S> extends AbstractPreparedQuery<S> {
 			final Object dbObject = MappingHelper.getDbObject(fieldElementToUpdate);
 			preparedStatement.setObject(i++, dbObject);
 			if (Cascade.UPDATE == cascade && dbObject != fieldElementToUpdate && UUID.class.isInstance(dbObject)) {
-				update(fieldElementToUpdate, connection, cascade);
+				update(fieldElementToUpdate, getConnection(), cascade);
 			}
 		}
 
@@ -108,11 +108,11 @@ class PreparedUpdate<S> extends AbstractPreparedQuery<S> {
 			final Object element;
 			if (MappingHelper.isSupportedType(listElement.getClass())) {
 				element = listElement;
-			}else if(listElement.getClass().isEnum()) {
+			} else if (listElement.getClass().isEnum()) {
 				element = listElement.toString();
 			} else {
 				if (Cascade.UPDATE == cascade) {
-					update(listElement, connection, cascade);
+					update(listElement, getConnection(), cascade);
 				}
 				element = MappingHelper.getId(listElement);
 			}

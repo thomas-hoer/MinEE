@@ -18,7 +18,6 @@ import java.util.UUID;
 public abstract class AbstractStatement<T> extends AbstractQuery {
 
 	private final Class<T> clazz;
-	private final Connection connection;
 	private final List<AbstractAndOrConnection<T, ? extends AbstractStatement<T>>> connections = new ArrayList<>();
 	private final List<AbstractJoinClause<?, T>> joins = new ArrayList<>();
 	private String additionalWhereClause;
@@ -30,10 +29,9 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 	 * @param connection Database connection
 	 */
 	public AbstractStatement(final Class<T> cls, final Connection connection) {
+		super(connection);
 		Assertions.assertNotNull(cls, "The type of a table cannot be null. Please pass over a valid Table-Class");
-		Assertions.assertNotNull(connection, "Database connection cannot be null");
 		this.clazz = cls;
-		this.connection = connection;
 	}
 
 	public <U extends AbstractStatement<T>> void add(final AbstractAndOrConnection<T, U> andOrConnection) {
@@ -57,7 +55,7 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 	 *
 	 * @param id Id of the entry
 	 * @return Object with Id id or null if no entry can be found @ SQLException in
-	 * case of an error
+	 *         case of an error
 	 */
 	public T byId(final UUID id) {
 		return byId(id, new HashMap<>());
@@ -71,7 +69,7 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 	 * @param id             Id of the entry
 	 * @param handledObjects Object cache of fetched entries in the same session
 	 * @return Object with Id id or null if no entry can be found @ SQLException in
-	 * case of an error
+	 *         case of an error
 	 */
 	protected abstract T byId(final UUID id, final Map<Object, Object> handledObjects);
 
@@ -116,11 +114,6 @@ public abstract class AbstractStatement<T> extends AbstractQuery {
 			query.append(whereClause.toString());
 		}
 		return query.toString();
-	}
-
-	@Override
-	protected Connection getConnection() {
-		return connection;
 	}
 
 	/**

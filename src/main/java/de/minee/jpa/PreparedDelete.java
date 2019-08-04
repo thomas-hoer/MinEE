@@ -76,7 +76,7 @@ public class PreparedDelete<T> extends AbstractPreparedQuery<T> {
 
 				final Object dbObject = MappingHelper.getDbObject(fieldElementToDelete);
 				if (Cascade.DELETE == cascade && dbObject != fieldElementToDelete && UUID.class.isInstance(dbObject)) {
-					delete(fieldElementToDelete, connection, cascade);
+					delete(fieldElementToDelete, getConnection(), cascade);
 				}
 			}
 			preparedStatement.setObject(1, objectId);
@@ -108,7 +108,7 @@ public class PreparedDelete<T> extends AbstractPreparedQuery<T> {
 				final Object element = MappingHelper.getId(listElement);
 				if (existingElements.contains(element)) {
 					if (Cascade.DELETE == cascade) {
-						delete(listElement, connection, cascade);
+						delete(listElement, getConnection(), cascade);
 					}
 				} else {
 					throw new MappingException("Inconsistence found. The List " + field.toString()

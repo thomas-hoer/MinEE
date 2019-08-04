@@ -20,7 +20,6 @@ public abstract class AbstractPreparedQuery<T> extends AbstractQuery {
 	private static final Logger LOGGER = Logger.getLogger(AbstractPreparedQuery.class);
 
 	protected final Cascade cascade;
-	protected final Connection connection;
 
 	protected final Map<Field, PreparedStatement> mappingSelect = new HashMap<>();
 	protected final Map<Field, PreparedStatement> mappingInsert = new HashMap<>();
@@ -28,16 +27,15 @@ public abstract class AbstractPreparedQuery<T> extends AbstractQuery {
 	protected final Map<Field, PreparedStatement> mappingDeleteAll = new HashMap<>();
 
 	protected AbstractPreparedQuery(final Connection connection, final Cascade cascade) {
-		Assertions.assertNotNull(connection, "Database connection cannot be null");
+		super(connection);
 		Assertions.assertNotNull(cascade, "Cascade cannot be null");
-		this.connection = connection;
 		this.cascade = cascade;
 	}
 
 	protected final void prepareInsert(final Field field) {
 		final Class<?> cls = field.getDeclaringClass();
 		try {
-			mappingInsert.put(field, connection.prepareStatement(
+			mappingInsert.put(field, getConnection().prepareStatement(
 					String.format("INSERT INTO Mapping_%s_%s VALUES (?,?)", cls.getSimpleName(), field.getName())));
 		} catch (final SQLException e) {
 			throw new DatabaseException(e);
@@ -50,7 +48,7 @@ public abstract class AbstractPreparedQuery<T> extends AbstractQuery {
 		final Class<?> type = (Class<?>) mapToType.getActualTypeArguments()[0];
 		try {
 			mappingSelect.put(field,
-					connection.prepareStatement(String.format("SELECT %1$s FROM Mapping_%2$s_%3$s WHERE %2$s =?",
+					getConnection().prepareStatement(String.format("SELECT %1$s FROM Mapping_%2$s_%3$s WHERE %2$s =?",
 							type.getSimpleName(), cls.getSimpleName(), field.getName())));
 		} catch (final SQLException e) {
 			throw new DatabaseException(e);
@@ -96,14 +94,9 @@ public abstract class AbstractPreparedQuery<T> extends AbstractQuery {
 		}
 	}
 
-	@Override
-	protected Connection getConnection() {
-		return connection;
-	}
-
 	final PreparedStatement prepare(final String query) {
 		try {
-			return connection.prepareStatement(query);
+			return getConnection().prepareStatement(query);
 		} catch (final SQLException e) {
 			throw new DatabaseException(e);
 		}

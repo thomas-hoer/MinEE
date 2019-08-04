@@ -82,7 +82,7 @@ public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 			}
 			final Object dbObject = MappingHelper.getDbObject(fieldElementToInsert);
 			if (Cascade.INSERT == cascade && dbObject != fieldElementToInsert && UUID.class.isInstance(dbObject)) {
-				final UUID id = insert(fieldElementToInsert, connection, cascade, handledObjects);
+				final UUID id = insert(fieldElementToInsert, getConnection(), cascade, handledObjects);
 				preparedStatement.setObject(i++, id);
 			} else {
 				preparedStatement.setObject(i++, dbObject);
@@ -113,12 +113,12 @@ public class PreparedInsert<T> extends AbstractPreparedQuery<T> {
 			}
 			if (MappingHelper.isSupportedType(listElement.getClass())) {
 				mappingsToInsert.add(new Pair<>(field, listElement));
-			}else if( listElement.getClass().isEnum()) {
+			} else if (listElement.getClass().isEnum()) {
 				mappingsToInsert.add(new Pair<>(field, listElement.toString()));
 			} else {
 				final UUID insertId;
 				if (Cascade.INSERT == cascade) {
-					insertId = insert(listElement, connection, cascade);
+					insertId = insert(listElement, getConnection(), cascade);
 				} else {
 					insertId = MappingHelper.getId(listElement);
 				}

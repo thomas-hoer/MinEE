@@ -73,7 +73,7 @@ class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 			final Object dbObject = MappingHelper.getDbObject(fieldElementToMerge);
 			preparedStatement.setObject(i++, dbObject);
 			if (Cascade.MERGE == cascade && dbObject != fieldElementToMerge && UUID.class.isInstance(dbObject)) {
-				merge(fieldElementToMerge, connection, cascade);
+				merge(fieldElementToMerge, getConnection(), cascade);
 			}
 		}
 
@@ -107,11 +107,11 @@ class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 			final Object element;
 			if (MappingHelper.isSupportedType(listElement.getClass())) {
 				element = listElement;
-			}else if(listElement.getClass().isEnum()) {
+			} else if (listElement.getClass().isEnum()) {
 				element = listElement.toString();
 			} else {
 				if (Cascade.MERGE == cascade) {
-					merge(listElement, connection, cascade);
+					merge(listElement, getConnection(), cascade);
 				}
 				element = MappingHelper.getId(listElement);
 			}

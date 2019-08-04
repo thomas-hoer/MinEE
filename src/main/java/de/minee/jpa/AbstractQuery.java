@@ -1,6 +1,7 @@
 package de.minee.jpa;
 
 import de.minee.jpa.AbstractPreparedQuery.ResultSetConsumer;
+import de.minee.util.Assertions;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,7 +11,16 @@ import java.sql.Statement;
 
 public abstract class AbstractQuery {
 
-	protected abstract Connection getConnection();
+	private final Connection connection;
+
+	protected AbstractQuery(final Connection connection) {
+		this.connection = connection;
+	}
+
+	protected Connection getConnection() {
+		Assertions.assertNotNull(connection, "Database connection cannot be null");
+		return connection;
+	}
 
 	protected static void executeQuery(final PreparedStatement statement, final ResultSetConsumer consumer) {
 		try (ResultSet resultSet = statement.executeQuery()) {
