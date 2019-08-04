@@ -44,7 +44,7 @@ public class JsonRenderer extends AbstractRenderer {
 			stringBuilder.append(']');
 			return;
 		} else if (isNumber(cls)) {
-			stringBuilder.append(escape(input.toString()));
+			stringBuilder.append(input.toString());
 			return;
 		} else if (isDirectPrintable(cls)) {
 			stringBuilder.append('"').append(escape(input.toString())).append('"');
@@ -59,7 +59,6 @@ public class JsonRenderer extends AbstractRenderer {
 				stringJoiner.add("\"" + field.getName() + "\":" + render(fieldObject, knownObjects));
 			}
 		}
-		knownObjects.remove(input);
 		stringBuilder.append(stringJoiner.toString());
 		stringBuilder.append("}");
 

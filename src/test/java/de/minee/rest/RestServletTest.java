@@ -253,6 +253,7 @@ public class RestServletTest {
 		hateoesServlet.service(request, response);
 		final String output = response.getWrittenOutput();
 		assertNotNull(output);
+		assertFalse(output.contains("value=\"null\""));
 		assertTrue(output.contains(id.toString()));
 	}
 

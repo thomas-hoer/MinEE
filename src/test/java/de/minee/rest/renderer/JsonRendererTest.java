@@ -1,6 +1,7 @@
 package de.minee.rest.renderer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -42,8 +43,14 @@ public class JsonRendererTest {
 	@Test
 	public void testForEditNull() {
 		final String result = renderer.forEdit(null);
-
 		Assert.assertNotNull(result);
+	}
+
+	@Test
+	public void testForCreateEnum() {
+		final String result = renderer.forCreate(EnumObject.class);
+		Assert.assertTrue(result.contains("\"type\":\"Enum\""));
+		Assert.assertTrue(result.contains("[\"ENUM_VALUE_1\",\"ENUM_VALUE_2\",\"ENUM_VALUE_3\",\"ENUM_VALUE_4\",\"ENUM_VALUE_5\",\"ENUM_VALUE_6\"]"));
 	}
 
 	@Test
@@ -81,8 +88,8 @@ public class JsonRendererTest {
 	public void testRenderCyclic() {
 		final Object o = createCyclicObject();
 		final String output = renderer.render(o);
-		assertNotNull(output);
-		assertTrue(output.contains(ID_3.toString()));
+		final String expected = "{\"id\":\""+ID_3.toString()+"\",\"child\":\""+ID_3.toString()+"\",\"child2\":\""+ID_3.toString()+"\"}";
+		assertEquals(expected , output);
 	}
 
 	/**
@@ -110,11 +117,11 @@ public class JsonRendererTest {
 		final String output = renderer.forCreate(RecursiveObject.class);
 		assertNotNull(output);
 		assertTrue(output.contains("child"));
-		assertTrue(output.contains("RecursiveObject"));
+		assertTrue(output.contains("\"type\":\"RecursiveObject\""));
+		assertTrue(output.contains("\"child\":\"RecursiveObject\""));
 		assertTrue(output.contains("id"));
-		assertTrue(output.contains("UUID"));
-		assertTrue(output.contains("name"));
-		assertTrue(output.contains("String"));
+		assertTrue(output.contains("{\"type\":\"UUID\"}"));
+		assertTrue(output.contains("\"name\":{\"type\":\"String\"}"));
 	}
 
 	@Test
@@ -174,9 +181,54 @@ public class JsonRendererTest {
 		assertEquals("{\"bool1\":true}", actual);
 	}
 
+	@Test
+	public void testInteger1() {
+		final TestInteger testInt = new TestInteger();
+		final String actual = renderer.render(testInt);
+		assertEquals("{\"int1\":0}", actual);
+	}
+
+	@Test
+	public void testInteger2() {
+		final TestInteger testInt = new TestInteger();
+		testInt.int1 = 1;
+		testInt.int2 = -1;
+		final String actual = renderer.render(testInt);
+		assertEquals("{\"int1\":1,\"int2\":-1}", actual);
+	}
+
+	@Test
+	public void testInteger3() {
+		final TestInteger testInt = new TestInteger();
+		testInt.int1 = 42;
+		testInt.int2 = Integer.MAX_VALUE;
+		final String actual = renderer.render(testInt);
+		assertEquals("{\"int1\":42,\"int2\":2147483647}", actual);
+	}
+	@Test
+	public void testEscapeString() {
+		final SimpleReference sr = new SimpleReference();
+		final String escapeCharacters = "\"\\\t";
+		sr.setName(escapeCharacters);
+		final String output = renderer.render(sr);
+		assertFalse(output.contains(escapeCharacters));
+		assertTrue(output.contains("\\\"\\\\\\t"));
+	}
+
+	@Test
+	public void testGetContentType() {
+		final String contentType = renderer.getContentType();
+		assertEquals("application/json", contentType);
+	}
+
 	static class TestBoolean {
 		boolean bool1;
 		Boolean bool2;
+	}
+
+	static class TestInteger {
+		int int1;
+		Integer int2;
 	}
 
 	private static Object createExampleObject() {
@@ -195,6 +247,7 @@ public class JsonRendererTest {
 		final RecursiveObject object = new RecursiveObject();
 		object.setId(ID_3);
 		object.setChild(object);
+		object.setChild2(object);
 
 		return object;
 	}

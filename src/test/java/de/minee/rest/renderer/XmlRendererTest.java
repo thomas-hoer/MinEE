@@ -11,7 +11,6 @@ import de.minee.datamodel.ReferenceChain;
 import de.minee.datamodel.ReferenceList;
 import de.minee.datamodel.SimpleReference;
 import de.minee.datamodel.enumeration.Enumeration;
-import de.minee.rest.renderer.XmlRenderer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +82,8 @@ public class XmlRendererTest {
 		final Object o = createCyclicObject();
 		final String output = renderer.render(o);
 		assertNotNull(output);
-		assertTrue(output.contains(ID_3.toString()));
+		assertTrue(output.contains(String.format("<id>%s</id>", ID_3)));
+		assertTrue(output.contains(String.format("<child>%s</child>", ID_3)));
 	}
 
 	/**
@@ -110,23 +110,26 @@ public class XmlRendererTest {
 	public void testForCreateRecursive() {
 		final String output = renderer.forCreate(RecursiveObject.class);
 		assertNotNull(output);
-		assertTrue(output.contains("child"));
-		assertTrue(output.contains("RecursiveObject"));
-		assertTrue(output.contains("id"));
-		assertTrue(output.contains("UUID"));
-		assertTrue(output.contains("name"));
-		assertTrue(output.contains("String"));
+		assertTrue(output.contains("<child>RecursiveObject</child>"));
+		assertTrue(output.contains("<child2>RecursiveObject</child2>"));
+		assertTrue(output.contains("<id>UUID</id>"));
+		assertTrue(output.contains("<name>String</name>"));
 	}
 
 	@Test
 	public void testForCreateHierarchy() {
 		final String output = renderer.forCreate(ReferenceChain.class);
-		assertTrue(output.contains("ReferenceChain"));
-		assertTrue(output.contains("simpleReference"));
-		assertTrue(output.contains("id"));
-		assertTrue(output.contains("UUID"));
-		assertTrue(output.contains("name"));
-		assertTrue(output.contains("String"));
+		assertTrue(output.contains("<ReferenceChain>"));
+		assertTrue(output.contains("</ReferenceChain>"));
+		assertTrue(output.contains("<simpleReference>"));
+		assertTrue(output.contains("</simpleReference>"));
+		assertTrue(output.contains("<id>UUID</id>"));
+		assertTrue(output.contains("<name>String</name>"));
+		assertTrue(output.contains("<string>String</string>"));
+		assertTrue(output.contains("<enumeration>Enumeration</enumeration>"));
+		assertTrue(output.contains("<enumList>List</enumList>"));
+		assertTrue(output.contains("<value>String</value>"));
+		assertTrue(output.contains("<referenceChain>ReferenceChain</referenceChain>"));
 	}
 
 	@Test
@@ -147,6 +150,18 @@ public class XmlRendererTest {
 		enumObject.setEnumeration(Enumeration.ENUM_VALUE_2);
 		final String output2 = renderer.render(enumObject);
 		assertTrue(output2.contains(Enumeration.ENUM_VALUE_2.name()));
+	}
+
+	@Test
+	public void testValidXml() {
+		final String output = renderer.render(new Object());
+		assertEquals("<?xml version=\"1.0\"?><Object></Object>", output);
+	}
+
+	@Test
+	public void testGetContentType() {
+		final String contentType = renderer.getContentType();
+		assertEquals("application/xml", contentType);
 	}
 
 	private static Object createExampleObject() {

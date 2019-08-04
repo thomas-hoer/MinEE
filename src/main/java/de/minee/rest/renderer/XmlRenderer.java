@@ -16,6 +16,7 @@ public class XmlRenderer extends AbstractRenderer {
 			return "";
 		}
 		final StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append("<?xml version=\"1.0\"?>");
 		stringBuilder.append("<" + input.getClass().getSimpleName() + ">");
 		toXml(input, stringBuilder, new HashSet<>());
 		stringBuilder.append("</" + input.getClass().getSimpleName() + ">");

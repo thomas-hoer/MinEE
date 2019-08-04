@@ -6,6 +6,7 @@ public class RecursiveObject {
 
 	private UUID id;
 	private RecursiveObject child;
+	private RecursiveObject child2;
 	private String name;
 
 	public UUID getId() {
@@ -22,6 +23,14 @@ public class RecursiveObject {
 
 	public void setChild(final RecursiveObject child) {
 		this.child = child;
+	}
+
+	public RecursiveObject getChild2() {
+		return child2;
+	}
+
+	public void setChild2(final RecursiveObject child2) {
+		this.child2 = child2;
 	}
 
 	public String getName() {

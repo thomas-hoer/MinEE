@@ -1,6 +1,7 @@
 package de.minee.rest.renderer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -11,7 +12,6 @@ import de.minee.datamodel.ReferenceChain;
 import de.minee.datamodel.ReferenceList;
 import de.minee.datamodel.SimpleReference;
 import de.minee.datamodel.enumeration.Enumeration;
-import de.minee.rest.renderer.HtmlRenderer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +31,7 @@ public class HtmlRendererTest {
 	@Test
 	public void testRenderNull() {
 		final String result = renderer.render(null);
-
-		Assert.assertNotNull(result);
+		Assert.assertEquals("<!DOCTYPE html><html><body></body></html>", result);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -42,16 +41,18 @@ public class HtmlRendererTest {
 
 	@Test(expected = NullPointerException.class)
 	public void testForEditNull() {
-		final String result = renderer.forEdit(null);
+		renderer.forEdit(null);
 	}
 
 	@Test
 	public void testRender() {
-		final Object o = createExampleObject();
+		final ReferenceChain o = createExampleObject();
 		final String output = renderer.render(o);
 		assertNotNull(output);
 		assertTrue(output.contains("RC-Name"));
 		assertTrue(output.contains("SR-Value"));
+		assertFalse(output.contains(o.getId().toString()));
+		assertFalse(output.contains(o.getSimpleReference().getId().toString()));
 	}
 
 	@Test
@@ -123,11 +124,22 @@ public class HtmlRendererTest {
 
 	@Test
 	public void testForEdit() {
-		final Object o = createExampleObject();
+		final ReferenceChain o = createExampleObject();
 		final String output = renderer.forEdit(o);
 		assertNotNull(output);
-		assertTrue(output.contains(ID_1.toString()));
-		assertTrue(output.contains(ID_2.toString()));
+		assertTrue(output.contains("method=\"POST\""));
+		assertTrue(output.contains(String.format("value=\"%s\"",ID_1)));
+		assertTrue(output.contains(String.format("value=\"%s\"",ID_2)));
+		assertTrue(output.contains(String.format("value=\"%s\"","RC-Name")));
+		assertTrue(output.contains("name=\"simpleReference\""));
+		assertTrue(output.contains("name=\"id"));
+		assertTrue(output.contains("name=\"name"));
+		assertTrue(output.contains("placeholder=\"simpleReference\""));
+		assertTrue(output.contains("placeholder=\"id\""));
+		assertTrue(output.contains("placeholder=\"name\""));
+
+		// Only show the root object, referenced objects can not be modified directly
+		assertFalse(output.contains(o.getSimpleReference().getValue()));
 	}
 
 	@Test
@@ -141,7 +153,19 @@ public class HtmlRendererTest {
 		assertTrue(output2.contains(Enumeration.ENUM_VALUE_2.name()));
 	}
 
-	private static Object createExampleObject() {
+	@Test
+	public void testValidHtml() {
+		final String output = renderer.render(new Object());
+		assertEquals("<!DOCTYPE html><html><body><div class=\"Object\"></div></body></html>", output);
+	}
+
+	@Test
+	public void testGetContentType() {
+		final String contentType = renderer.getContentType();
+		assertEquals("text/html", contentType);
+	}
+
+	private static ReferenceChain createExampleObject() {
 		final SimpleReference simpleReference = new SimpleReference();
 		simpleReference.setId(ID_1);
 		simpleReference.setValue("SR-Value");
@@ -153,11 +177,12 @@ public class HtmlRendererTest {
 		return object;
 	}
 
-	private static Object createCyclicObject() {
+	private static RecursiveObject createCyclicObject() {
 		final RecursiveObject object = new RecursiveObject();
 		object.setId(ID_3);
 		object.setChild(object);
 
 		return object;
 	}
+
 }

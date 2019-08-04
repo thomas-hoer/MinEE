@@ -1,6 +1,5 @@
 package de.minee.rest.renderer;
 
-import de.minee.util.Assertions;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
@@ -64,7 +63,6 @@ public class HtmlRenderer extends AbstractRenderer {
 
 	@Override
 	public String forCreate(final Class<?> cls) {
-		Assertions.assertNotNull(cls, "Class should not be null");
 		final StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append("<!DOCTYPE html><html><body><form method=\"POST\" action=\"create\">");
 		for (final Field field : ReflectionUtil.getAllFields(cls)) {
