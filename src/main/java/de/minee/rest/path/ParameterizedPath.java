@@ -33,7 +33,7 @@ public class ParameterizedPath {
 
 	public int paramPos(final String pathParam) {
 		for (int pos = 0; pos < pathParts.size(); pos++) {
-			if (pathParts.get(pos).mathParamName(pathParam)) {
+			if (pathParts.get(pos).matchParamName(pathParam)) {
 				return pos;
 			}
 		}

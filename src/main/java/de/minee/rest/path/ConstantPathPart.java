@@ -39,7 +39,7 @@ public final class ConstantPathPart implements IParameterPathPart {
 	}
 
 	@Override
-	public boolean mathParamName(final String paramPart) {
+	public boolean matchParamName(final String paramPart) {
 		return false;
 	}
 

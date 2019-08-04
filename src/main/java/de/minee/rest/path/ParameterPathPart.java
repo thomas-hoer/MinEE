@@ -17,7 +17,7 @@ public class ParameterPathPart implements IParameterPathPart {
 	}
 
 	@Override
-	public boolean mathParamName(final String paramPart) {
+	public boolean matchParamName(final String paramPart) {
 		return pathPart.equals(paramPart);
 	}
 
