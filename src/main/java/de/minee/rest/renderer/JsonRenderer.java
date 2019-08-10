@@ -5,6 +5,7 @@ import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -48,6 +49,9 @@ public class JsonRenderer extends AbstractRenderer {
 			return;
 		} else if (isDirectPrintable(cls)) {
 			stringBuilder.append('"').append(escape(input.toString())).append('"');
+			return;
+		} else if (input instanceof Date) {
+			stringBuilder.append(((Date) input).getTime());
 			return;
 		}
 		stringBuilder.append("{");

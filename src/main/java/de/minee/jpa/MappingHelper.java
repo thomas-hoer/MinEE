@@ -23,7 +23,7 @@ public final class MappingHelper {
 	private static final String BOOLEAN = "BOOLEAN";
 	private static final String SMALLINT = "SMALLINT";
 	private static final String UUID_TYPE = "UUID";
-	private static final String DATE_TYPE = "DATETIME";
+	private static final String DATE_TYPE = "TIMESTAMP";
 
 	private static final Map<Class<?>, String> MAPPED_TYPES = new HashMap<>();
 	private static final UUID NULL_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
@@ -106,6 +106,9 @@ public final class MappingHelper {
 		if (List.class.isAssignableFrom(clazz)) {
 			return null;
 		}
+		if (Date.class.isAssignableFrom(clazz)) {
+			return object;
+		}
 		final UUID id = (UUID) ReflectionUtil.executeGet("id", object);
 		if (id == null) {
 			return NULL_UUID;
@@ -156,18 +159,19 @@ public final class MappingHelper {
 		}
 		return null;
 	}
+
 	public static Object getDefaultPrimitive(final Class<?> cls) {
 		if (int.class.isAssignableFrom(cls)) {
 			return Integer.valueOf(0);
 		} else if (long.class.isAssignableFrom(cls)) {
 			return Long.valueOf(0);
 		} else if (byte.class.isAssignableFrom(cls)) {
-			return Byte.valueOf((byte)0);
+			return Byte.valueOf((byte) 0);
 		} else if (boolean.class.isAssignableFrom(cls)) {
 			return Boolean.FALSE;
 		} else if (short.class.isAssignableFrom(cls)) {
-			return Short.valueOf((short)0);
-		} else if ( float.class.isAssignableFrom(cls)) {
+			return Short.valueOf((short) 0);
+		} else if (float.class.isAssignableFrom(cls)) {
 			return Float.valueOf(0f);
 		} else if (double.class.isAssignableFrom(cls)) {
 			return Double.valueOf(0d);
