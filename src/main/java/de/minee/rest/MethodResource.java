@@ -1,10 +1,12 @@
 package de.minee.rest;
 
+import de.minee.cdi.CdiUtil;
+import de.minee.jpa.MappingHelper;
 import de.minee.rest.parser.Parser;
 import de.minee.rest.parser.ParserException;
 import de.minee.rest.path.ParameterizedPath;
 import de.minee.rest.renderer.Renderer;
-import de.minee.util.Logger;
+import de.minee.util.logging.Logger;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -26,23 +28,23 @@ class MethodResource extends AbstractResource {
 	private static final Logger LOGGER = Logger.getLogger(MethodResource.class);
 
 	private final ParameterizedPath path;
-	private final RestServlet instance;
+	private final Class<? extends RestServlet> instanceType;
 	private final Method method;
 	private final List<ArgumentMapping> methodParams = new ArrayList<>();
 
-	MethodResource(final String fullPath, final Operation[] allowedOperations, final RestServlet instance,
-			final Method method) {
+	MethodResource(final String fullPath, final Operation[] allowedOperations,
+			final Class<? extends RestServlet> instanceType, final Method method) {
 		super(allowedOperations);
 		path = new ParameterizedPath(fullPath);
 		this.method = method;
-		this.instance = instance;
+		this.instanceType = instanceType;
 		final Annotation[][] parameterAnnotations = method.getParameterAnnotations();
 		final Class<?>[] annotatedTypes = method.getParameterTypes();
 		for (int i = 0; i < annotatedTypes.length; i++) {
 			final PathParam pathParam = getAnnotation(parameterAnnotations[i], PathParam.class);
 			final ArgumentMapping mapping;
 			if (pathParam != null) {
-				mapping = new PathParamMapping(path, pathParam.value());
+				mapping = new PathParamMapping(path, pathParam.value(), annotatedTypes[i]);
 			} else if (HttpSession.class.isAssignableFrom(annotatedTypes[i])) {
 				mapping = new SessionMapping();
 			} else if (Cookies.class.isAssignableFrom(annotatedTypes[i])) {
@@ -98,16 +100,18 @@ class MethodResource extends AbstractResource {
 
 	private static class PathParamMapping implements ArgumentMapping {
 		private final int pathNr;
+		private final Class<?> type;
 
-		public PathParamMapping(final ParameterizedPath path, final String pathParam) {
+		public PathParamMapping(final ParameterizedPath path, final String pathParam, final Class<?> type) {
 			pathNr = path.paramPos(pathParam);
+			this.type = type;
 		}
 
 		@Override
 		public Object map(final RequestContext context) {
 			final HttpServletRequest req = context.getRequest();
 			final String[] paths = req.getPathInfo().split("/");
-			return paths[pathNr];
+			return MappingHelper.parseType(paths[pathNr], type);
 		}
 	}
 
@@ -139,7 +143,8 @@ class MethodResource extends AbstractResource {
 			context.setRequest(req);
 			final Object[] args = methodParams.stream().map(param -> param.map(context)).toArray();
 			Object result = null;
-			result = this.method.invoke(this.instance, args);
+			final RestServlet proxyBean = CdiUtil.getInstance(this.instanceType);
+			result = this.method.invoke(proxyBean, args);
 			resp.setCharacterEncoding("UTF-8");
 
 			final Collection<Cookie> changedCookies = context.getCookies().getChangedCookies();

@@ -59,4 +59,16 @@ public class AssertionsTest {
 			Assert.assertEquals(MSG, e.getMessage());
 		}
 	}
+
+	public void testAssertFalseWithFalse() {
+		final boolean input = false;
+		Assertions.assertFalse(input, MSG);
+		Assert.assertFalse(input);
+	}
+
+	@Test(expected = IllegalStateException.class)
+	public void testAssertFalseWithTrue() {
+		final boolean input = true;
+		Assertions.assertFalse(input, MSG);
+	}
 }

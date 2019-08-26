@@ -1,4 +1,4 @@
-package de.minee.util;
+package de.minee.util.logging;
 
 import java.util.function.Supplier;
 import java.util.logging.Level;

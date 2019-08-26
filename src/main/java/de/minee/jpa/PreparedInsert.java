@@ -1,9 +1,9 @@
 package de.minee.jpa;
 
 import de.minee.util.Assertions;
-import de.minee.util.Logger;
 import de.minee.util.Pair;
 import de.minee.util.ReflectionUtil;
+import de.minee.util.logging.Logger;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;

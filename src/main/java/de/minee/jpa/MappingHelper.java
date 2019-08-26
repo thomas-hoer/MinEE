@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.UUID;
+import java.util.function.Function;
 
 public final class MappingHelper {
 
@@ -22,15 +23,17 @@ public final class MappingHelper {
 	private static final String TINYINT = "TINYINT";
 	private static final String BOOLEAN = "BOOLEAN";
 	private static final String SMALLINT = "SMALLINT";
+	private static final String CHAR = "CHAR(1)";
 	private static final String UUID_TYPE = "UUID";
 	private static final String DATE_TYPE = "TIMESTAMP";
 
 	private static final Map<Class<?>, String> MAPPED_TYPES = new HashMap<>();
 	private static final UUID NULL_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+	private static final Map<Class<?>, Function<String, Object>> PARSE_FUNCTION = new HashMap<>();
 
 	static {
 		MAPPED_TYPES.put(Boolean.class, BOOLEAN);
-		MAPPED_TYPES.put(Character.class, SMALLINT);
+		MAPPED_TYPES.put(Character.class, CHAR);
 		MAPPED_TYPES.put(Byte.class, TINYINT);
 		MAPPED_TYPES.put(Short.class, SMALLINT);
 		MAPPED_TYPES.put(Integer.class, INT);
@@ -39,7 +42,7 @@ public final class MappingHelper {
 		MAPPED_TYPES.put(Double.class, DOUBLE);
 		MAPPED_TYPES.put(String.class, VARCHAR);
 		MAPPED_TYPES.put(boolean.class, BOOLEAN);
-		MAPPED_TYPES.put(char.class, SMALLINT);
+		MAPPED_TYPES.put(char.class, CHAR);
 		MAPPED_TYPES.put(byte.class, TINYINT);
 		MAPPED_TYPES.put(short.class, SMALLINT);
 		MAPPED_TYPES.put(int.class, INT);
@@ -48,6 +51,26 @@ public final class MappingHelper {
 		MAPPED_TYPES.put(double.class, DOUBLE);
 		MAPPED_TYPES.put(UUID.class, UUID_TYPE);
 		MAPPED_TYPES.put(Date.class, DATE_TYPE);
+
+		PARSE_FUNCTION.put(Integer.class, Integer::valueOf);
+		PARSE_FUNCTION.put(int.class, Integer::valueOf);
+		PARSE_FUNCTION.put(Long.class, Long::valueOf);
+		PARSE_FUNCTION.put(long.class, Long::valueOf);
+		PARSE_FUNCTION.put(Byte.class, Byte::valueOf);
+		PARSE_FUNCTION.put(byte.class, Byte::valueOf);
+		PARSE_FUNCTION.put(Boolean.class, Boolean::valueOf);
+		PARSE_FUNCTION.put(boolean.class, Boolean::valueOf);
+		PARSE_FUNCTION.put(Short.class, Short::valueOf);
+		PARSE_FUNCTION.put(short.class, Short::valueOf);
+		PARSE_FUNCTION.put(Float.class, Float::valueOf);
+		PARSE_FUNCTION.put(float.class, Float::valueOf);
+		PARSE_FUNCTION.put(Double.class, Double::valueOf);
+		PARSE_FUNCTION.put(double.class, Double::valueOf);
+		final Function<String, Object> charAt0 = s -> s.charAt(0);
+		PARSE_FUNCTION.put(Character.class, charAt0);
+		PARSE_FUNCTION.put(char.class, charAt0);
+		PARSE_FUNCTION.put(UUID.class, UUID::fromString);
+		PARSE_FUNCTION.put(String.class, s -> s);
 	}
 
 	private MappingHelper() {
@@ -134,47 +157,30 @@ public final class MappingHelper {
 	}
 
 	public static Object parseType(final String object, final Class<?> cls) {
-		if (Integer.class.isAssignableFrom(cls) || int.class.isAssignableFrom(cls)) {
-			return Integer.valueOf(object);
-		} else if (Long.class.isAssignableFrom(cls) || long.class.isAssignableFrom(cls)) {
-			return Long.valueOf(object);
-		} else if (Byte.class.isAssignableFrom(cls) || byte.class.isAssignableFrom(cls)) {
-			return Byte.valueOf(object);
-		} else if (Boolean.class.isAssignableFrom(cls) || boolean.class.isAssignableFrom(cls)) {
-			return Boolean.valueOf(object);
-		} else if (Short.class.isAssignableFrom(cls) || short.class.isAssignableFrom(cls)) {
-			return Short.valueOf(object);
-		} else if (Float.class.isAssignableFrom(cls) || float.class.isAssignableFrom(cls)) {
-			return Float.valueOf(object);
-		} else if (Double.class.isAssignableFrom(cls) || double.class.isAssignableFrom(cls)) {
-			return Double.valueOf(object);
-		} else if (Character.class.isAssignableFrom(cls) || char.class.isAssignableFrom(cls)) {
-			return object.charAt(0);
-		} else if (UUID.class.isAssignableFrom(cls)) {
-			return UUID.fromString(object);
-		} else if (String.class.isAssignableFrom(cls)) {
-			return object;
+		if (PARSE_FUNCTION.containsKey(cls)) {
+			return PARSE_FUNCTION.get(cls).apply(object);
 		} else if (Date.class.isAssignableFrom(cls)) {
 			return new Date(Long.parseLong(object));
+		} else {
+			return null;
 		}
-		return null;
 	}
 
 	public static Object getDefaultPrimitive(final Class<?> cls) {
 		if (int.class.isAssignableFrom(cls)) {
-			return Integer.valueOf(0);
+			return 0;
 		} else if (long.class.isAssignableFrom(cls)) {
-			return Long.valueOf(0);
+			return 0l;
 		} else if (byte.class.isAssignableFrom(cls)) {
-			return Byte.valueOf((byte) 0);
+			return (byte) 0;
 		} else if (boolean.class.isAssignableFrom(cls)) {
-			return Boolean.FALSE;
+			return false;
 		} else if (short.class.isAssignableFrom(cls)) {
-			return Short.valueOf((short) 0);
+			return (short) 0;
 		} else if (float.class.isAssignableFrom(cls)) {
-			return Float.valueOf(0f);
+			return 0f;
 		} else if (double.class.isAssignableFrom(cls)) {
-			return Double.valueOf(0d);
+			return 0d;
 		} else if (char.class.isAssignableFrom(cls)) {
 			return '\0';
 		}

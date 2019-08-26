@@ -9,8 +9,8 @@ import de.minee.rest.annotation.RestResource;
 import de.minee.rest.parser.Parser;
 import de.minee.rest.renderer.JsonRenderer;
 import de.minee.rest.renderer.Renderer;
-import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
+import de.minee.util.logging.Logger;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -26,7 +26,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class RestServlet extends CdiAwareHttpServlet {
+public abstract class RestServlet extends CdiAwareHttpServlet {
 
 	private static final long serialVersionUID = -5213801706760630081L;
 	private static final Logger LOGGER = Logger.getLogger(RestServlet.class);
@@ -62,7 +62,7 @@ public class RestServlet extends CdiAwareHttpServlet {
 			final RestResource annotation = method.getAnnotation(RestResource.class);
 			if (annotation != null) {
 				final MethodResource resource = new MethodResource(annotation.value(), annotation.allowedOperations(),
-						this, method);
+						getClass(), method);
 				Arrays.stream(annotation.consumes()).map(CdiUtil::getInstance).forEach(resource::addParser);
 				Arrays.stream(annotation.produces()).map(CdiUtil::getInstance).forEach(resource::addRenderer);
 				servletParser.stream().map(CdiUtil::getInstance).forEach(resource::addParser);

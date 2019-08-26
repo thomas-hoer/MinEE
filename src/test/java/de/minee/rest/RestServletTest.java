@@ -390,7 +390,8 @@ public class RestServletTest {
 	}
 
 	private static RestServlet createInMemServlet(final ServletConfig config) throws ServletException {
-		final RestServlet servlet = new RestServlet();
+		final RestServlet servlet = new RestServlet() {
+		};
 		servlet.init(config);
 		return servlet;
 	}

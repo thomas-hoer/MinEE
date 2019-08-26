@@ -1,7 +1,7 @@
 package de.minee.jpa;
 
-import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
+import de.minee.util.logging.Logger;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -152,8 +152,8 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 			try {
 				if (supportedType) {
 					list.add(resultSet.getObject(1));
-				} else if(isEnum) {
-					list.add(Enum.valueOf((Class<? extends Enum>)type, resultSet.getString(1)));
+				} else if (isEnum) {
+					list.add(Enum.valueOf((Class<? extends Enum>) type, resultSet.getString(1)));
 				} else {
 					final Object o = select(type, getConnection()).byId((UUID) resultSet.getObject(1), handledObjects);
 					list.add(o);
@@ -176,6 +176,8 @@ public class SelectStatement<T> extends AbstractStatement<T> {
 					final Object resolvedValue = select(field.getType(), getConnection()).byId((UUID) value,
 							handledObjects);
 					ReflectionUtil.executeSet(field, obj, resolvedValue);
+				} else if (Character.class.equals(field.getType()) && value instanceof String) {
+					ReflectionUtil.executeSet(field, obj, value.toString().charAt(0));
 				} else if (field.getType().isEnum()) {
 					final String stringValue = rs.getString(field.getName());
 					ReflectionUtil.executeSet(field, obj, MappingHelper.getEnum(field.getType(), stringValue));

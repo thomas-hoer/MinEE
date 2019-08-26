@@ -8,6 +8,8 @@ import de.minee.datamodel.DateType;
 import de.minee.datamodel.EnumObject;
 import de.minee.datamodel.NotSupportedType;
 import de.minee.datamodel.PrimitiveList;
+import de.minee.datamodel.PrimitiveObjects;
+import de.minee.datamodel.PrimitiveTypes;
 import de.minee.datamodel.RecursiveObject;
 import de.minee.datamodel.enumeration.Enumeration;
 import de.minee.datamodel.invalid.FieldPropertyMismatch;
@@ -38,6 +40,8 @@ public class AbstractDAOTest extends AbstractTestDAO {
 		createTable(ArrayTypes.class);
 		createTable(NonDefaultConstructor.class);
 		createTable(FieldPropertyMismatch.class);
+		createTable(PrimitiveObjects.class);
+		createTable(PrimitiveTypes.class);
 		updateTable(ReferenceChain.class);
 		updateTable(SimpleReference.class, true);
 		updateTable(ReferenceList.class);
@@ -78,7 +82,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 	@Test
 	public void testEnumList() {
 		final EnumObject enumObject = new EnumObject();
-		enumObject.setEnumList(Arrays.asList(Enumeration.ENUM_VALUE_1,Enumeration.ENUM_VALUE_2));
+		enumObject.setEnumList(Arrays.asList(Enumeration.ENUM_VALUE_1, Enumeration.ENUM_VALUE_2));
 
 		final UUID id = insert(enumObject);
 
@@ -93,7 +97,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 		Assert.assertTrue(selectedEnumObject.getEnumList().contains(Enumeration.ENUM_VALUE_2));
 
 		// Delete ENUM_VALUE_1 Add ENUM_VALUE_3
-		enumObject.setEnumList(Arrays.asList(Enumeration.ENUM_VALUE_2,Enumeration.ENUM_VALUE_3));
+		enumObject.setEnumList(Arrays.asList(Enumeration.ENUM_VALUE_2, Enumeration.ENUM_VALUE_3));
 		merge(enumObject);
 
 		final EnumObject selectedEnumObject2 = select(EnumObject.class).byId(id);
@@ -104,8 +108,7 @@ public class AbstractDAOTest extends AbstractTestDAO {
 		Assert.assertTrue(selectedEnumObject2.getEnumList().contains(Enumeration.ENUM_VALUE_2));
 		Assert.assertTrue(selectedEnumObject2.getEnumList().contains(Enumeration.ENUM_VALUE_3));
 
-
-		enumObject.setEnumList(Arrays.asList(Enumeration.ENUM_VALUE_4,Enumeration.ENUM_VALUE_5));
+		enumObject.setEnumList(Arrays.asList(Enumeration.ENUM_VALUE_4, Enumeration.ENUM_VALUE_5));
 		update(enumObject);
 
 		final EnumObject selectedEnumObject3 = select(EnumObject.class).byId(id);
@@ -116,7 +119,6 @@ public class AbstractDAOTest extends AbstractTestDAO {
 		Assert.assertTrue(selectedEnumObject3.getEnumList().contains(Enumeration.ENUM_VALUE_4));
 		Assert.assertTrue(selectedEnumObject3.getEnumList().contains(Enumeration.ENUM_VALUE_5));
 	}
-
 
 	@Test
 	public void testCycle() {
@@ -413,6 +415,88 @@ public class AbstractDAOTest extends AbstractTestDAO {
 		Assert.assertArrayEquals(new Integer[] { 1, 2, 10, 10, 11, 0 }, intArray);
 	}
 
+	@Test
+	public void testSelectPrimitives() {
+		final PrimitiveTypes primitiveTypes = new PrimitiveTypes();
+		primitiveTypes.setBoolValue(true);
+		primitiveTypes.setByteValue((byte) 42);
+		primitiveTypes.setCharValue('=');
+		primitiveTypes.setDoubleValue(2e100);
+		primitiveTypes.setFloatValue(5.2e12f);
+		primitiveTypes.setIntValue(987654321);
+		primitiveTypes.setLongValue(9999999999l);
+		primitiveTypes.setShortValue((short) 1000);
+		insert(primitiveTypes);
+		List<PrimitiveTypes> selectedResources = null;
+		selectedResources = select(PrimitiveTypes.class).where(PrimitiveTypes::getBoolValue).is(true).execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveTypes.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveTypes.class).where(PrimitiveTypes::getByteValue).is((byte) 42).execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveTypes.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveTypes.class).where(PrimitiveTypes::getCharValue).is('=').execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveTypes.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveTypes.class).where(PrimitiveTypes::getDoubleValue).is(2e100).execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveTypes.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveTypes.class).where(PrimitiveTypes::getFloatValue).is(5.2e12f).execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveTypes.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveTypes.class).where(PrimitiveTypes::getIntValue).is(987654321).execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveTypes.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveTypes.class).where(PrimitiveTypes::getLongValue).is(9999999999l).execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveTypes.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveTypes.class).where(PrimitiveTypes::getShortValue).is((short) 1000)
+				.execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveTypes.getId(), selectedResources.get(0).getId());
+	}
+
+	@Test
+	public void testSelectPrimitiveWrapper() {
+		final PrimitiveObjects primitiveObjects = new PrimitiveObjects();
+		primitiveObjects.setBoolValue(true);
+		primitiveObjects.setByteValue((byte) 42);
+		primitiveObjects.setCharValue('=');
+		primitiveObjects.setDoubleValue(2e100);
+		primitiveObjects.setFloatValue(5.2e12f);
+		primitiveObjects.setIntValue(987654321);
+		primitiveObjects.setLongValue(9999999999l);
+		primitiveObjects.setShortValue((short) 1000);
+		insert(primitiveObjects);
+		List<PrimitiveObjects> selectedResources = null;
+		selectedResources = select(PrimitiveObjects.class).where(PrimitiveObjects::getBoolValue).is(true).execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveObjects.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveObjects.class).where(PrimitiveObjects::getByteValue).is((byte) 42)
+				.execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveObjects.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveObjects.class).where(PrimitiveObjects::getCharValue).is('=').execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveObjects.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveObjects.class).where(PrimitiveObjects::getDoubleValue).is(2e100).execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveObjects.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveObjects.class).where(PrimitiveObjects::getFloatValue).is(5.2e12f).execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveObjects.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveObjects.class).where(PrimitiveObjects::getIntValue).is(987654321).execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveObjects.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveObjects.class).where(PrimitiveObjects::getLongValue).is(9999999999l)
+				.execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveObjects.getId(), selectedResources.get(0).getId());
+		selectedResources = select(PrimitiveObjects.class).where(PrimitiveObjects::getShortValue).is((short) 1000)
+				.execute();
+		assertEquals(1, selectedResources.size());
+		assertEquals(primitiveObjects.getId(), selectedResources.get(0).getId());
+	}
+
 	@Test(expected = MappingException.class)
 	public void testUnsupportedType() {
 		final AbstractDAO dao = new AbstractTestDAO() {
@@ -455,7 +539,8 @@ public class AbstractDAOTest extends AbstractTestDAO {
 		final FieldPropertyMismatch object = new FieldPropertyMismatch();
 		object.setBool(true);
 		insert(object);
-		final List<FieldPropertyMismatch> list = select(FieldPropertyMismatch.class).where(FieldPropertyMismatch::getBool).is().execute(Arrays.asList(true));
+		final List<FieldPropertyMismatch> list = select(FieldPropertyMismatch.class)
+				.where(FieldPropertyMismatch::getBool).is().execute(Arrays.asList(true));
 	}
 
 	@Test(expected = DatabaseException.class)

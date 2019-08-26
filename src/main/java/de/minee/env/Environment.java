@@ -1,6 +1,6 @@
 package de.minee.env;
 
-import de.minee.util.Logger;
+import de.minee.util.logging.Logger;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;

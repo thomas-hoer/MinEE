@@ -2,12 +2,13 @@ package de.minee.rest;
 
 import de.minee.jpa.AbstractDAO;
 import de.minee.jpa.DatabaseException;
+import de.minee.jpa.MappingHelper;
 import de.minee.rest.parser.Parser;
 import de.minee.rest.parser.ParserException;
 import de.minee.rest.path.ManagedPath;
 import de.minee.rest.renderer.Renderer;
-import de.minee.util.Logger;
 import de.minee.util.ReflectionUtil;
+import de.minee.util.logging.Logger;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -132,14 +133,9 @@ class ManagedResource<T> extends AbstractResource {
 		if (parameter == null) {
 			return null;
 		}
-		if (int.class.equals(fieldType) || Integer.class.equals(fieldType)) {
-			return Integer.valueOf(parameter);
-		}
-		if (String.class.equals(fieldType)) {
-			return parameter;
-		}
-		if (UUID.class.equals(fieldType)) {
-			return "".equals(parameter) ? null : UUID.fromString(parameter);
+		final Object basicType = MappingHelper.parseType(parameter, fieldType);
+		if (basicType != null) {
+			return basicType;
 		}
 
 		final Field refId = ReflectionUtil.getDeclaredField(fieldType, "id");

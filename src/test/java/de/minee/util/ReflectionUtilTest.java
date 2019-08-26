@@ -9,8 +9,10 @@ import de.minee.jpa.Cascade;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -274,5 +276,50 @@ public class ReflectionUtilTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testGetMethodNullMethod() {
 		final Method method = ReflectionUtil.getMethod(SimpleReference.class, null);
+	}
+
+	@Test
+	public void testInvokeGetter() {
+		final Method method = ReflectionUtil.getMethod(SimpleReference.class, "getValue");
+		final SimpleReference simpleReference = new SimpleReference();
+		final String value = "Value";
+		simpleReference.setValue(value);
+		final Object result = ReflectionUtil.invoke(method, simpleReference);
+		Assert.assertEquals(value, result);
+	}
+
+	@Test
+	public void testInvokeSetter() throws NoSuchMethodException, SecurityException {
+		final Method method = SimpleReference.class.getMethod("setValue", String.class);
+		final SimpleReference simpleReference = new SimpleReference();
+		final String value = "Value";
+		ReflectionUtil.invoke(method, simpleReference, value);
+		final String result = simpleReference.getValue();
+		Assert.assertEquals(value, result);
+	}
+
+	@Test
+	public void testInvokeException() {
+		final Method method = ReflectionUtil.getMethod(RecursiveObject.class, "getId");
+		final SimpleReference simpleReference = new SimpleReference();
+		final UUID value = UUID.randomUUID();
+		simpleReference.setId(value);
+		final Object result = ReflectionUtil.invoke(method, simpleReference);
+		Assert.assertNull(result);
+	}
+
+	@Test
+	public void testGetAllMethods() {
+		final List<Method> methods = ReflectionUtil.getAllMethods(RecursiveObjectDerivation.class);
+		final Set<Method> methodMap = new HashSet<>(methods);
+		final Method[] recursiveObjectMethods = RecursiveObject.class.getDeclaredMethods();
+		final Method[] recursiveObjectDerivationMethods = RecursiveObjectDerivation.class.getDeclaredMethods();
+		final Method[] objectMethods = Object.class.getDeclaredMethods();
+		final int methodsNum = recursiveObjectDerivationMethods.length + recursiveObjectMethods.length
+				+ objectMethods.length;
+		Assert.assertEquals(methodsNum, methods.size());
+		for (final Method method : recursiveObjectMethods) {
+			Assert.assertTrue(methodMap.contains(method));
+		}
 	}
 }

@@ -1,5 +1,7 @@
 package de.minee.rest.parser;
 
+import de.minee.cdi.Bean;
+import de.minee.cdi.Scope;
 import de.minee.jpa.MappingHelper;
 import de.minee.util.Assertions;
 import de.minee.util.ReflectionUtil;
@@ -10,6 +12,7 @@ import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean(Scope.NONE)
 public class JsonParser implements Parser {
 
 	private static final Object JSON_CONTENT_TYPE = "application/json";

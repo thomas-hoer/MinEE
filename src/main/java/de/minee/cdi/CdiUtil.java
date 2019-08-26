@@ -3,13 +3,15 @@ package de.minee.cdi;
 import de.minee.util.Assertions;
 import de.minee.util.ReflectionUtil;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
 public final class CdiUtil {
 
-	private static Map<Class<?>, Object> map = new HashMap<>();
+	private static final Map<Class<?>, Object> APPLICATION_SCOPED_BEANS = new HashMap<>();
 
 	private CdiUtil() {
 	}
@@ -34,13 +36,16 @@ public final class CdiUtil {
 	public static <T> T getInstance(final Class<T> cls) {
 		Assertions.assertNotNull(cls, "Class should not be null");
 		try {
-			if (!map.containsKey(cls)) {
-				final Object instance = cls.newInstance();
-				map.put(cls, instance);
+			if (!APPLICATION_SCOPED_BEANS.containsKey(cls)) {
+				final Constructor<T> constructor = cls.getDeclaredConstructor();
+				constructor.setAccessible(true);
+				final T instance = constructor.newInstance();
+				APPLICATION_SCOPED_BEANS.put(cls, instance);
 				injectResources(instance);
 			}
-			return (T) map.get(cls);
-		} catch (InstantiationException | IllegalAccessException e) {
+			return (T) APPLICATION_SCOPED_BEANS.get(cls);
+		} catch (InvocationTargetException | IllegalArgumentException | InstantiationException | IllegalAccessException
+				| NoSuchMethodException | SecurityException e) {
 			throw new CdiException("Cannot instantiate object of type " + cls.getSimpleName()
 					+ ". Probably there is no public constructor with no arguments.", e);
 		}

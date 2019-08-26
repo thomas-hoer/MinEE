@@ -1,5 +1,7 @@
 package de.minee.rest.renderer;
 
+import de.minee.cdi.Bean;
+import de.minee.cdi.Scope;
 import de.minee.util.Assertions;
 import de.minee.util.ReflectionUtil;
 
@@ -11,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 
+@Bean(Scope.NONE)
 public class JsonRenderer extends AbstractRenderer {
 
 	@Override
@@ -63,6 +66,7 @@ public class JsonRenderer extends AbstractRenderer {
 				stringJoiner.add("\"" + field.getName() + "\":" + render(fieldObject, knownObjects));
 			}
 		}
+		knownObjects.remove(input);
 		stringBuilder.append(stringJoiner.toString());
 		stringBuilder.append("}");
 

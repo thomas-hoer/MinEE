@@ -26,6 +26,9 @@ public abstract class AbstractAndOrConnection<T, U extends AbstractStatement<T>>
 	 * @return WhereClause to set the relation to the field
 	 */
 	public <S> WhereClause<S, T, U> where(final Function<T, S> whereField) {
+		if (whereClause != null) {
+			return (WhereClause<S, T, U>) statement.and().where(whereField);
+		}
 		final WhereClause<S, T, U> where = new WhereClause<>(whereField, statement);
 		statement.add(this);
 		whereClause = where;

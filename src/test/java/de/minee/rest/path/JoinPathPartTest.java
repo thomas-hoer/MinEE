@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import de.minee.datamodel.PrimitiveObjects;
+import de.minee.datamodel.PrimitiveTypes;
 import de.minee.datamodel.ReferenceChain;
 import de.minee.datamodel.SimpleReference;
 import de.minee.rest.MockHttpServletRequestImpl;
@@ -34,6 +36,18 @@ public class JoinPathPartTest {
 
 		@RestResource("sRef")
 		SimpleReference simpleReference;
+
+		@RestResource("primType")
+		PrimitiveTypes primitiveTypes;
+
+		@RestResource("primType/{longValue}/{intValue}/{floatValue}")
+		PrimitiveTypes primitiveTypesByValue;
+
+		@RestResource("primObj")
+		PrimitiveObjects primitiveObject;
+
+		@RestResource("primObj/{longValue}/{intValue}/{charValue}")
+		PrimitiveObjects primitiveObjectByValue;
 
 		// Returns all ReferenceChain that are referencing a SimpleReference with
 		// specific ids
@@ -84,6 +98,52 @@ public class JoinPathPartTest {
 		assertTrue(output.contains("SimpleReference"));
 		assertTrue(output.contains("ReferenceChain"));
 		assertTrue(output.contains("Name?"));
+	}
+
+	@Test
+	public void testResolveTypes() throws ServletException, IOException {
+		MockHttpServletRequestImpl request;
+		MockHttpServletResponseImpl response;
+		final UUID sRefId = UUID.randomUUID();
+		request = new MockHttpServletRequestImpl("primType/create", Operation.POST, null);
+		request.addParameter("id", sRefId.toString());
+		request.addParameter("intValue", "333");
+		request.addParameter("longValue", "444");
+		request.addParameter("floatValue", "1e12");
+		response = new MockHttpServletResponseImpl();
+		HATEOES_TEST_SERVLET.service(request, response);
+
+		request = new MockHttpServletRequestImpl("primType/444/333/1e12");
+		response = new MockHttpServletResponseImpl();
+		HATEOES_TEST_SERVLET.service(request, response);
+		final String output = response.getWrittenOutput();
+		assertTrue(output.contains("PrimitiveTypes"));
+		assertTrue(output.contains("333"));
+		assertTrue(output.contains("444"));
+		assertTrue(output.contains("1.0E12"));
+	}
+
+	@Test
+	public void testResolveWrapper() throws ServletException, IOException {
+		MockHttpServletRequestImpl request;
+		MockHttpServletResponseImpl response;
+		final UUID sRefId = UUID.randomUUID();
+		request = new MockHttpServletRequestImpl("primObj/create", Operation.POST, null);
+		request.addParameter("id", sRefId.toString());
+		request.addParameter("intValue", "333");
+		request.addParameter("longValue", "444");
+		request.addParameter("charValue", "z");
+		response = new MockHttpServletResponseImpl();
+		HATEOES_TEST_SERVLET.service(request, response);
+
+		request = new MockHttpServletRequestImpl("primObj/444/333/z");
+		response = new MockHttpServletResponseImpl();
+		HATEOES_TEST_SERVLET.service(request, response);
+		final String output = response.getWrittenOutput();
+		assertTrue(output.contains("PrimitiveObjects"));
+		assertTrue(output.contains("333"));
+		assertTrue(output.contains("444"));
+		assertTrue(output.contains("z"));
 	}
 
 	@Test

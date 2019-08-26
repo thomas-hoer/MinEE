@@ -1,5 +1,7 @@
 package de.minee.rest.renderer;
 
+import de.minee.cdi.Bean;
+import de.minee.cdi.Scope;
 import de.minee.util.Assertions;
 import de.minee.util.ReflectionUtil;
 
@@ -8,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Bean(Scope.NONE)
 public class XmlRenderer extends AbstractRenderer {
 
 	@Override

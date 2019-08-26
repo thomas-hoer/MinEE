@@ -1,5 +1,7 @@
 package de.minee.rest.renderer;
 
+import de.minee.cdi.Bean;
+import de.minee.cdi.Scope;
 import de.minee.util.ReflectionUtil;
 
 import java.lang.reflect.Field;
@@ -8,6 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+@Bean(Scope.NONE)
 public class HtmlRenderer extends AbstractRenderer {
 
 	private static final String TAG_DIV_START = "<div>";
