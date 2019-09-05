@@ -71,10 +71,7 @@ public final class ProxyFactory {
 				lastCalledProperty = methodName.substring(SUBSTR_GET);
 			}
 			lastCalledProperty = lastCalledProperty.substring(0, 1).toLowerCase() + lastCalledProperty.substring(1);
-			if(proceed.getReturnType().isPrimitive()) {
-				return MappingHelper.getDefaultPrimitive(proceed.getReturnType());
-			}
-			return null;
+			return MappingHelper.getDefaultPrimitive(proceed.getReturnType());
 		}
 	}
 

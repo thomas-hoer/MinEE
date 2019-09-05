@@ -83,6 +83,7 @@ class PreparedMerge<S> extends AbstractPreparedQuery<S> {
 				handleList(field, fieldElementToMerge, objectId);
 			}
 		}
+		LOGGER.info(preparedStatement::toString);
 		preparedStatement.executeUpdate();
 		return objectId;
 	}

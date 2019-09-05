@@ -41,8 +41,14 @@ public final class Assertions {
 		}
 	}
 
-	public static void assertFalse(boolean bool, String errorMessage) {
+	public static void assertFalse(final boolean bool, final String errorMessage) {
 		if (bool) {
+			throw new IllegalStateException(errorMessage);
+		}
+	}
+
+	public static void assertTrue(final boolean bool, final String errorMessage) {
+		if (!bool) {
 			throw new IllegalStateException(errorMessage);
 		}
 	}

@@ -85,6 +85,7 @@ class PreparedUpdate<S> extends AbstractPreparedQuery<S> {
 		}
 		// this is for 'UPDATE (...) WHERE id = ?'
 		preparedStatement.setObject(i, objectId);
+		LOGGER.info(preparedStatement::toString);
 		return preparedStatement.executeUpdate();
 	}
 

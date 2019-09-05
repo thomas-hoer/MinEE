@@ -11,12 +11,9 @@ import de.minee.jpa.AbstractStatement;
 import de.minee.jpa.DAOTestImpl;
 import de.minee.jpa.DatabaseException;
 import de.minee.jpa.InitialQueryConnection;
-import de.minee.rest.parser.JsonParser;
 import de.minee.rest.renderer.HtmlRenderer;
-import de.minee.rest.renderer.JsonRenderer;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletResponse;
@@ -28,23 +25,11 @@ public class ManagedResourceTest {
 
 	private static final ManagedResource<SimpleReference> RESOURCE = new ManagedResource<>(null, "root",
 			new Operation[] { Operation.ALL }, SimpleReference.class);
-	private static final ManagedResource<Date> BAD_RESOURCE = new ManagedResource<>(null, "root",
-			new Operation[] { Operation.ALL }, Date.class);
 
 	@BeforeClass
 	public static void prepare() {
 		RESOURCE.setDao(new DAOTestImpl());
 		RESOURCE.addRenderer(new HtmlRenderer());
-		BAD_RESOURCE.setDao(new DAOTestImpl());
-		BAD_RESOURCE.addRenderer(new JsonRenderer());
-		BAD_RESOURCE.addParser(new JsonParser());
-	}
-
-	@Test
-	public void testServeBadResource() throws IOException {
-		final MockHttpServletRequestImpl request = new MockHttpServletRequestImpl("root/create", Operation.POST, "{}");
-		final MockHttpServletResponseImpl response = new MockHttpServletResponseImpl();
-		BAD_RESOURCE.serve(request, response);
 	}
 
 	@Test
