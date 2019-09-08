@@ -124,6 +124,32 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 		return selectStatement;
 	}
 
+	public U gt(final S gt) {
+		checkConditionSet();
+		setCondition(Operator.GT, gt);
+		return selectStatement;
+	}
+
+	public U gt() {
+		checkConditionSet();
+		conditionForPrepare = true;
+		setCondition(Operator.GT);
+		return selectStatement;
+	}
+
+	public U lt(final S lt) {
+		checkConditionSet();
+		setCondition(Operator.LT, lt);
+		return selectStatement;
+	}
+
+	public U lt() {
+		checkConditionSet();
+		conditionForPrepare = true;
+		setCondition(Operator.LT);
+		return selectStatement;
+	}
+
 	private static String computeConditionValue(final Object condition) {
 		final UUID id = MappingHelper.getId(condition);
 		return id != null ? id.toString() : condition.toString();
@@ -218,7 +244,7 @@ public class WhereClause<S, T, U extends AbstractStatement<T>> {
 	}
 
 	private enum Operator {
-		EQUALS(" = "), IN(" IN "), IS_NULL(" IS NULL "), IS_NOT(" != ");
+		EQUALS(" = "), IN(" IN "), IS_NULL(" IS NULL "), IS_NOT(" != "), GT(" > "), LT(" < ");
 
 		private String sqlOperation;
 
