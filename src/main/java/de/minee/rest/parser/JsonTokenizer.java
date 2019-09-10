@@ -71,10 +71,16 @@ public class JsonTokenizer {
 		final int startIndex = index;
 		while (true) {
 			final char charAtI = payload.charAt(++index);
-			if (!allowedLiteral(charAtI) || index + 1 == length) {
+			if (!allowedLiteral(charAtI)) {
 				lookup = payload.substring(startIndex, index);
 				break;
 			}
+			if (index + 1 == length) {
+				index++;
+				lookup = payload.substring(startIndex, index);
+				break;
+			}
+
 		}
 	}
 

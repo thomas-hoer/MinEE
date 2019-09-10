@@ -32,7 +32,7 @@ class ManagedResource<T> extends AbstractResource {
 
 	/**
 	 * Creates a new fully managed resource for a REST interface. It can handle GET
-	 * for retrieving, PUT and POST for creating and updating resources as well es
+	 * for retrieving, PUT and POST for creating and updating resources as well as
 	 * DELETE for deleting existing resources.
 	 *
 	 * @param context           Context containing information of other resources

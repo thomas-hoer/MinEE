@@ -1,11 +1,8 @@
 package de.minee.rest.parser;
 
-/**
- *
- */
-public class ParserException extends Exception {
+public class ParserException extends RuntimeException {
 
-	private static final long serialVersionUID = 5678460520945773458L;
+	private static final long serialVersionUID = 1L;
 
 	public ParserException(final String msg) {
 		super(msg);
