@@ -30,11 +30,11 @@ public abstract class AbstractDAO {
 	}
 
 	protected String getUserName() {
-		return Environment.getEnvironmentVariable("DB_USER");
+		return null;
 	}
 
 	protected String getPassword() {
-		return Environment.getEnvironmentVariable("DB_PASSWORD");
+		return null;
 	}
 
 	/**
